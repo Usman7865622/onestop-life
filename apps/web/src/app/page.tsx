@@ -225,7 +225,7 @@ export default function Home() {
         body: JSON.stringify({ phone }),
       });
       setVerificationSent(true);
-      setStatus('OTP sent. Check the backend terminal for the verification code in development mode.');
+      setStatus('OTP sent. In development mode, you can just use 000000 as your code.');
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Failed to request OTP.');
     } finally {

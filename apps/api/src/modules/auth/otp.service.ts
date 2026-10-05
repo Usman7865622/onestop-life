@@ -51,7 +51,8 @@ export class OtpService {
       throw new HttpException('Too many codes requested. Try again later', HttpStatus.TOO_MANY_REQUESTS);
     }
 
-    const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
+    const isDev = this.cfg('NODE_ENV') === 'development';
+    const code = isDev ? '000000' : randomInt(0, 1_000_000).toString().padStart(6, '0');
 
     await this.redis
       .multi()
