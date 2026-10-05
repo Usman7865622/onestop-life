@@ -1,0 +1,38 @@
+.root { position: fixed; z-index: 60; right: 24px; bottom: 24px; font-family: inherit; color: #172337; }
+.launcher { display: flex; align-items: center; gap: 9px; border: 0; border-radius: 999px; padding: 14px 20px; background: #176b67; color: #fff; font: inherit; font-weight: 700; box-shadow: 0 12px 32px #17233738; cursor: pointer; }
+.launcher span { font-size: 19px; }
+.panel { display: flex; flex-direction: column; width: min(390px, calc(100vw - 28px)); height: min(610px, calc(100dvh - 105px)); margin-bottom: 14px; overflow: hidden; border: 1px solid #dfe8e5; border-radius: 22px; background: #fff; box-shadow: 0 24px 70px #17233730; }
+.header { display: flex; align-items: center; gap: 11px; padding: 16px; border-bottom: 1px solid #e8eeec; background: #fbfdfc; }
+.avatar { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #dff1eb; color: #176b67; font-weight: 800; }
+.header > div:nth-child(2) { display: grid; gap: 3px; flex: 1; }
+.header strong { font-size: 14px; }
+.header span { color: #6c7d7a; font-size: 11px; }
+.close { border: 0; background: transparent; color: #52625f; font-size: 24px; cursor: pointer; }
+.transcript { flex: 1; overflow-y: auto; padding: 16px; background: #f7faf9; }
+.welcome { padding: 17px; border: 1px solid #e4ece9; border-radius: 16px; background: #fff; }
+.welcome > strong { font-size: 16px; }
+.welcome p { margin: 7px 0 15px; color: #657471; font-size: 13px; line-height: 1.55; }
+.suggestions { display: flex; flex-wrap: wrap; gap: 7px; }
+.suggestions button { padding: 8px 10px; border: 1px solid #cbded8; border-radius: 999px; background: #f6fbf8; color: #176b67; font: inherit; font-size: 11px; cursor: pointer; }
+.userMessage, .assistantMessage { max-width: 94%; margin: 0 0 12px; padding: 11px 13px; border-radius: 15px; }
+.userMessage { margin-left: auto; background: #176b67; color: #fff; border-bottom-right-radius: 5px; }
+.assistantMessage { margin-right: auto; border: 1px solid #e4ece9; background: #fff; border-bottom-left-radius: 5px; }
+.userMessage p, .assistantMessage > p { margin: 0; white-space: pre-wrap; font-size: 13px; line-height: 1.5; }
+.productList { display: grid; gap: 8px; margin-top: 11px; }
+.productCard { display: flex; align-items: center; gap: 9px; padding: 8px; border: 1px solid #e8eeec; border-radius: 12px; background: #fff; color: #172337; }
+.productCard img, .productPlaceholder { flex: 0 0 43px; width: 43px; height: 43px; border-radius: 9px; object-fit: cover; }
+.productPlaceholder { display: grid; place-items: center; background: #eaf4ef; color: #176b67; }
+.productInfo { display: grid; flex: 1; min-width: 0; gap: 2px; }
+.productInfo span { color: #7a8986; font-size: 9px; }
+.productInfo strong { overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.productInfo small { color: #176b67; font-size: 10px; }
+.productCard > button { padding: 7px 9px; border: 0; border-radius: 8px; background: #176b67; color: #fff; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; }
+.thinking, .notice { color: #59716b; font-size: 12px; }
+.error { color: #a32929; font-size: 12px; }
+.composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #e8eeec; background: #fff; }
+.composer input { min-width: 0; flex: 1; padding: 11px 12px; border: 1px solid #d9e3df; border-radius: 11px; color: #172337; font: inherit; font-size: 13px; outline-color: #176b67; }
+.composer button { padding: 0 14px; border: 0; border-radius: 10px; background: #176b67; color: #fff; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.composer button:disabled { opacity: .5; cursor: not-allowed; }
+.disclaimer { margin: 0; padding: 0 12px 11px; background: #fff; color: #778581; font-size: 10px; line-height: 1.4; text-align: center; }
+.visuallyHidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 520px) { .root { right: 14px; bottom: 14px; } .panel { height: min(590px, calc(100dvh - 92px)); } }

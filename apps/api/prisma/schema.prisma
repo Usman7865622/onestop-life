@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Enums ----------
+
+enum RoleKey {
+  CUSTOMER
+  DOCTOR
+  VET
+  BLOOD_BANK_STAFF
+  PHARMACY
+  SELLER
+  DELIVERY_AGENT
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum Locale {
+  en
+  ur
+}
+
+enum VerificationType {
+  DOCTOR
+  VET
+  PHARMACY
+  BLOOD_BANK
+  SELLER
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentRecordStatus {
+  PENDING
+  REQUIRES_ACTION
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+// ---------- Identity ----------
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  phone           String?    @unique // E.164 when supplied; email accounts may add a phone later
+  email           String?    @unique
+  passwordHash    String?
+  name            String?
+  locale          Locale     @default(en)
+  status          UserStatus @default(ACTIVE)
+  phoneVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  roles                UserRole[]
+  refreshTokens        RefreshToken[]
+  verificationRequests VerificationRequest[] @relation("Applicant")
+  reviewedRequests     VerificationRequest[] @relation("Reviewer")
+  auditLogs            AuditLog[]
+  orders               Order[]
+  products             Product[] @relation("SellerProducts")
+
+  @@map("users")
+}
+
+model UserRole {
+  userId    String   @db.Uuid
+  role      RoleKey
+  grantedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, role])
+  @@map("user_roles")
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  familyId  String    @db.Uuid // all tokens descended from one login share a family
+  tokenHash String    @unique // SHA-256 of the raw token; the raw token is never stored
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+// ---------- Professional / seller verification ----------
+
+model VerificationRequest {
+  id               String             @id @default(uuid()) @db.Uuid
+  userId           String             @db.Uuid
+  type             VerificationType
+  licenseNumber    String
+  licenseAuthority String // e.g. the council or authority that issued the licence
+  documentKey      String // storage key of the uploaded licence document (file service comes later)
+  notes            String?
+  status           VerificationStatus @default(PENDING)
+  reviewedById     String?            @db.Uuid
+  reviewNote       String?
+  reviewedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  user       User  @relation("Applicant", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("Reviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([userId, type])
+  @@map("verification_requests")
+}
+
+// ---------- Audit ----------
+
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @db.Uuid
+  action    String
+  entity    String
+  entityId  String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+  @@map("audit_logs")
+}
+// Add to schema.prisma
+
+enum ImportJobStatus {
+  PENDING
+  VALIDATING
+  VALIDATED
+  APPLYING
+  COMPLETED
+  FAILED
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
+}
+
+model ImportJob {
+  id           String          @id @default(cuid())
+  filename     String
+  status       ImportJobStatus @default(PENDING)
+  totalRows    Int             @default(0)
+  validRows    Int             @default(0)
+  invalidRows  Int             @default(0)
+  summary      Json?           // { toCreate: number, toUpdate: number, errorsCount: number }
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  rows         ImportRow[]
+}
+
+model ImportRow {
+  id          String    @id @default(cuid())
+  jobId       String
+  job         ImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  rowNumber   Int
+  rawPayload  Json
+  isValid     Boolean   @default(false)
+  action      String?   // 'CREATE' | 'UPDATE' | 'REJECT'
+  sku         String?
+  errors      Json?     // Array of validation error strings
+}
+
+model OutboxEvent {
+  id          String       @id @default(cuid())
+  aggregate   String       // 'PRODUCT' | 'CATEGORY' | 'INVENTORY'
+  aggregateId String
+  eventType   String       // 'UPSERT' | 'DELETE'
+  payload     Json
+  status      OutboxStatus @default(PENDING)
+  attempts    Int          @default(0)
+  lastError   String?
+  createdAt   DateTime     @default(now())
+  processedAt DateTime?
+
+  @@index([status, createdAt])
+}
+
+model Product {
+  id         String   @id @default(uuid()) @db.Uuid
+  sellerId   String?  @db.Uuid
+  nameEn     String
+  nameUr     String?
+  priceMinor Int
+  unit       String   @default("item")
+  category   String?
+  imageUrl   String?
+  inStock    Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orderItems OrderItem[]
+  seller     User? @relation("SellerProducts", fields: [sellerId], references: [id], onDelete: SetNull)
+
+  @@index([category])
+  @@index([createdAt])
+  @@index([sellerId])
+  @@map("products")
+}
+
+model Order {
+  id              String      @id @default(uuid()) @db.Uuid
+  userId          String      @db.Uuid
+  status          OrderStatus @default(PENDING_PAYMENT)
+  subtotalMinor   Int
+  discountMinor   Int         @default(0)
+  shippingMinor   Int         @default(0)
+  totalMinor      Int
+  currency        String      @default("PKR")
+  discountCode    String?
+  shippingName    String
+  shippingPhone   String
+  shippingAddress String
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items    OrderItem[]
+  payments PaymentRecord[]
+  refunds  Refund[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String  @id @default(uuid()) @db.Uuid
+  orderId         String  @db.Uuid
+  productId       String  @db.Uuid
+  productName     String
+  priceMinor      Int
+  quantity        Int
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model PaymentRecord {
+  id                String               @id @default(uuid()) @db.Uuid
+  orderId           String               @db.Uuid
+  method            String
+  status            PaymentRecordStatus  @default(PENDING)
+  amountMinor       Int
+  providerReference String?              @unique
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  order  Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  refunds Refund[]
+
+  @@index([orderId, createdAt])
+  @@map("payment_records")
+}
+
+model Refund {
+  id              String       @id @default(uuid()) @db.Uuid
+  orderId         String       @db.Uuid
+  paymentId       String?      @db.Uuid
+  amountMinor     Int
+  reason          String?
+  status          RefundStatus @default(PENDING)
+  providerReference String?
+  createdAt       DateTime     @default(now())
+
+  order   Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment PaymentRecord? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@map("refunds")
+}
+
+model DiscountCode {
+  id          String       @id @default(uuid()) @db.Uuid
+  code        String       @unique
+  type        DiscountType
+  value       Int
+  active      Boolean      @default(true)
+  maxUses     Int?
+  usedCount   Int          @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@map("discount_codes")
+}
