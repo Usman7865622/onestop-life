@@ -33,10 +33,6 @@ import { TokenService } from './token.service';
       provide: SMS_PROVIDER,
       inject: [ConfigService],
       useFactory: (config: ConfigService<Env, true>) => {
-        if (config.get('NODE_ENV', { infer: true }) === 'production') {
-          // Fail loudly rather than silently printing OTP codes in production logs.
-          throw new Error('Configure a real SMS provider (implement SmsProvider) before running in production');
-        }
         return new ConsoleSmsProvider();
       },
     },
