@@ -25,8 +25,8 @@ export const envSchema = z.object({
   OTP_MAX_PER_HOUR: z.coerce.number().int().positive().default(5),
 
   ADMIN_PHONE: z.string().optional(),
-  OPENAI_API_KEY: z.string().optional(),
-  OPENAI_MODEL: z.string().default('gpt-4.1-mini'),
+  XAI_API_KEY: z.string().optional(),
+  XAI_MODEL: z.string().default('grok-4.7'),
 });
 
 export type Env = z.infer<typeof envSchema>;

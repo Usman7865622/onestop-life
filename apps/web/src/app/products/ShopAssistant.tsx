@@ -173,8 +173,8 @@ export default function ShopAssistant({ catalogProducts, onAddToCart }: ShopAssi
             {!messages.length ? (
               <div className={styles.welcome}>
                 <span className={styles.welcomeEyebrow}>YOUR LIVE SHOPPING GUIDE</span>
-                <strong>What can I help you find?</strong>
-                <p>Describe an item, who it is for, or your budget. I’ll match it against products currently in stock.</p>
+                <strong>What can I help you with?</strong>
+                <p>Ask a question or tell me what you need. I can help with general questions and find products currently in stock.</p>
                 <div className={styles.suggestions} aria-label="Browse a category">
                   {categorySuggestions.map((category) => (
                     <button key={category} type="button" onClick={() => void sendMessage(undefined, `Show me ${category} products`)}>
@@ -230,13 +230,13 @@ export default function ShopAssistant({ catalogProducts, onAddToCart }: ShopAssi
           </div>
 
           <form className={styles.composer} onSubmit={(event) => void sendMessage(event)}>
-            <label className={styles.visuallyHidden} htmlFor="assistant-message">Search or ask about products</label>
+            <label className={styles.visuallyHidden} htmlFor="assistant-message">Ask a question or search products</label>
             <input
               id="assistant-message"
               value={draft}
               onChange={(event) => { setDraft(event.target.value); setError(''); setNotice(''); }}
               maxLength={1200}
-              placeholder="Try “pet shampoo under Rs 1,500”"
+              placeholder="Ask me anything, or find a product…"
               disabled={busy}
               autoComplete="off"
             />
