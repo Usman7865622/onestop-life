@@ -112,6 +112,17 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     return Array.from(groups.entries());
   }, [products]);
 
+  const assistantProducts = useMemo<AssistantProduct[]>(() => products.map((product) => ({
+    id: product.id,
+    nameEn: product.nameEn,
+    nameUr: product.nameUr ?? null,
+    priceMinor: product.priceMinor,
+    unit: product.unit ?? 'item',
+    category: product.category ?? null,
+    imageUrl: product.imageUrl ?? null,
+    inStock: product.inStock ?? true,
+  })), [products]);
+
   const visibleCategories = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     return categories
@@ -321,7 +332,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           </section>
         </div>
       ) : null}
-      <ShopAssistant onAddToCart={(product: AssistantProduct) => addToCart({
+      <ShopAssistant catalogProducts={assistantProducts} onAddToCart={(product: AssistantProduct) => addToCart({
         ...product,
         nameUr: product.nameUr ?? undefined,
         category: product.category ?? undefined,
