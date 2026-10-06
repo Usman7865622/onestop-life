@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import styles from './page.module.css';
 
 const STORAGE_KEY = 'onestop-access-token';
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'https://api-production-7a91a.up.railway.app';
 
 type PublicUser = {
   id: string;

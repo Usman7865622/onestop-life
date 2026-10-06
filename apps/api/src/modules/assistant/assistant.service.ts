@@ -140,7 +140,8 @@ export class AssistantService {
         body: JSON.stringify(payload),
         signal: AbortSignal.timeout(25_000),
       });
-    } catch {
+    } catch (error) {
+      console.error('Fetch to OpenAI failed:', error);
       throw new ServiceUnavailableException('The shopping assistant could not reach its AI service. Please try again.');
     }
 

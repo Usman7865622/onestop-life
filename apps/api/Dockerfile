@@ -27,3 +27,4 @@ COPY --from=base /app/prisma ./prisma
 EXPOSE 4000
 
 CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+

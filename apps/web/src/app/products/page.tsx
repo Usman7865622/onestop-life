@@ -13,7 +13,7 @@ type Product = {
   inStock?: boolean;
 };
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api-production-7a91a.up.railway.app';
 
 async function getProducts(): Promise<Product[]> {
   try {
