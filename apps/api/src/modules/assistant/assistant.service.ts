@@ -43,19 +43,20 @@ export class AssistantService {
     const products = isShoppingQuestion(query) || (!query.includes('?') && productMatches.length > 0)
       ? productMatches
       : [];
-    const apiKey = this.config.get<string>('XAI_API_KEY');
+    const apiKey = this.config.get<string>('GEMINI_API_KEY')
+      ?? this.config.get<string>('Gemini API Key 2');
 
     if (!apiKey) {
       if (products.length) {
         const budgetNote = budget === null ? '' : ` within Rs. ${budget.toLocaleString('en-PK')}`;
         return {
-          reply: `I found these in-stock catalogue matches${budgetNote}. To answer general questions too, add an XAI_API_KEY to the API service on Railway.`,
+          reply: `I found these in-stock catalogue matches${budgetNote}. To answer general questions too, add a GEMINI_API_KEY to the API service on Railway.`,
           products,
           source: 'live_catalog',
         };
       }
       return {
-        reply: 'I can search the live product catalogue, but answering general questions needs a Grok API key. Add XAI_API_KEY to the API service environment on Railway, then redeploy it.',
+        reply: 'I can search the live product catalogue, but answering general questions needs a Gemini API key. Add GEMINI_API_KEY to the API service environment on Railway, then redeploy it.',
         products: [],
         source: 'live_catalog',
       };
@@ -66,38 +67,45 @@ export class AssistantService {
       : '\n\nNo relevant in-stock catalogue items were found for this message. Do not invent products, availability, or prices.';
 
     try {
-      const response = await fetch('https://api.x.ai/v1/chat/completions', {
+      const model = this.config.get<string>('GEMINI_MODEL', 'gemini-3.8-flash');
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          'x-goog-api-key': apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: this.config.get<string>('XAI_MODEL', 'grok-4.7'),
-          messages: [
-            {
-              role: 'system',
-              content: `You are OneStop's helpful, friendly store assistant. Answer the customer's question directly in clear, concise language, even when it is not about shopping. For questions about OneStop, orders, delivery, stock, or policies, only state facts present in the conversation or catalogue; say when you do not know. For medical questions, offer general information only, do not diagnose or prescribe, and advise contacting a qualified clinician for personal care. Never claim to have taken an action. Never make up catalogue items, stock, or prices.${catalogContext}`,
-            },
-            ...messages.map(({ role, content }) => ({ role, content })),
-          ],
-          temperature: 0.5,
-          max_tokens: 500,
+          systemInstruction: {
+            parts: [{
+              text: `You are OneStop's helpful, friendly store assistant. Answer the customer's question directly in clear, concise language, even when it is not about shopping. For questions about OneStop, orders, delivery, stock, or policies, only state facts present in the conversation or catalogue; say when you do not know. For medical questions, offer general information only, do not diagnose or prescribe, and advise contacting a qualified clinician for personal care. Never claim to have taken an action. Never make up catalogue items, stock, or prices.${catalogContext}`,
+            }],
+          },
+          contents: messages.map(({ role, content }) => ({
+            role: role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: content }],
+          })),
+          generationConfig: {
+            temperature: 0.5,
+            maxOutputTokens: 500,
+          },
         }),
         signal: AbortSignal.timeout(20_000),
       });
 
       if (!response.ok) {
-        throw new Error(`OpenAI chat request failed with status ${response.status}`);
+        throw new Error(`Gemini request failed with status ${response.status}`);
       }
 
       const payload = await response.json() as {
-        choices?: Array<{ message?: { content?: string | null } }>;
+        candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
       };
-      const reply = payload.choices?.[0]?.message?.content?.trim();
-      if (!reply) throw new Error('OpenAI returned an empty assistant response');
+      const reply = payload.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text ?? '')
+        .join('')
+        .trim();
+      if (!reply) throw new Error('Gemini returned an empty assistant response');
 
-      return { reply, products, source: 'openai_live_catalog' };
+      return { reply, products, source: 'gemini_live_catalog' };
     } catch {
       throw new ServiceUnavailableException('The assistant is temporarily unavailable. Please try again shortly.');
     }

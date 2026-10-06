@@ -25,8 +25,9 @@ export const envSchema = z.object({
   OTP_MAX_PER_HOUR: z.coerce.number().int().positive().default(5),
 
   ADMIN_PHONE: z.string().optional(),
-  XAI_API_KEY: z.string().optional(),
-  XAI_MODEL: z.string().default('grok-4.7'),
+  GEMINI_API_KEY: z.string().optional(),
+  'Gemini API Key 2': z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-3.8-flash'),
 });
 
 export type Env = z.infer<typeof envSchema>;
