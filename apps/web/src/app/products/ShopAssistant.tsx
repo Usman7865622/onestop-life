@@ -116,7 +116,7 @@ export default function ShopAssistant({ catalogProducts, onAddToCart }: ShopAssi
     const content = (suggestion ?? draft).trim();
     if (!content || busy) return;
 
-    const nextMessages: ChatMessage[] = [...messages, { role: 'user', content }].slice(-12);
+    const nextMessages: ChatMessage[] = [...messages, { role: 'user' as const, content }].slice(-12);
     setMessages(nextMessages);
     setDraft('');
     setError('');
@@ -132,7 +132,7 @@ export default function ShopAssistant({ catalogProducts, onAddToCart }: ShopAssi
       const payload = await response.json().catch(() => ({})) as { reply?: string; products?: AssistantProduct[]; message?: string };
       if (!response.ok) throw new Error(payload.message || 'The catalogue assistant could not answer right now.');
       setMessages((current) => [...current, {
-        role: 'assistant',
+        role: 'assistant' as const,
         content: payload.reply || 'I could not find an in-stock match. Try a product name or category.',
         products: payload.products ?? [],
       }].slice(-12));
