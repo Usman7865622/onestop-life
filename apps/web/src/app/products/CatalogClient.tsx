@@ -139,7 +139,6 @@ export default function CatalogClient({ products }: CatalogClientProps) {
       .filter(([, items]) => items.length > 0);
   }, [categories, searchTerm, selectedCategory, sortOrder]);
 
-  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const subtotal = cart.reduce((total, item) => total + item.priceMinor * item.quantity, 0);
   const shipping = subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
   const total = subtotal + shipping;
@@ -212,13 +211,11 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   return (
     <>
       <div className={styles.marketHeader}>
-        <Link className={styles.marketBrand} href="/">OneStop <span>Life</span></Link>
         <form className={styles.searchForm} role="search" onSubmit={(event) => event.preventDefault()}>
           <label htmlFor="catalog-search">Search the store</label>
           <input id="catalog-search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search medicines, appliances, pet care..." />
           <button type="submit" aria-label="Search products"><span aria-hidden="true">⌕</span> Search</button>
         </form>
-        <div className={styles.marketUtilities}><Link href="/">Account</Link><Link className={styles.utilityCart} href="/cart" aria-label={`Open cart with ${cartCount} items`}><span className={styles.cartIcon} aria-hidden="true"><i /><b /><em /></span> Cart <strong>{cartCount}</strong></Link></div>
       </div>
 
       <div className={styles.announcementBar} aria-label="Store announcements">

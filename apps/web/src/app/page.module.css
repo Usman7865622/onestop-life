@@ -29,6 +29,22 @@
 .topNav { display: flex; align-items: center; gap: 23px; margin-left: auto; color: #52657b; font-size: 0.86rem; font-weight: 800; }
 .topNav a:hover { color: #166a91; }
 
+.accountToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border: 1px solid #dce4e9;
+  border-radius: 8px;
+  color: #52657b;
+  background: #fff;
+  font-size: 0.82rem;
+}
+
+.accountToolbar strong { color: #172337; }
+
 .kicker {
   font-size: 0.78rem;
   font-weight: 700;

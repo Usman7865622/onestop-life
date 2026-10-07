@@ -25,6 +25,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.siteContent {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;

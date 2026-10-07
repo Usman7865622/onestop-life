@@ -166,12 +166,11 @@
 }
 
 .marketHeader {
-  display: grid;
-  grid-template-columns: auto minmax(280px, 1fr) auto;
-  align-items: center;
-  gap: 22px;
+  display: flex;
+  justify-content: center;
   margin-bottom: 14px;
   padding: 14px 18px;
+  border: 1px solid #e2e8ed;
   background: #172337;
   color: #fff;
 }
@@ -179,7 +178,7 @@
 .marketBrand { color: #fff; font-size: 1.35rem; font-weight: 900; letter-spacing: -0.03em; }
 .marketBrand span { color: #f7b928; }
 
-.searchForm { display: grid; grid-template-columns: 1fr auto; position: relative; }
+.searchForm { display: grid; grid-template-columns: 1fr auto; position: relative; width: min(720px, 100%); }
 .searchForm label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .searchForm input { min-width: 0; padding: 11px 13px; border: 0; border-radius: 3px 0 0 3px; color: #172337; background: #fff; }
 .searchForm input:focus { outline: 3px solid rgba(247, 185, 40, 0.65); }
@@ -592,9 +591,8 @@
   .header { align-items: flex-start; flex-direction: column; padding: 20px; }
   .header h1 { font-size: 2.35rem; }
   .count { align-self: flex-start; }
-  .marketHeader { grid-template-columns: 1fr auto; gap: 13px; }
-  .searchForm { grid-column: 1 / -1; grid-row: 2; }
-  .marketUtilities { justify-self: end; }
+  .marketHeader { gap: 13px; }
+  .searchForm { width: 100%; }
   .featuredBand { flex-direction: column; padding: 22px; }
   .featuredStats { min-width: 0; padding: 15px 0 0; border-top: 1px solid #d5d9d9; border-left: 0; }
   .catalogLayout { grid-template-columns: 1fr; }

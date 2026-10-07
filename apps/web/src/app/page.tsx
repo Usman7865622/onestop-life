@@ -397,25 +397,16 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} id="account">
       <div className={styles.shell}>
-        <header className={styles.topbar}>
-          <Link className={styles.brandLockup} href="/" aria-label="OneStop Life home">
-            <span className={styles.logoMark} aria-hidden="true"><span>O</span><i /></span>
-            <span className={styles.brandName}>OneStop <b>Life</b></span>
-          </Link>
-          <nav className={styles.topNav} aria-label="Primary navigation">
-            <Link href="/products">Shop products</Link>
-            <a href="#trending">Trending</a>
-            <a href="#why-onestop">Why OneStop</a>
-            <a href="#contact">Contact</a>
-          </nav>
-          {session ? (
+        {session ? (
+          <div className={styles.accountToolbar}>
+            <p>Signed in as <strong>{session.user.name || session.user.phone}</strong></p>
             <button className={styles.secondaryButton} onClick={logout} disabled={busy}>
               Log out
             </button>
-          ) : null}
-        </header>
+          </div>
+        ) : null}
 
         {!session ? (
           <>

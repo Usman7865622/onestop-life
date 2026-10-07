@@ -30,7 +30,6 @@ export default function CartClient() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
 
   useEffect(() => {
     const stored = window.localStorage.getItem('onestop-cart');
@@ -94,14 +93,6 @@ export default function CartClient() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <header className={styles.shopHeader}>
-          <Link className={styles.shopLogo} href="/">OneStop <b>Life</b></Link>
-          <div className={styles.deliveryShortcut}><span aria-hidden="true">⌖</span><small>Deliver to</small><strong>Pakistan</strong></div>
-          <form className={styles.shopSearch} role="search" onSubmit={(event) => event.preventDefault()}><label htmlFor="cart-search">Search OneStop Life</label><input id="cart-search" placeholder="Search medicines, electronics, pet care..." /><button aria-label="Search products">⌕</button></form>
-          <div className={styles.headerLinks}><button className={styles.accountButton} onClick={() => setAccountMenuOpen((open) => !open)} aria-expanded={accountMenuOpen}><small>Hello, shopper</small><strong>Account & Lists</strong></button><Link href="/">Orders</Link><Link className={styles.headerCart} href="/cart" aria-label="Shopping cart"><span className={styles.cartIcon} aria-hidden="true"><i /><b /><em /></span><strong>{cart.reduce((count, item) => count + item.quantity, 0)}</strong><span>Cart</span></Link></div>
-          {accountMenuOpen ? <div className={styles.accountMenu} role="menu"><strong>Welcome to OneStop Life</strong><Link href="/">Your account</Link><Link href="/">Sign in with phone</Link><Link href="/products">Shop products</Link><a href="#support">Customer support</a></div> : null}
-        </header>
-        <div className={styles.shopNav}><Link href="/products">☰ All categories</Link><Link href="/products#electronics-&-appliances">Smart living</Link><Link href="/products#medicines">Medicines</Link><Link href="/products#pet-care">Pet care</Link><Link href="/products#wellness">Wellness</Link><span>Free delivery over Rs. 3,000</span></div>
         <Link className={styles.backLink} href="/products">Back to products</Link>
         <header className={styles.header}>
           <div><p className={styles.kicker}>Your order</p><h1>Shopping cart</h1><p className={styles.subtitle}>Review your essentials, then choose delivery and payment.</p></div>
