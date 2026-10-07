@@ -67,7 +67,7 @@ export class AssistantService {
       : '\n\nNo relevant in-stock catalogue items were found for this message. Do not invent products, availability, or prices.';
 
     try {
-      const model = this.config.get<string>('GEMINI_MODEL', 'gemini-3.8-flash');
+      const model = this.config.get<string>('GEMINI_MODEL', 'gemini-3.6-flash');
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
         headers: {

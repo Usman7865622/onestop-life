@@ -27,7 +27,7 @@ export const envSchema = z.object({
   ADMIN_PHONE: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   'Gemini API Key 2': z.string().optional(),
-  GEMINI_MODEL: z.string().default('gemini-3.8-flash'),
+  GEMINI_MODEL: z.string().default('gemini-3.6-flash'),
 });
 
 export type Env = z.infer<typeof envSchema>;
