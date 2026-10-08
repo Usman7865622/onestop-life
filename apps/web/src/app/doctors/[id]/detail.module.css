@@ -89,3 +89,36 @@
   .avatar { width: 64px !important; height: 64px !important; }
   .infoGrid { grid-template-columns: 1fr; }
 }
+
+/* --- Responsive system v2 ---
+   Booking card is sticky only on laptop+ (>=1024px). Below that
+   it stacks under the profile instead of squeezing beside it. */
+@media (max-width: 1023.98px) {
+  .layout { grid-template-columns: 1fr; }
+  .bookingCard { position: static; }
+}
+
+@media (min-width: 1024px) {
+  .bookingCard { position: sticky; top: 18px; }
+}
+
+@media (max-width: 767.98px) {
+  .profileStats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .successGrid { grid-template-columns: 1fr; }
+  .successActions { flex-direction: column; align-items: stretch; width: 100%; }
+  .successActions .primaryButton { width: 100%; min-height: 48px; }
+}
+
+@media (max-width: 480px) {
+  .profileStats { grid-template-columns: 1fr 1fr; }
+  .profileStats div:last-child { grid-column: 1 / -1; }
+  .infoGrid { grid-template-columns: 1fr; }
+  .summaryBox { grid-template-columns: 1fr; gap: 4px; }
+  .summaryBox strong { text-align: left; }
+  .segmented { grid-template-columns: 1fr 1fr; }
+}
+
+@media (pointer: coarse) {
+  .primaryButton, .segment, .segmentActive { min-height: 48px; }
+  .backLink, .textLink, .secondaryLink { display: inline-flex; align-items: center; min-height: 44px; }
+}
