@@ -763,3 +763,40 @@
   color: #12506e;
   background: #f1f8fb;
 }
+
+/* --- Responsive system v2 ---
+   This module previously had NO media queries: brand + form
+   columns squeezed side-by-side on phones. Stack them, hide
+   the decorative proof row progressively, 16px inputs. */
+@media (max-width: 1023.98px) {
+  .shell { grid-template-columns: 1fr; min-height: 0; }
+  .brandPanel { padding: 34px 30px; gap: 26px; }
+  .brandHeadline { font-size: clamp(1.8rem, 4.5vw, 2.4rem); }
+  .formColumn { padding: 32px 24px 44px; }
+}
+
+@media (max-width: 767.98px) {
+  .brandPanel { padding: 28px 20px; }
+  .brandProof { grid-template-columns: 1fr; }
+  .brandQuote { display: none; }
+  .formColumn { padding: 24px 14px 40px; }
+  .formCard { padding: 24px 18px; border-radius: 14px; }
+  .formTitle { font-size: 1.55rem; }
+  .fieldInput { font-size: 16px; padding: 14px 0; }
+  .fieldControl { min-height: 50px; }
+  .socialGrid { grid-template-columns: 1fr; }
+  .socialButton { min-height: 48px; }
+  .submitButton, .ghostButton { min-height: 50px; }
+  .check input { width: 20px; height: 20px; }
+}
+
+@media (max-width: 480px) {
+  .brandTrust li { font-size: 0.84rem; }
+  .modeTab, .modeTabActive { min-height: 44px; }
+  .rowBetween { flex-direction: column; align-items: flex-start; }
+}
+
+@media (orientation: landscape) and (max-height: 480px) {
+  .brandPanel { padding: 20px; gap: 16px; }
+  .brandQuote, .brandProof { display: none; }
+}

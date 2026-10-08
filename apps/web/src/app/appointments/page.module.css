@@ -31,3 +31,27 @@
   .card { flex-wrap: wrap; }
   .cancelButton { width: 100%; }
 }
+
+/* --- Responsive system v2 ---
+   Cards already stack on phones; add tablet tightening and
+   coarse-pointer targets. */
+@media (max-width: 1023.98px) {
+  .shell { max-width: 860px; }
+}
+
+@media (max-width: 767.98px) {
+  .page { padding: 18px 14px 56px; }
+  .header { padding: 19px; }
+  .header h1 { font-size: 1.6rem; }
+}
+
+@media (max-width: 480px) {
+  .card { flex-direction: column; }
+  .cardSide { justify-items: start; text-align: left; width: 100%; }
+  .cancelButton { width: 100%; min-height: 48px; }
+  .status { align-self: flex-start; }
+}
+
+@media (pointer: coarse) {
+  .primaryLink { display: inline-flex; align-items: center; min-height: 44px; }
+}

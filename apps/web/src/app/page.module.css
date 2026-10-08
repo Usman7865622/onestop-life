@@ -184,3 +184,61 @@
   .categoryTile strong { font-size: .9rem; }
   .heroPanel { grid-template-columns: 1fr 1fr; min-height: 200px; }
 }
+
+/* --- Responsive system v2 ---
+   Grid progression: 1 col phone -> 2 col small tablet ->
+   3 col laptop -> 4 col desktop (products/categories);
+   facilities 1 -> 2 -> 3 -> 5. */
+@media (min-width: 1536px) {
+  .shell { max-width: 1280px; } /* cap holds; content centres on ultrawide */
+}
+
+@media (max-width: 1279.98px) {
+  .facilityStrip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1023.98px) {
+  .productGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .categoryGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .whyGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .facilityStrip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero { grid-template-columns: 1fr; }
+  .heroPanel { min-height: 260px; }
+  .doctorsBanner { grid-template-columns: 1fr; }
+  .ctaActions { min-width: 0; }
+}
+
+@media (max-width: 767.98px) {
+  .page { padding: 18px 14px 56px; }
+  .productGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .categoryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .trustStrip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .faqList { grid-template-columns: 1fr; }
+  .stepsGrid, .testimonialGrid { grid-template-columns: 1fr; }
+  .heroSearch input { font-size: 16px; }
+  .heroActions .primaryButton,
+  .heroActions .secondaryButtonLight { min-height: 48px; }
+}
+
+@media (max-width: 480px) {
+  .page { padding: 14px 12px 48px; }
+  .categoryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .productGrid { grid-template-columns: 1fr; }
+  .facilityStrip, .whyGrid, .trustStrip { grid-template-columns: 1fr; }
+  .heroCopy h1 { font-size: clamp(2rem, 11vw, 2.6rem); }
+  .heroPanel { grid-template-columns: 1fr 1fr; min-height: 180px; }
+  .accountBar { flex-direction: column; align-items: stretch; }
+  .ctaActions { width: 100%; }
+}
+
+@media (pointer: coarse) {
+  .productLink, .accountBarButton { min-height: 44px; }
+  .categoryTile { min-height: 44px; }
+}
+
+/* Short landscape phones: don't let the hero eat the screen. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .hero { padding: 20px; }
+  .heroPanel { min-height: 150px; }
+  .heroCopy h1 { font-size: clamp(1.7rem, 4vw, 2.4rem); }
+}

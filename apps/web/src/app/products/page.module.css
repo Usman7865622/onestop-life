@@ -651,3 +651,111 @@
 @media (max-width: 380px) {
   .grid { grid-template-columns: 1fr; }
 }
+
+/* --- Responsive system v2 ---
+   Product grid: 4 cols desktop -> 3 laptop -> 2 tablet/phone
+   -> 1 very small. Catalogue rail goes horizontal at <=860px
+   (tablet portrait) instead of squeezing beside results.
+   Sticky cart summary stacks below lines on tablet/mobile. */
+@media (min-width: 1280px) {
+  .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1279.98px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .recentGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1023.98px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .shopHeader { grid-template-columns: 1fr auto; gap: 10px 16px; }
+  .shopSearch { grid-column: 1 / -1; grid-row: 2; }
+  .deliveryShortcut { display: none; }
+  .headerLinks { justify-self: end; }
+  .visualBanner { grid-template-columns: 1fr 1fr 1fr; }
+  .visualCopy { grid-column: 1 / -1; min-height: 130px; }
+  .needStrip { grid-template-columns: 1fr 1fr; }
+  .needIntro { grid-column: 1 / -1; }
+  .checkoutLayout { grid-template-columns: 1fr; gap: 18px; }
+  .checkoutSummary { order: -1; }
+}
+
+@media (max-width: 860px) {
+  .catalogLayout { grid-template-columns: 1fr; }
+  .filterRail {
+    position: static;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filterRail::-webkit-scrollbar { display: none; }
+  .filterHeading, .railNote { display: none; }
+  .filterButton, .filterActive {
+    flex: 0 0 auto;
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid #d5d9d9;
+    white-space: nowrap;
+  }
+  .cartPageLayout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 767.98px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .recentGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shopSuggestions { grid-template-columns: 1fr; }
+  .visualBanner { grid-template-columns: 1fr 1fr; min-height: 0; }
+  .featuredBand { flex-direction: column; padding: 22px; }
+  .featuredStats { min-width: 0; padding: 15px 0 0; border-top: 1px solid #d5d9d9; border-left: 0; }
+  .announcementBar { overflow-x: auto; scrollbar-width: none; }
+  .announcementBar::-webkit-scrollbar { display: none; }
+  .field input, .field textarea, .searchForm input, .shopSearch input { font-size: 16px; min-height: 48px; }
+  .quickViewPanel { grid-template-columns: 1fr; max-height: 92dvh; overflow-y: auto; }
+  .quickViewImage { min-height: 210px; }
+  .cartPanel, .checkoutPanel { width: 100%; padding: 20px 16px; }
+  .checkoutSteps { flex-wrap: wrap; }
+}
+
+@media (max-width: 480px) {
+  .grid { grid-template-columns: 1fr; }
+  .recentGrid { grid-template-columns: 1fr; }
+  .needStrip { grid-template-columns: 1fr; }
+  .needIntro { grid-column: auto; min-height: 100px; }
+  .visualBanner { grid-template-columns: 1fr; }
+  .visualTile { min-height: 130px; }
+  .cartPageLine { grid-template-columns: 52px minmax(0, 1fr); gap: 10px; }
+  .cartPageLine .quantityControls,
+  .cartPageLine > strong { grid-column: 2; }
+  .quantityControls button { width: 40px; height: 40px; }
+  .resultsToolbar { flex-direction: column; align-items: stretch; }
+  .resultActions { flex-wrap: wrap; }
+  .resultActions select { min-height: 44px; font-size: 16px; }
+  .headerLinks > a:not(.headerCart), .accountButton { display: none; }
+  .accountMenu { right: 12px; max-width: calc(100vw - 24px); }
+}
+
+@media (pointer: coarse) {
+  .addButton, .quickViewButton, .cartButton, .primaryAction,
+  .categoryLink, .filterButton, .filterActive { min-height: 44px; }
+  .closeButton { width: 44px; height: 44px; }
+}
+
+@media (orientation: landscape) and (max-height: 480px) {
+  .visualBanner { min-height: 0; }
+  .visualTile { min-height: 110px; }
+  .panel, .cartPanel { min-height: 100%; }
+}
+
+/* Cart summary: sticky only on laptop+; stacked (and first,
+   so totals are visible) below that. */
+@media (min-width: 1024px) {
+  .cartPageSummary { position: sticky; top: 18px; }
+  .checkoutSummary { position: sticky; top: 18px; }
+}
+@media (max-width: 1023.98px) {
+  .cartPageSummary, .checkoutSummary { position: static; }
+}

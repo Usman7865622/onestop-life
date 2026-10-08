@@ -1,5 +1,5 @@
 .container {
-  width: min(1320px, calc(100% - 48px));
+  width: min(1280px, calc(100% - clamp(32px, 6vw, 64px)));
   margin-inline: auto;
 }
 
@@ -206,4 +206,54 @@
 @media (max-width: 560px) {
   .accountLink { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .container { width: calc(100% - 24px); }
+}
+
+/* --- Responsive system v2 ---
+   Header: nav becomes a scrollable row below 1024px (tablet
+   portrait included); footer stacks 4 -> 2 -> 1 columns. */
+@media (max-width: 1023.98px) {
+  .mainBarInner { flex-wrap: wrap; gap: 12px 22px; padding-block: 13px; }
+  .navigation {
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: 4px 0 2px;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .navigation::-webkit-scrollbar { display: none; }
+  .actions { margin-left: auto; }
+  .footerMain { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1024px) and (max-width: 1279.98px) {
+  .navigation { gap: 18px; font-size: 0.8rem; }
+  .footerMain { gap: 40px; }
+}
+
+@media (max-width: 767.98px) {
+  .trustBar > div { flex-wrap: wrap; row-gap: 2px; padding-block: 5px; }
+}
+
+@media (max-width: 480px) {
+  .footerMain { grid-template-columns: 1fr; gap: 26px; }
+  .footerBrand { grid-column: auto; }
+  .footerColumn { gap: 9px; }
+  .footerShopCta { width: 100%; justify-content: space-between; }
+  .brandWords small { letter-spacing: 0.12em; }
+}
+
+@media (pointer: coarse) {
+  .navigation a,
+  .accountLink { display: inline-flex; align-items: center; min-height: 44px; }
+  .cartLink { min-height: 44px; }
+  .footerColumn a { display: inline-flex; align-items: center; min-height: 32px; }
+}
+
+/* Short landscape phones: compress the header stack. */
+@media (orientation: landscape) and (max-height: 480px) {
+  .mainBarInner { min-height: 60px; padding-block: 8px; }
+  .trustBar > div { min-height: 28px; }
 }

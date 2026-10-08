@@ -61,3 +61,23 @@
   .intentCard { padding: 18px; }
   .authTabs { position: sticky; top: 0; z-index: 2; }
 }
+
+/* --- Responsive system v2 ---
+   Intent cards: 4 cols desktop -> 2 tablet -> 1 phone.
+   Auth layout stacks at tablet portrait (<=1023px). */
+@media (max-width: 1023.98px) {
+  .intentGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .authLayout { grid-template-columns: 1fr; }
+  .intentCard { min-height: 0; }
+}
+
+@media (max-width: 767.98px) {
+  .page { padding: 18px 14px 56px; }
+  .signedInBanner { flex-direction: column; align-items: stretch; }
+}
+
+@media (max-width: 480px) {
+  .intentGrid { grid-template-columns: 1fr; }
+  .intentSection h1, .authIntroPanel h1 { font-size: clamp(1.8rem, 8.5vw, 2.3rem); }
+  .authTabs { grid-template-columns: 1fr 1fr; }
+}
