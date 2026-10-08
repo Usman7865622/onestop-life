@@ -34,20 +34,6 @@ const categoryLabels: Record<string, string> = {
   'Electronics & appliances': 'Electronics & appliances',
 };
 
-const categoryIcons: Record<string, string> = {
-  'Trending essentials': '★',
-  Medicines: '✚',
-  'Medical devices': '⌁',
-  Wellness: '✦',
-  'Health essentials': '✓',
-  'Personal care': '✧',
-  'Baby care': '♡',
-  Nutrition: '◒',
-  'Pet care': '♥',
-  'Home health': '⌂',
-  'Electronics & appliances': '◉',
-};
-
 const categoryShortLabels: Record<string, string> = {
   'Electronics & appliances': 'Electronics',
   'Medical devices': 'Medical devices',
@@ -245,8 +231,8 @@ export default function CatalogClient({ products }: CatalogClientProps) {
       <div className={styles.catalogLayout}>
         <aside className={styles.filterRail} aria-label="Shop categories">
           <div className={styles.filterHeading}><span>Browse</span><strong>{products.length}</strong></div>
-          <button className={selectedCategory === 'All products' ? styles.filterActive : styles.filterButton} onClick={() => setSelectedCategory('All products')}><span className={styles.filterName}><i className={styles.categoryIcon} aria-hidden="true">◈</i>All products</span><span>{products.length}</span></button>
-          {categories.map(([category, items]) => <button className={selectedCategory === category ? styles.filterActive : styles.filterButton} onClick={() => setSelectedCategory(category)} key={category}><span className={styles.filterName}><i className={styles.categoryIcon} aria-hidden="true">{categoryIcons[category] ?? '•'}</i>{categoryLabels[category] ?? category}</span><span>{items.length}</span></button>)}
+          <button className={selectedCategory === 'All products' ? styles.filterActive : styles.filterButton} onClick={() => setSelectedCategory('All products')}><span className={styles.filterName}><i className={styles.categoryDot} aria-hidden="true" />All products</span><span>{products.length}</span></button>
+          {categories.map(([category, items]) => <button className={selectedCategory === category ? styles.filterActive : styles.filterButton} onClick={() => setSelectedCategory(category)} key={category}><span className={styles.filterName}><i className={styles.categoryDot} aria-hidden="true" />{categoryLabels[category] ?? category}</span><span>{items.length}</span></button>)}
           <div className={styles.railNote}><strong>Simple delivery</strong><p>Free shipping on orders over Rs. 3,000.</p></div>
         </aside>
 
@@ -269,7 +255,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                   <article className={styles.card} key={product.id}>
                     <div className={styles.productImage} role="img" aria-label={`${product.nameEn} product image`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
                       {!product.imageUrl ? product.nameEn.slice(0, 1) : null}
-                      <span className={styles.imageCategoryBadge}><i aria-hidden="true">{categoryIcons[category] ?? '•'}</i>{categoryShortLabels[category] ?? categoryLabels[category] ?? category}</span>
+                      <span className={styles.imageCategoryBadge}><i className={styles.categoryDotLight} aria-hidden="true" />{categoryShortLabels[category] ?? categoryLabels[category] ?? category}</span>
                     </div>
                     <div className={styles.cardBody}>
                           <div className={styles.productMeta}><span>{product.inStock === false ? 'Unavailable' : 'In stock'}</span><span aria-label="Customer rating">★★★★★</span></div>
