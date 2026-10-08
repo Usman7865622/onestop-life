@@ -66,3 +66,25 @@
 .emptyNote { color: #68798e; font-size: .92rem; padding: 10px 0; }
 @media (max-width: 960px) { .hero { grid-template-columns: 1fr; } .heroStats { grid-template-columns: repeat(3, 1fr); } .trustStrip { grid-template-columns: repeat(2, 1fr); } .requestForm { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 620px) { .page { padding: 14px 12px 48px; } .hero { padding: 24px; border-radius: 18px; } .heroStats, .trustStrip, .requestForm { grid-template-columns: 1fr; } .bankGrid, .requestGrid { grid-template-columns: 1fr; } .requestCard { grid-template-columns: 58px 1fr; } .sectionHead { align-items: start; flex-direction: column; } }
+
+/* --- Responsive pass --- */
+.bankGrid { grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); }
+.requestGrid { grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); }
+.submitButton, .callButton, .cancelButton { min-height: 44px; }
+.callButton { display: inline-flex; align-items: center; justify-content: center; }
+@media (max-width: 1024px) { .bankGrid, .requestGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .bankGrid, .requestGrid, .requestForm { grid-template-columns: 1fr; }
+  .field input, .field select, .inlineField input, .inlineField select { font-size: 16px; min-height: 48px; }
+  .boardFilters { flex-direction: column; align-items: stretch; }
+  .inlineField { min-width: 0; width: 100%; }
+  .myRow { flex-wrap: wrap; }
+  .myMeta { flex: 1 1 calc(100% - 60px); }
+  .requestCard { grid-template-columns: 58px minmax(0, 1fr); }
+  .urgencyPill { grid-column: 2; justify-self: start; }
+  .heroStats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .heroStats div { padding: 12px 10px; }
+  .heroStats strong { font-size: 1.25rem; }
+  .trustStrip { grid-template-columns: 1fr 1fr; gap: 8px; }
+}
+@media (max-width: 400px) { .trustStrip { grid-template-columns: 1fr; } }
