@@ -21,6 +21,8 @@ export default function SiteHeader() {
           <nav className={styles.navigation} aria-label="Main navigation">
             <Link href="/">Home</Link>
             <Link href="/products">Shop</Link>
+            <Link href="/doctors">Doctors</Link>
+            <Link href="/appointments">My Appointments</Link>
             <Link href="/#trending">Trending</Link>
             <Link href="/#why-onestop">Our promise</Link>
             <Link href="/#contact">Support</Link>

@@ -13,6 +13,9 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
 import { AssistantModule } from './modules/assistant/assistant.module';
+import { FacilitiesModule } from './modules/facilities/facilities.module';
+import { DoctorsModule } from './modules/doctors/doctors.module';
+import { AppointmentsModule } from './modules/appointments/appointments.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { AssistantModule } from './modules/assistant/assistant.module';
     ProductsModule,
     OrdersModule,
     AssistantModule,
+    FacilitiesModule,
+    DoctorsModule,
+    AppointmentsModule,
     HealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
