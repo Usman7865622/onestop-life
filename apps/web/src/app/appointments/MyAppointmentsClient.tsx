@@ -23,7 +23,7 @@ export default function MyAppointmentsClient() {
 
   const load = useCallback(async () => {
     const token = readAccessToken();
-    if (!token) { setError('Please sign in on the home page to see your appointments.'); setLoading(false); return; }
+    if (!token) { setError('Please sign in to see your appointments.'); setLoading(false); return; }
     try {
       const data = await apiFetch<Appointment[]>('/appointments/mine', {}, token);
       setAppointments(data);
@@ -48,7 +48,7 @@ export default function MyAppointmentsClient() {
   };
 
   if (loading) return <p className={styles.loading}>Loading your appointments…</p>;
-  if (error && !appointments.length) return <section className={styles.emptyState}><h2>{error}</h2><p><Link className={styles.link} href="/#account">Go to sign in</Link> · <Link className={styles.link} href="/doctors">Browse doctors</Link></p></section>;
+  if (error && !appointments.length) return <section className={styles.emptyState}><h2>{error}</h2><p><Link className={styles.link} href="/login">Go to sign in</Link> · <Link className={styles.link} href="/doctors">Browse doctors</Link></p></section>;
 
   return (
     <>
