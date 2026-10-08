@@ -249,6 +249,8 @@ export default function DashboardPage() {
               <Link className={styles.linkCard} href="/appointments"><strong>My Appointments</strong><span>See, manage or cancel doctor visits.</span></Link>
               <Link className={styles.linkCard} href="/cart"><strong>My cart &amp; orders</strong><span>Review your cart and check out with COD.</span></Link>
               <Link className={styles.linkCard} href="/doctors"><strong>Book a doctor</strong><span>Verified doctors with upfront fees.</span></Link>
+              <Link className={styles.linkCard} href="/labs"><strong>Lab tests at home</strong><span>Book home sample collection and track reports.</span></Link>
+              <Link className={styles.linkCard} href="/blood"><strong>Blood banks &amp; requests</strong><span>Find a blood bank or post a donor request.</span></Link>
               <Link className={styles.linkCard} href="/products"><strong>Shop essentials</strong><span>Medicines, wellness, baby &amp; pet care.</span></Link>
             </div>
           </section>
