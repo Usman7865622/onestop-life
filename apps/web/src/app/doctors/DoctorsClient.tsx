@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import styles from './page.module.css';
-import { doctorAvatarStyle, doctorInitials, money, type Doctor } from '../../lib/doctors/types';
+import DoctorAvatar from '../../components/doctors/DoctorAvatar';
+import { money, type Doctor } from '../../lib/doctors/types';
 
 function countBy(doctors: Doctor[], value: (doctor: Doctor) => string[]) {
   const counts = new Map<string, number>();
@@ -77,7 +78,7 @@ export default function DoctorsClient({ doctors }: { doctors: Doctor[] }) {
             return (
               <article className={styles.card} key={doctor.id}>
                 <div className={styles.cardTop}>
-                  <div className={styles.avatar} style={doctorAvatarStyle(doctor.speciality)} aria-hidden="true">{doctorInitials(doctor.user.name)}</div>
+                  <DoctorAvatar name={doctor.user.name} size={64} className={styles.avatar} />
                   <div className={styles.cardTitle}>
                     <div className={styles.nameRow}><h3>{doctor.user.name ?? 'Doctor'}</h3><span className={styles.verified}>Verified</span></div>
                     <p className={styles.speciality}>{doctor.speciality}</p>
