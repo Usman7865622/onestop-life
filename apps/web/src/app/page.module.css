@@ -84,7 +84,7 @@
 .doctorMiniGrid { display: grid; gap: 10px; }
 .doctorMiniCard { display: grid; grid-template-columns: 52px 1fr; gap: 13px; align-items: center; padding: 14px; border: 1px solid rgba(255,255,255,.22); border-radius: 18px; background: rgba(255,255,255,.1); backdrop-filter: blur(8px); transition: transform .18s ease, background .18s ease; }
 .doctorMiniCard:hover { transform: translateY(-1px); background: rgba(255,255,255,.16); }
-.doctorAvatar { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 16px; color: #fff; font-weight: 950; }
+.doctorAvatar { width: 52px; height: 52px; border-radius: 16px; box-shadow: 0 8px 18px rgba(0,0,0,.22); }
 .doctorMiniBody { display: grid; gap: 2px; min-width: 0; }
 .doctorMiniBody strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .doctorMiniBody span { color: #d7e7f2; font-size: .86rem; }
@@ -159,3 +159,28 @@
 @media (max-width: 1080px) { .productGrid, .categoryGrid, .whyGrid { grid-template-columns: repeat(2, 1fr); } .facilityStrip { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 900px) { .hero, .doctorsBanner { grid-template-columns: 1fr; } .trustStrip { grid-template-columns: repeat(2, 1fr); } .stepsGrid, .testimonialGrid { grid-template-columns: 1fr; } .ctaSection { align-items: stretch; flex-direction: column; } }
 @media (max-width: 620px) { .page { padding: 16px 12px 48px; } .hero, .section, .sectionAlt, .doctorsBanner, .ctaSection { padding: 22px; border-radius: 18px; } .heroSearch { grid-template-columns: 1fr; } .heroPanel { min-height: 240px; } .sectionHeader { align-items: stretch; flex-direction: column; } .productGrid, .categoryGrid, .whyGrid, .facilityStrip, .trustStrip, .faqList { grid-template-columns: 1fr; } .accountBar { align-items: stretch; flex-direction: column; } .accountBarButton { text-align: center; } .ctaActions { min-width: 0; } }
+
+/* --- Responsive pass --- */
+@media (max-width: 640px) {
+  .categoryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .productGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .productBody { padding: 13px; }
+  .productBody h3 { font-size: .92rem; }
+  .facilityStrip { grid-template-columns: 1fr; }
+  .whyGrid, .trustStrip { grid-template-columns: 1fr; }
+  .heroActions { flex-direction: column; align-items: stretch; }
+  .heroActions .primaryButton, .heroActions .secondaryButtonLight { width: 100%; min-height: 48px; }
+  .doctorsCopy .primaryButton { width: 100%; min-height: 48px; }
+  .ctaActions .primaryButton, .ctaGhost { min-height: 48px; justify-content: center; }
+  .liveStrip { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .categoryTile { padding: 16px 13px 14px; }
+  .categoryIconWrap { width: 48px; height: 48px; border-radius: 15px; }
+  .textLink { white-space: normal; }
+  .doctorMiniCard { grid-template-columns: 52px minmax(0, 1fr); }
+}
+@media (max-width: 420px) {
+  .productGrid { grid-template-columns: 1fr; }
+  .categoryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .categoryTile strong { font-size: .9rem; }
+  .heroPanel { grid-template-columns: 1fr 1fr; min-height: 200px; }
+}
