@@ -132,3 +132,23 @@
 @media (prefers-reduced-motion: reduce) {
   .launcher, .panel, .userMessage, .assistantMessage, .liveSuggestions, .typingDots i { animation: none; transition: none; }
 }
+
+/* --- Responsive system v2 ---
+   Assistant panel already clamps to viewport width; on small
+   phones it docks full-width and the composer input stays 16px
+   so iOS doesn't zoom. Launcher keeps a 48px tap target. */
+@media (max-width: 480px) {
+  .root { right: 10px; left: 10px; bottom: 10px; }
+  .root .panel { width: 100%; }
+  .launcher { width: 100%; justify-content: center; min-height: 50px; }
+  .panel { height: min(640px, calc(100dvh - 84px)); border-radius: 16px; }
+  .composer input { font-size: 16px; height: 48px; }
+  .composer button { width: 48px; height: 48px; }
+  .userMessage, .assistantMessage { max-width: 96%; }
+  .productCard > button, .quickAdd { min-height: 40px; }
+  .suggestions button { min-height: 40px; }
+}
+
+@media (orientation: landscape) and (max-height: 480px) {
+  .panel { height: calc(100dvh - 84px); }
+}
