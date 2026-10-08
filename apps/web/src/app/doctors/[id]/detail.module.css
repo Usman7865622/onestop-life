@@ -1,0 +1,23 @@
+.layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; margin-top: 14px; align-items: start; }
+.profileCard, .bookingCard, .successCard { border: 1px solid #e0e6ee; border-radius: 6px; padding: 20px; background: #fff; }
+.doctorName { font-size: 1.5rem; letter-spacing: -.02em; }
+.about { margin-top: 12px; color: #40546b; line-height: 1.6; }
+.facilityList { margin-top: 16px; display: grid; gap: 10px; }
+.facilityList h3 { font-size: .95rem; }
+.facilityList p { color: #40546b; font-size: .92rem; line-height: 1.5; }
+.feeBox { margin-top: 16px; padding: 14px; border-radius: 4px; background: #f7f9fb; border: 1px solid #e3e8ee; display: grid; gap: 2px; }
+.feeBox strong { font-size: 1.3rem; }
+.feeBox span, .feeBox small { color: #68798e; }
+.bookingCard { display: grid; gap: 12px; }
+.field { display: grid; gap: 6px; font-size: .85rem; font-weight: 800; color: #40546b; }
+.field input, .field select, .field textarea { padding: 11px 12px; border: 1px solid #cfd8e3; border-radius: 4px; font: inherit; font-weight: 400; background: #fff; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.primaryButton { padding: 12px 16px; border: 0; border-radius: 4px; background: #f7b928; color: #172337; font-weight: 900; cursor: pointer; text-align: center; }
+.primaryButton:disabled { opacity: .6; cursor: wait; }
+.error { padding: 10px 12px; border-radius: 4px; background: #fdecec; color: #9b1c1c; font-size: .9rem; }
+.hint { color: #68798e; font-size: .82rem; line-height: 1.5; }
+.successCard { margin-top: 14px; text-align: center; display: grid; gap: 10px; justify-items: center; padding: 32px 20px; }
+.successIcon { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; background: #e8f6ee; color: #147a3d; font-size: 1.4rem; font-weight: 900; }
+.successActions { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: center; }
+.successNote { color: #68798e; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }

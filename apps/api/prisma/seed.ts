@@ -86,7 +86,51 @@ async function main() {
     create: { code: 'CARE500', type: 'FIXED', value: 50000, maxUses: null },
   });
 
+  // ---- Demo healthcare seed (Phase 1B) ----
+  const demoFacilities = [
+    { name: 'OneStop Care Clinic — Gulberg', type: 'CLINIC' as const, address: 'Main Boulevard, Gulberg III', city: 'Lahore', phone: '+924235778899', timings: 'Mon–Sat 9am–9pm', isEmergency: false },
+    { name: 'City General Hospital', type: 'HOSPITAL' as const, address: 'Jail Road', city: 'Lahore', phone: '+924299231100', timings: '24/7', isEmergency: true },
+    { name: 'OneStop Diagnostics Lab', type: 'LAB' as const, address: 'MM Alam Road', city: 'Lahore', phone: '+924235771122', timings: 'Mon–Sun 7am–11pm', isEmergency: false },
+  ];
+  const facilities = [];
+  for (const f of demoFacilities) {
+    const existing = await prisma.facility.findFirst({ where: { name: f.name } });
+    facilities.push(existing ?? (await prisma.facility.create({ data: f })));
+  }
+
+  const demoDoctors = [
+    { email: 'dr.ahmed@onestop.demo', name: 'Dr. Ahmed Khan', speciality: 'Cardiology', qualifications: 'MBBS, FCPS (Cardiology)', experienceYears: 12, feeMinor: 250000, languages: ['English', 'Urdu'], about: 'Consultant cardiologist focused on preventive heart care and hypertension.' },
+    { email: 'dr.fatima@onestop.demo', name: 'Dr. Fatima Noor', speciality: 'Pediatrics', qualifications: 'MBBS, FCPS (Pediatrics)', experienceYears: 9, feeMinor: 180000, languages: ['English', 'Urdu'], about: 'Child specialist for newborns, vaccination and developmental care.' },
+    { email: 'dr.bilal@onestop.demo', name: 'Dr. Bilal Hussain', speciality: 'General Physician', qualifications: 'MBBS', experienceYears: 7, feeMinor: 120000, languages: ['Urdu', 'English', 'Punjabi'], about: 'Family physician for everyday health, diabetes and general check-ups.' },
+  ];
+  for (const [idx, d] of demoDoctors.entries()) {
+    const docUser = await prisma.user.upsert({
+      where: { email: d.email },
+      update: { name: d.name },
+      create: { email: d.email, name: d.name },
+    });
+    for (const role of [RoleKey.CUSTOMER, RoleKey.DOCTOR]) {
+      await prisma.userRole.upsert({
+        where: { userId_role: { userId: docUser.id, role } },
+        update: {},
+        create: { userId: docUser.id, role },
+      });
+    }
+    const profile = await prisma.doctorProfile.upsert({
+      where: { userId: docUser.id },
+      update: { speciality: d.speciality, qualifications: d.qualifications, experienceYears: d.experienceYears, feeMinor: d.feeMinor, languages: d.languages, about: d.about, isBookable: true },
+      create: { userId: docUser.id, speciality: d.speciality, qualifications: d.qualifications, experienceYears: d.experienceYears, feeMinor: d.feeMinor, languages: d.languages, about: d.about, isBookable: true },
+    });
+    const facility = facilities[idx % facilities.length];
+    await prisma.doctorFacility.upsert({
+      where: { doctorProfileId_facilityId: { doctorProfileId: profile.id, facilityId: facility.id } },
+      update: {},
+      create: { doctorProfileId: profile.id, facilityId: facility.id },
+    });
+  }
+
   console.log(`Admin ready: ${phone}`);
+  console.log('Demo doctors & facilities ready');
 }
 
 main()
