@@ -117,6 +117,8 @@ async function main() {
     { name: 'OneStop Diagnostics Lab', type: 'LAB', address: 'MM Alam Road', city: 'Lahore', phone: '+924235771122', timings: 'Mon–Sun 7am–11pm', isEmergency: false },
     { name: 'Karachi Care Clinic', type: 'CLINIC', address: 'Clifton Block 5, Boat Basin', city: 'Karachi', phone: '+922135895500', timings: 'Mon–Sat 10am–10pm', isEmergency: false },
     { name: 'Islamabad Medical Complex', type: 'HOSPITAL', address: 'Sector G-8, Ibn-e-Sina Road', city: 'Islamabad', phone: '+92519106600', timings: '24/7', isEmergency: true },
+    { name: 'Lahore Blood Bank — Model Town', type: 'BLOOD_BANK', address: 'Model Town Link Road', city: 'Lahore', phone: '+924235887766', timings: '24/7', isEmergency: true },
+    { name: 'Karachi Blood Services', type: 'BLOOD_BANK', address: 'Shahrah-e-Faisal, PECHS', city: 'Karachi', phone: '+922134567788', timings: '24/7', isEmergency: true },
   ];
   const facilities = [];
   for (const f of demoFacilities) {
@@ -164,8 +166,36 @@ async function main() {
     });
   }
 
+  // ---- Demo lab tests & blood banks (Phase 1D) ----
+  const labFacility = facilities.find((f) => f.name === 'OneStop Diagnostics Lab') ?? facilities[0];
+  const demoLabTests = [
+    { code: 'CBC', name: 'Complete Blood Count (CBC)', priceMinor: 60000, sampleType: 'Blood', reportHours: 12 },
+    { code: 'HBA1C', name: 'HbA1c (Diabetes Control)', priceMinor: 120000, sampleType: 'Blood', reportHours: 24 },
+    { code: 'LIPID', name: 'Lipid Profile (Cholesterol)', priceMinor: 180000, sampleType: 'Blood', reportHours: 24 },
+    { code: 'LFT', name: 'Liver Function Test (LFT)', priceMinor: 140000, sampleType: 'Blood', reportHours: 24 },
+    { code: 'RFT', name: 'Kidney Function Test (RFT)', priceMinor: 150000, sampleType: 'Blood', reportHours: 24 },
+    { code: 'VITD', name: 'Vitamin D Total', priceMinor: 350000, sampleType: 'Blood', reportHours: 48 },
+    { code: 'TSH', name: 'Thyroid Stimulating Hormone (TSH)', priceMinor: 110000, sampleType: 'Blood', reportHours: 24 },
+    { code: 'DENGUE-NS1', name: 'Dengue NS1 Antigen', priceMinor: 220000, sampleType: 'Blood', reportHours: 12 },
+    { code: 'MALARIA-MP', name: 'Malaria Parasite (MP)', priceMinor: 90000, sampleType: 'Blood', reportHours: 6 },
+    { code: 'URINE-COMP', name: 'Urine Complete Examination', priceMinor: 50000, sampleType: 'Urine', reportHours: 12 },
+    { code: 'BSF', name: 'Blood Sugar Fasting', priceMinor: 30000, sampleType: 'Blood', reportHours: 6 },
+  ];
+  for (const t of demoLabTests) {
+    const existing = await prisma.labTest.findFirst({ where: { code: t.code } });
+    if (existing) {
+      await prisma.labTest.update({
+        where: { id: existing.id },
+        data: { name: t.name, priceMinor: t.priceMinor, sampleType: t.sampleType, reportHours: t.reportHours, facilityId: labFacility.id, isActive: true },
+      });
+    } else {
+      await prisma.labTest.create({ data: { ...t, facilityId: labFacility.id } });
+    }
+  }
+
   console.log(`Admin ready: ${phone}`);
   console.log('Demo doctors & facilities ready');
+  console.log(`Demo lab tests ready: ${demoLabTests.length} tests at ${labFacility.name}`);
 }
 
 main()
