@@ -1,7 +1,20 @@
-import { PrismaClient, RoleKey } from '@prisma/client';
-import { normalizePkMobile } from '../src/common/phone';
+// Plain-JS seed so production never depends on ts-node/tsconfig (fixes TS5109 in Docker).
+const { PrismaClient, RoleKey } = require('@prisma/client');
+
+function normalizePkMobile(input) {
+  if (typeof input !== 'string') return null;
+  let digits = input.replace(/[\s\-().]/g, '');
+  if (digits.startsWith('+')) digits = digits.slice(1);
+  if (!/^\d+$/.test(digits)) return null;
+  if (digits.startsWith('0092')) digits = digits.slice(2);
+  else if (digits.startsWith('92')) {}
+  else if (digits.startsWith('0')) digits = '92' + digits.slice(1);
+  else if (digits.startsWith('3')) digits = '92' + digits;
+  return /^923\d{9}$/.test(digits) ? `+${digits}` : null;
+}
 
 const prisma = new PrismaClient();
+
 
 async function main() {
   const raw = process.env.ADMIN_PHONE;
@@ -88,9 +101,9 @@ async function main() {
 
   // ---- Demo healthcare seed (Phase 1B) ----
   const demoFacilities = [
-    { name: 'OneStop Care Clinic — Gulberg', type: 'CLINIC' as const, address: 'Main Boulevard, Gulberg III', city: 'Lahore', phone: '+924235778899', timings: 'Mon–Sat 9am–9pm', isEmergency: false },
-    { name: 'City General Hospital', type: 'HOSPITAL' as const, address: 'Jail Road', city: 'Lahore', phone: '+924299231100', timings: '24/7', isEmergency: true },
-    { name: 'OneStop Diagnostics Lab', type: 'LAB' as const, address: 'MM Alam Road', city: 'Lahore', phone: '+924235771122', timings: 'Mon–Sun 7am–11pm', isEmergency: false },
+    { name: 'OneStop Care Clinic — Gulberg', type: 'CLINIC', address: 'Main Boulevard, Gulberg III', city: 'Lahore', phone: '+924235778899', timings: 'Mon–Sat 9am–9pm', isEmergency: false },
+    { name: 'City General Hospital', type: 'HOSPITAL', address: 'Jail Road', city: 'Lahore', phone: '+924299231100', timings: '24/7', isEmergency: true },
+    { name: 'OneStop Diagnostics Lab', type: 'LAB', address: 'MM Alam Road', city: 'Lahore', phone: '+924235771122', timings: 'Mon–Sun 7am–11pm', isEmergency: false },
   ];
   const facilities = [];
   for (const f of demoFacilities) {
