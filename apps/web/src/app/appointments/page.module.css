@@ -20,3 +20,14 @@
 .link { color: #166a91; font-weight: 800; }
 .primaryLink { padding: 10px 14px; border-radius: 4px; background: #f7b928; color: #172337; font-weight: 900; }
 @media (max-width: 640px) { .card { flex-direction: column; } .cardSide { justify-items: start; text-align: left; } }
+.card { display: flex; gap: 14px; }
+.calIcon { display: grid; place-items: center; flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px; background: linear-gradient(135deg, var(--accent), #38a3c8); color: #fff; box-shadow: 0 8px 16px -8px rgba(22,106,145,.5); align-self: start; }
+
+/* --- Responsive pass --- */
+.cancelButton, .primaryLink, .link { min-height: 44px; }
+.cancelButton { display: inline-flex; align-items: center; justify-content: center; }
+@media (max-width: 640px) {
+  .page { padding: 16px 12px 48px; }
+  .card { flex-wrap: wrap; }
+  .cancelButton { width: 100%; }
+}

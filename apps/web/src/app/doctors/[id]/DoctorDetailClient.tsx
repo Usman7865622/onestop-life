@@ -5,7 +5,8 @@ import { useMemo, useState } from 'react';
 import styles from './detail.module.css';
 import { apiFetch } from '../../../lib/auth/api';
 import { readAccessToken } from '../../../lib/auth/session';
-import { doctorAvatarStyle, doctorInitials, money, type Appointment, type Doctor } from '../../../lib/doctors/types';
+import DoctorAvatar from '../../../components/doctors/DoctorAvatar';
+import { money, type Appointment, type Doctor } from '../../../lib/doctors/types';
 
 function toIso(date: string, time: string) {
   return new Date(`${date}T${time}:00`).toISOString();
@@ -75,7 +76,7 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
       <div className={styles.mainColumn}>
         <section className={styles.profileHero}>
           <div className={styles.profileTop}>
-            <div className={styles.avatar} style={doctorAvatarStyle(doctor.speciality)} aria-hidden="true">{doctorInitials(doctor.user.name)}</div>
+            <DoctorAvatar name={doctor.user.name} size={92} className={styles.avatar} />
             <div className={styles.identity}>
               <div className={styles.nameRow}>
                 <h1>{doctor.user.name ?? 'Doctor'}</h1>

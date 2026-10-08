@@ -77,3 +77,16 @@
 @media (max-width: 620px) { .page { padding: 16px 12px 48px; } .welcomeCard { align-items: stretch; flex-direction: column; } .card { padding: 20px; border-radius: 18px; } .linkGrid, .formGrid { grid-template-columns: 1fr; } .listItem { grid-template-columns: 1fr; gap: 4px; } .queueHeader { flex-direction: column; } }
 .cardHeader { display: flex; align-items: start; gap: 12px; }
 .panelIcon { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 13px; background: linear-gradient(135deg, var(--accent), #38a3c8); color: #fff; box-shadow: 0 8px 16px -8px rgba(22,106,145,.5); }
+
+/* --- Responsive pass --- */
+.primaryButton, .secondaryButton, .dangerButton { min-height: 44px; }
+@media (max-width: 640px) {
+  .field input, .field select { font-size: 16px; min-height: 48px; }
+  .welcomeActions { flex-direction: column; align-items: stretch; width: 100%; }
+  .welcomeActions .secondaryButton, .welcomeActions .rolePill { justify-content: center; text-align: center; }
+  .adminStats { flex-wrap: wrap; }
+  .adminStats div { flex: 1 1 120px; }
+  .reviewActions .primaryButton, .reviewActions .dangerButton { flex: 1 1 130px; }
+  .listItem { grid-template-columns: 1fr; }
+  .queueItem { overflow-x: auto; }
+}

@@ -5,8 +5,9 @@ import { FACILITY_FALLBACK, FACILITY_STYLE, SectionIcon } from '../components/ho
 import HeroSearch from '../components/home/HeroSearch';
 import HomeAccountBar from '../components/home/HomeAccountBar';
 import styles from './page.module.css';
+import DoctorAvatar from '../components/doctors/DoctorAvatar';
 import type { Doctor, Facility } from '../lib/doctors/types';
-import { doctorAvatarStyle, doctorInitials, money as doctorMoney } from '../lib/doctors/types';
+import { money as doctorMoney } from '../lib/doctors/types';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api-production-7a91a.up.railway.app';
 
@@ -215,7 +216,7 @@ export default async function HomePage() {
               const facility = doctor.facilities[0]?.facility;
               return (
                 <Link key={doctor.id} className={styles.doctorMiniCard} href={`/doctors/${doctor.id}`}>
-                  <span className={styles.doctorAvatar} style={doctorAvatarStyle(doctor.speciality)} aria-hidden="true">{doctorInitials(doctor.user.name)}</span>
+                  <DoctorAvatar name={doctor.user.name} size={52} className={styles.doctorAvatar} />
                   <span className={styles.doctorMiniBody}>
                     <strong>{doctor.user.name ?? 'Doctor'}</strong>
                     <span>{doctor.speciality}{facility ? ` · ${facility.city}` : ''}</span>

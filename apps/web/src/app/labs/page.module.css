@@ -75,3 +75,24 @@
 .emptyNote { color: #68798e; font-size: .92rem; }
 @media (max-width: 960px) { .hero { grid-template-columns: 1fr; } .heroStats { grid-template-columns: repeat(3, 1fr); } .trustStrip { grid-template-columns: repeat(2, 1fr); } .searchPanel, .bookingForm { grid-template-columns: 1fr; } }
 @media (max-width: 620px) { .page { padding: 14px 12px 48px; } .hero { padding: 24px; border-radius: 18px; } .heroStats, .trustStrip { grid-template-columns: 1fr; } .grid { grid-template-columns: 1fr; } .cardFooter, .bookingRow { align-items: stretch; flex-direction: column; } .bookButton { text-align: center; } .bookingActions { justify-items: start; } }
+
+/* --- Responsive pass --- */
+.grid { grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); }
+.bookButton, .confirmButton, .cancelButton, .closeButton { min-height: 44px; }
+.bookButton { display: inline-flex; align-items: center; justify-content: center; }
+@media (max-width: 1024px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) {
+  .grid { grid-template-columns: 1fr; }
+  .searchPanel, .bookingForm { grid-template-columns: 1fr; }
+  .filterField input, .filterField select, .field input { font-size: 16px; min-height: 48px; }
+  .card { padding: 16px; }
+  .cardTop { grid-template-columns: 52px minmax(0, 1fr); }
+  .sampleBadge { grid-column: 2; justify-self: start; }
+  .bookingRow { flex-direction: column; align-items: stretch; }
+  .bookingActions { justify-items: start; }
+  .heroStats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .heroStats div { padding: 12px 10px; }
+  .heroStats strong { font-size: 1.25rem; }
+  .trustStrip { grid-template-columns: 1fr 1fr; gap: 8px; }
+}
+@media (max-width: 400px) { .trustStrip { grid-template-columns: 1fr; } }

@@ -634,3 +634,20 @@
 }
 .categoryDot { display: inline-block; width: 9px; height: 9px; flex: 0 0 auto; border-radius: 999px; background: linear-gradient(135deg, #166a91, #38a3c8); box-shadow: 0 0 0 4px #eef6f9; font-style: normal; }
 .categoryDotLight { display: inline-block; width: 7px; height: 7px; flex: 0 0 auto; border-radius: 999px; background: #f7b928; font-style: normal; }
+
+/* --- Responsive pass --- */
+@media (max-width: 650px) {
+  .field input, .field textarea, .searchForm input, .shopSearch input, .resultActions select { font-size: 16px; min-height: 44px; }
+  .quantityControls button { width: 38px; height: 38px; }
+  .addButton, .quickViewButton, .cartButton, .primaryAction { min-height: 44px; }
+  .cartPageLine { grid-template-columns: 52px minmax(0, 1fr); }
+  .cartPageLine .quantityControls { grid-column: 2; }
+  .cartPageLine > strong { grid-column: 2; }
+  .resultsToolbar { flex-direction: column; align-items: stretch; }
+  .resultActions { flex-wrap: wrap; }
+  .accountMenu { max-width: calc(100vw - 24px); overflow-x: auto; }
+  .visualBanner, .categorySection { max-width: 100%; }
+}
+@media (max-width: 380px) {
+  .grid { grid-template-columns: 1fr; }
+}

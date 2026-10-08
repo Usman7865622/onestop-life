@@ -52,3 +52,12 @@
 .finePrint { margin-top: 18px; color: var(--muted); font-size: .8rem; line-height: 1.55; text-align: center; }
 @media (max-width: 980px) { .intentGrid { grid-template-columns: repeat(2, 1fr); } .authLayout { grid-template-columns: 1fr; } }
 @media (max-width: 620px) { .page { padding: 16px 12px 48px; } .intentGrid { grid-template-columns: 1fr; } .intentCard { min-height: auto; } .signedInBanner { align-items: stretch; flex-direction: column; } .signedInBanner .primaryButton { width: 100%; } .authCard, .authIntroPanel { padding: 22px; border-radius: 18px; } }
+
+/* --- Responsive pass --- */
+.intentCard, .authTab, .authTabActive { min-height: 44px; }
+@media (max-width: 640px) {
+  .field input { font-size: 16px; min-height: 48px; }
+  .primaryButton, .secondaryButton, .secondaryLinkButton { min-height: 48px; }
+  .intentCard { padding: 18px; }
+  .authTabs { position: sticky; top: 0; z-index: 2; }
+}

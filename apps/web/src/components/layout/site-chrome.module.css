@@ -196,3 +196,14 @@
   .cartLink,
   .footerColumn a { transition: none; }
 }
+
+/* --- Responsive pass --- */
+@media (max-width: 940px) {
+  .navigation { scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .navigation::-webkit-scrollbar { display: none; }
+  .navigation a { padding-block: 8px; }
+}
+@media (max-width: 560px) {
+  .accountLink { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .container { width: calc(100% - 24px); }
+}
