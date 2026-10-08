@@ -6,6 +6,7 @@ import styles from './page.module.css';
 import { apiFetch } from '../../lib/auth/api';
 import { readAccessToken } from '../../lib/auth/session';
 import { money, type Appointment } from '../../lib/doctors/types';
+import { SectionIcon } from '../../components/home/SectionIcons';
 
 const statusLabels: Record<Appointment['status'], string> = {
   PENDING: 'Pending confirmation',
@@ -59,6 +60,7 @@ export default function MyAppointmentsClient() {
             const canCancel = appt.status === 'PENDING' || appt.status === 'CONFIRMED';
             return (
               <article className={styles.card} key={appt.id}>
+                <span className={styles.calIcon}><SectionIcon name="calendar" size={22} /></span>
                 <div className={styles.cardMain}>
                   <p className={styles.doctorName}>{appt.doctorProfile.user.name ?? 'Doctor'} · {appt.doctorProfile.speciality}</p>
                   <p className={styles.meta}>{new Date(appt.startsAt).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })} · {appt.type === 'VIDEO' ? 'Video consultation' : appt.facility ? `${appt.facility.name}, ${appt.facility.city}` : 'In-person'}</p>

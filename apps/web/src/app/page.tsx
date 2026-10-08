@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import CategoryIcon, { categoryTheme } from '../components/home/CategoryIcon';
+import { FACILITY_FALLBACK, FACILITY_STYLE, SectionIcon } from '../components/home/SectionIcons';
 import HeroSearch from '../components/home/HeroSearch';
 import HomeAccountBar from '../components/home/HomeAccountBar';
 import styles from './page.module.css';
@@ -89,6 +90,15 @@ export default async function HomePage() {
   }
   const categories = Array.from(categoryCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8);
   const topDoctors = doctors.slice(0, 3);
+  const cities = new Set<string>();
+  for (const f of facilities) if (f.city) cities.add(f.city);
+  for (const d of doctors) for (const link of d.facilities ?? []) if (link.facility?.city) cities.add(link.facility.city);
+  const liveStats: Array<{ value: number; label: string }> = [
+    ...(doctors.length ? [{ value: doctors.length, label: 'verified doctors' }] : []),
+    ...(products.length ? [{ value: products.length, label: 'products in store' }] : []),
+    ...(facilities.length ? [{ value: facilities.length, label: 'clinics, hospitals & labs' }] : []),
+    ...(cities.size ? [{ value: cities.size, label: cities.size === 1 ? 'city covered' : 'cities covered' }] : []),
+  ];
 
   return (
     <main className={styles.page}>
@@ -117,6 +127,16 @@ export default async function HomePage() {
             <div className={styles.heroTile}><span>Wellness</span><strong>Small rituals. Better days.</strong></div>
           </div>
         </section>
+
+        {liveStats.length ? (
+          <section className={styles.liveStrip} aria-label="Live on OneStop Life">
+            <span className={styles.liveBadge}><span className={styles.liveDot} aria-hidden="true" />Live on OneStop</span>
+            <div className={styles.liveStats}>
+              {liveStats.map((s) => <span key={s.label} className={styles.liveStat}><strong>{s.value}</strong> {s.label}</span>)}
+            </div>
+            <span className={styles.liveUpdated}><SectionIcon name="check" size={15} /> Updated today</span>
+          </section>
+        ) : null}
 
         <section className={styles.trustStrip} aria-label="Why shoppers trust OneStop Life">
           <article><strong>Cash on delivery</strong><span>Pay at your door. Free delivery over Rs. 3,000.</span></article>
@@ -214,14 +234,23 @@ export default async function HomePage() {
               <Link className={styles.textLink} href="/doctors">Find care</Link>
             </div>
             <div className={styles.facilityStrip}>
-              {facilities.slice(0, 5).map((facility) => (
-                <article key={facility.id} className={styles.facilityCard}>
-                  <span className={styles.facilityType}>{facility.type.replaceAll('_', ' ')}{facility.isEmergency ? ' · 24/7' : ''}</span>
-                  <strong>{facility.name}</strong>
-                  <span>{facility.address}, {facility.city}</span>
-                  {facility.timings ? <span>{facility.timings}</span> : null}
-                </article>
-              ))}
+              {facilities.slice(0, 5).map((facility) => {
+                const style = FACILITY_STYLE[facility.type] ?? FACILITY_FALLBACK;
+                const open247 = Boolean(facility.isEmergency) || /24\s*\/\s*7/i.test(facility.timings ?? '');
+                return (
+                  <article key={facility.id} className={styles.facilityCard} style={{ '--fac-from': style.from, '--fac-to': style.to, '--fac-soft': style.soft } as CSSProperties}>
+                    <div className={styles.facilityTop}>
+                      <span className={styles.facilityMedal}><SectionIcon name={style.icon} size={24} /></span>
+                      {open247 ? <span className={styles.openBadge}><span className={styles.openDot} aria-hidden="true" />24/7</span> : null}
+                    </div>
+                    <span className={styles.facilityType}>{style.label}</span>
+                    <strong>{facility.name}</strong>
+                    <span className={styles.facilityMeta}><SectionIcon name="pin" size={14} /> {facility.address}, {facility.city}</span>
+                    {facility.timings ? <span className={styles.facilityMeta}><SectionIcon name="clock" size={14} /> {facility.timings}</span> : null}
+                    {facility.phone ? <a className={styles.facilityCall} href={`tel:${facility.phone.replace(/[^+\d]/g, '')}`}><SectionIcon name="phone" size={14} /> {facility.phone}</a> : null}
+                  </article>
+                );
+              })}
             </div>
           </section>
         ) : null}
@@ -231,10 +260,10 @@ export default async function HomePage() {
             <div><p className={styles.kicker}>A calmer way to shop for care</p><h2 id="why-heading">Why OneStop</h2><p>Useful products and trusted professional access, together in one place.</p></div>
           </div>
           <div className={styles.whyGrid}>
-            <article><span>01</span><h3>One considered catalogue</h3><p>Health, home, baby, wellness and veterinary essentials in one clear store.</p></article>
-            <article><span>02</span><h3>Built around real life</h3><p>Save your details, repeat useful orders and keep doctor bookings close by.</p></article>
-            <article><span>03</span><h3>Clear from shelf to door</h3><p>Simple pricing, visible availability, delivery thresholds and checkout you can understand.</p></article>
-            <article><span>04</span><h3>Trust you can check</h3><p>Verified doctors and businesses, upfront fees and licences reviewed by our team.</p></article>
+            <article><span className={styles.whyIcon}><SectionIcon name="grid" size={23} /></span><h3>One considered catalogue</h3><p>Health, home, baby, wellness and veterinary essentials in one clear store.</p></article>
+            <article><span className={styles.whyIcon}><SectionIcon name="heart" size={23} /></span><h3>Built around real life</h3><p>Save your details, repeat useful orders and keep doctor bookings close by.</p></article>
+            <article><span className={styles.whyIcon}><SectionIcon name="truck" size={23} /></span><h3>Clear from shelf to door</h3><p>Simple pricing, visible availability, delivery thresholds and checkout you can understand.</p></article>
+            <article><span className={styles.whyIcon}><SectionIcon name="shield" size={23} /></span><h3>Trust you can check</h3><p>Verified doctors and businesses, upfront fees and licences reviewed by our team.</p></article>
           </div>
         </section>
 
@@ -243,9 +272,9 @@ export default async function HomePage() {
             <div><p className={styles.kicker}>Simple by design</p><h2 id="how-heading">How it works</h2></div>
           </div>
           <div className={styles.stepsGrid}>
-            <article><span>1</span><h3>Choose your path</h3><p>Sign in as a patient, doctor, pharmacy/business or admin — we ask first, every time.</p></article>
-            <article><span>2</span><h3>Book or shop</h3><p>Pick a doctor with an upfront fee, or add genuine essentials to your cart.</p></article>
-            <article><span>3</span><h3>Relax, we deliver care</h3><p>Visit the clinic, join by video, or pay COD at your door. Track everything in your dashboard.</p></article>
+            <article><span className={styles.stepBadge}>1</span><span className={styles.stepIcon}><SectionIcon name="signin" size={22} /></span><h3>Choose your path</h3><p>Sign in as a patient, doctor, pharmacy/business or admin — we ask first, every time.</p></article>
+            <article><span className={styles.stepBadge}>2</span><span className={styles.stepIcon}><SectionIcon name="calendar" size={22} /></span><h3>Book or shop</h3><p>Pick a doctor with an upfront fee, or add genuine essentials to your cart.</p></article>
+            <article><span className={styles.stepBadge}>3</span><span className={styles.stepIcon}><SectionIcon name="truck" size={22} /></span><h3>Relax, we deliver care</h3><p>Visit the clinic, join by video, or pay COD at your door. Track everything in your dashboard.</p></article>
           </div>
         </section>
 
@@ -254,23 +283,38 @@ export default async function HomePage() {
             <div><p className={styles.kicker}>Customer stories</p><h2 id="stories-heading">Loved for everyday care</h2><p>Demo stories from early OneStop Life customers.</p></div>
           </div>
           <div className={styles.testimonialGrid}>
-            <figure><blockquote>“Booked a dermatologist in Lahore the same evening. Fee was clear before I confirmed — no surprises at the clinic.”</blockquote><figcaption>Ayesha K. · Lahore · Doctor booking</figcaption></figure>
-            <figure><blockquote>“My monthly vitamins and baby essentials arrive together now. COD makes it easy for my parents to order too.”</blockquote><figcaption>Bilal R. · Karachi · Store customer</figcaption></figure>
-            <figure><blockquote>“As a seller, verification was straightforward and my products were live without chasing support.”</blockquote><figcaption>Pharmacy partner · Islamabad · Business</figcaption></figure>
+            {[
+              { quote: 'Booked a dermatologist in Lahore the same evening. Fee was clear before I confirmed — no surprises at the clinic.', name: 'Ayesha K.', city: 'Lahore', role: 'Doctor booking', initials: 'AK', from: '#db2777', to: '#f472b6' },
+              { quote: 'My monthly vitamins and baby essentials arrive together now. COD makes it easy for my parents to order too.', name: 'Bilal R.', city: 'Karachi', role: 'Store customer', initials: 'BR', from: '#0284c7', to: '#38bdf8' },
+              { quote: 'As a seller, verification was straightforward and my products were live without chasing support.', name: 'Pharmacy partner', city: 'Islamabad', role: 'Business', initials: 'PP', from: '#059669', to: '#34d399' },
+            ].map((t) => (
+              <figure key={t.name} className={styles.storyCard}>
+                <span className={styles.quoteIcon}><SectionIcon name="quote" size={20} /></span>
+                <span className={styles.stars} role="img" aria-label="Rated 5 out of 5">{[0, 1, 2, 3, 4].map((i) => <SectionIcon key={i} name="star" size={15} />)}</span>
+                <blockquote>“{t.quote}”</blockquote>
+                <figcaption>
+                  <span className={styles.storyAvatar} style={{ background: `linear-gradient(135deg, ${t.from}, ${t.to})` }} aria-hidden="true">{t.initials}</span>
+                  <span className={styles.storyPerson}><strong>{t.name}</strong><span>{t.city}</span></span>
+                  <span className={styles.rolePill}>{t.role}</span>
+                </figcaption>
+              </figure>
+            ))}
           </div>
+          <p className={styles.demoNote}>Demo stories shared by early OneStop Life users.</p>
         </section>
 
         <section className={styles.ctaSection} id="contact" aria-labelledby="cta-heading">
           <div>
+            <span className={styles.ctaSpark}><SectionIcon name="spark" size={26} /></span>
             <p className={styles.kickerLight}>One account for care &amp; commerce</p>
             <h2 id="cta-heading">Get care updates, deals and refill reminders.</h2>
             <p>Join OneStop Life today, or talk to our team about products, delivery, professional verification or an existing order.</p>
           </div>
           <div className={styles.ctaActions}>
             <Link className={styles.primaryButton} href="/login">Create my account</Link>
-            <a href="mailto:support@onestop.life">support@onestop.life</a>
-            <a href="tel:+923001234567">+92 300 1234567</a>
-            <span>Mon–Fri, 9:00–18:00 PKT</span>
+            <a className={styles.ctaGhost} href="mailto:support@onestop.life"><SectionIcon name="mail" size={17} /> support@onestop.life</a>
+            <a className={styles.ctaGhost} href="tel:+923001234567"><SectionIcon name="phone" size={17} /> +92 300 1234567</a>
+            <span className={styles.ctaHours}><SectionIcon name="clock" size={15} /> Mon–Fri, 9:00–18:00 PKT</span>
           </div>
         </section>
 
@@ -279,11 +323,11 @@ export default async function HomePage() {
             <div><p className={styles.kicker}>Good to know</p><h2 id="faq-heading">Essential information</h2></div>
           </div>
           <div className={styles.faqList}>
-            <details><summary>Delivery and free shipping</summary><p>Standard delivery is Rs. 150. Orders over Rs. 3,000 qualify for free delivery. Timing depends on your address and product availability.</p></details>
-            <details><summary>Returns and refunds</summary><p>Contact support with your order number for damaged, incorrect or eligible returned items. Approved refunds are recorded against the original payment.</p></details>
-            <details><summary>Payment options</summary><p>Cash on delivery is available. Card checkout is enabled in test mode until a live payment gateway is connected.</p></details>
-            <details><summary>How do I sign in as a doctor or business?</summary><p>Go to <Link href="/login">Login</Link>, choose Doctor or Pharmacy / Business first, then sign in. If your professional role is not approved yet, submit verification from your dashboard.</p></details>
-            <details><summary>Professional verification</summary><p>Sign in, choose your path, submit your credentials from the dashboard, and our review team will assess your application.</p></details>
+            <details><summary><span>Delivery and free shipping</span><span className={styles.faqChevron}><SectionIcon name="chevron" size={17} /></span></summary><p>Standard delivery is Rs. 150. Orders over Rs. 3,000 qualify for free delivery. Timing depends on your address and product availability.</p></details>
+            <details><summary><span>Returns and refunds</span><span className={styles.faqChevron}><SectionIcon name="chevron" size={17} /></span></summary><p>Contact support with your order number for damaged, incorrect or eligible returned items. Approved refunds are recorded against the original payment.</p></details>
+            <details><summary><span>Payment options</span><span className={styles.faqChevron}><SectionIcon name="chevron" size={17} /></span></summary><p>Cash on delivery is available. Card checkout is enabled in test mode until a live payment gateway is connected.</p></details>
+            <details><summary><span>How do I sign in as a doctor or business?</span><span className={styles.faqChevron}><SectionIcon name="chevron" size={17} /></span></summary><p>Go to <Link href="/login">Login</Link>, choose Doctor or Pharmacy / Business first, then sign in. If your professional role is not approved yet, submit verification from your dashboard.</p></details>
+            <details><summary><span>Professional verification</span><span className={styles.faqChevron}><SectionIcon name="chevron" size={17} /></span></summary><p>Sign in, choose your path, submit your credentials from the dashboard, and our review team will assess your application.</p></details>
           </div>
         </section>
       </div>

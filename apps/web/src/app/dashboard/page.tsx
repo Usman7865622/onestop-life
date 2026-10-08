@@ -7,6 +7,11 @@ import { apiFetch } from '../../lib/auth/api';
 import { clearAccessToken, hasRole, isBusinessUser, readAccessToken, readLoginIntent, type LoginIntent } from '../../lib/auth/session';
 import type { PublicUser } from '../../lib/auth/types';
 import { money, type Appointment } from '../../lib/doctors/types';
+import { SectionIcon, type SectionIconName } from '../../components/home/SectionIcons';
+
+function PanelTitle({ icon, title, sub, id }: { icon: SectionIconName; title: string; sub: string; id?: string }) {
+  return (<div className={styles.cardHeader}><span className={styles.panelIcon}><SectionIcon name={icon} size={21} /></span><div><h2 id={id}>{title}</h2><p>{sub}</p></div></div>);
+}
 
 type VerificationRequest = {
   id: string;
@@ -225,14 +230,14 @@ export default function DashboardPage() {
 
         <div className={styles.grid}>
           <section className={styles.card}>
-            <div className={styles.cardHeader}><h2>Profile</h2><p>Keep your account details current.</p></div>
+            <PanelTitle icon="users" title="Profile" sub="Keep your account details current." />
             <label className={styles.field}><span>Full name</span><input value={profileName} onChange={(e) => setProfileName(e.target.value)} /></label>
             <label className={styles.field}><span>Email</span><input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} placeholder="you@example.com" /></label>
             <button className={styles.primaryButton} onClick={updateProfile} disabled={busy}>Save profile</button>
           </section>
 
           <section className={styles.card}>
-            <div className={styles.cardHeader}><h2>Account overview</h2><p>Personal details and permissions.</p></div>
+            <PanelTitle icon="shield" title="Account overview" sub="Personal details and permissions." />
             <div className={styles.summaryList}>
               <div><span>Phone</span><strong>{user.phone || 'Email account'}</strong></div>
               <div><span>Email</span><strong>{user.email || 'Not provided yet'}</strong></div>
@@ -244,7 +249,7 @@ export default function DashboardPage() {
 
         {showPatient ? (
           <section className={styles.card} aria-labelledby="patient-heading">
-            <div className={styles.cardHeader}><h2 id="patient-heading">Patient &amp; customer</h2><p>Your everyday care shortcuts.</p></div>
+            <PanelTitle id="patient-heading" icon="heart" title="Patient & customer" sub="Your everyday care shortcuts." />
             <div className={styles.linkGrid}>
               <Link className={styles.linkCard} href="/appointments"><strong>My Appointments</strong><span>See, manage or cancel doctor visits.</span></Link>
               <Link className={styles.linkCard} href="/cart"><strong>My cart &amp; orders</strong><span>Review your cart and check out with COD.</span></Link>
@@ -258,7 +263,7 @@ export default function DashboardPage() {
 
         {showDoctor ? (
           <section className={styles.card} aria-labelledby="doctor-heading">
-            <div className={styles.cardHeader}><h2 id="doctor-heading">Doctor workspace</h2><p>{isDoctor ? 'Your consultations and public profile.' : 'Doctor tools unlock after your DOCTOR verification is approved.'}</p></div>
+            <PanelTitle id="doctor-heading" icon="stethoscope" title="Doctor workspace" sub={isDoctor ? 'Your consultations and public profile.' : 'Doctor tools unlock after your DOCTOR verification is approved.'} />
             {isDoctor ? (
               <>
                 <div className={styles.linkGrid}>
@@ -286,7 +291,7 @@ export default function DashboardPage() {
         {showBusiness ? (
           <>
             <section className={styles.card} aria-labelledby="business-heading">
-              <div className={styles.cardHeader}><h2 id="business-heading">Pharmacy / Business verification</h2><p>Choose the workspace that matches your work. Approval unlocks the tools for that role.</p></div>
+              <PanelTitle id="business-heading" icon="pharmacy" title="Pharmacy / Business verification" sub="Choose the workspace that matches your work. Approval unlocks the tools for that role." />
               <div className={styles.formGrid}>
                 <label className={styles.field}><span>Workspace type</span>
                   <select value={verificationType} onChange={(e) => setVerificationType(e.target.value as typeof verificationType)}>
@@ -310,7 +315,7 @@ export default function DashboardPage() {
 
             {(isSeller || isAdmin) ? (
               <section className={styles.card} aria-labelledby="seller-heading">
-                <div className={styles.cardHeader}><h2 id="seller-heading">Seller catalogue</h2><p>List products, set prices, and build your storefront inventory.</p></div>
+                <PanelTitle id="seller-heading" icon="cart" title="Seller catalogue" sub="List products, set prices, and build your storefront inventory." />
                 <div className={styles.sellerGrid}>
                   <div>
                     <h3 className={styles.subheading}>Add a product</h3>
@@ -339,7 +344,7 @@ export default function DashboardPage() {
 
         {showAdmin ? (
           <section className={styles.card} aria-labelledby="admin-heading">
-            <div className={styles.cardHeader}><h2 id="admin-heading">Admin control centre</h2><p>Review trust applications and keep the marketplace safe.</p></div>
+            <PanelTitle id="admin-heading" icon="shield" title="Admin control centre" sub="Review trust applications and keep the marketplace safe." />
             {isAdmin ? (
               <>
                 <div className={styles.adminStats}><div><strong>{queue.length}</strong><span>pending reviews</span></div><Link href="/products">Open catalogue →</Link></div>

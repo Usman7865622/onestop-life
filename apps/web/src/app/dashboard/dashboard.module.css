@@ -75,3 +75,5 @@
 .errorText { color: var(--danger); background: #fff1f3; border: 1px solid #fecdd3; }
 @media (max-width: 980px) { .linkGrid { grid-template-columns: repeat(2, 1fr); } .grid, .sellerGrid { grid-template-columns: 1fr; } }
 @media (max-width: 620px) { .page { padding: 16px 12px 48px; } .welcomeCard { align-items: stretch; flex-direction: column; } .card { padding: 20px; border-radius: 18px; } .linkGrid, .formGrid { grid-template-columns: 1fr; } .listItem { grid-template-columns: 1fr; gap: 4px; } .queueHeader { flex-direction: column; } }
+.cardHeader { display: flex; align-items: start; gap: 12px; }
+.panelIcon { display: grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 13px; background: linear-gradient(135deg, var(--accent), #38a3c8); color: #fff; box-shadow: 0 8px 16px -8px rgba(22,106,145,.5); }
