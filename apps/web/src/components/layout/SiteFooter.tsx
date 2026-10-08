@@ -19,6 +19,8 @@ export default function SiteFooter() {
           <Link href="/">Home</Link>
           <Link href="/products">Shop all products</Link>
           <Link href="/doctors">Book a doctor</Link>
+          <Link href="/labs">Lab tests at home</Link>
+          <Link href="/blood">Blood banks & requests</Link>
           <Link href="/login">Login / Sign up</Link>
           <Link href="/dashboard">My dashboard</Link>
           <Link href="/cart">Your shopping cart</Link>

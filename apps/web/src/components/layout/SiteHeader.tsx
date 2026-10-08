@@ -45,6 +45,8 @@ export default function SiteHeader() {
             <Link href="/">Home</Link>
             <Link href="/products">Shop</Link>
             <Link href="/doctors">Doctors</Link>
+            <Link href="/labs">Labs</Link>
+            <Link href="/blood">Blood</Link>
             <Link href="/appointments">My Appointments</Link>
             <Link href="/#trending">Trending</Link>
             <Link href="/#why-onestop">Our promise</Link>
