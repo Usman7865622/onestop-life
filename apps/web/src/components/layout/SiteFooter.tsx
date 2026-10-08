@@ -18,6 +18,9 @@ export default function SiteFooter() {
           <h2>Explore</h2>
           <Link href="/">Home</Link>
           <Link href="/products">Shop all products</Link>
+          <Link href="/doctors">Book a doctor</Link>
+          <Link href="/login">Login / Sign up</Link>
+          <Link href="/dashboard">My dashboard</Link>
           <Link href="/cart">Your shopping cart</Link>
           <Link href="/#why-onestop">Why OneStop</Link>
         </nav>
