@@ -87,6 +87,31 @@ enum AppointmentType {
   VIDEO
 }
 
+enum LabBookingStatus {
+  BOOKED
+  SAMPLE_COLLECTED
+  REPORT_READY
+  DELIVERED
+  CANCELLED
+}
+
+enum BloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+enum BloodRequestStatus {
+  OPEN
+  FULFILLED
+  CANCELLED
+}
+
 enum AppointmentStatus {
   PENDING
   CONFIRMED
@@ -119,6 +144,8 @@ model User {
   products             Product[] @relation("SellerProducts")
   doctorProfile        DoctorProfile?
   patientAppointments  Appointment[] @relation("PatientAppointments")
+  labBookings          LabBooking[]
+  bloodRequests        BloodRequest[]
 
   @@map("users")
 }
@@ -381,6 +408,8 @@ model Facility {
 
   doctors      DoctorFacility[]
   appointments Appointment[]
+  labTests     LabTest[]
+  labBookings  LabBooking[]
 
   @@index([city])
   @@index([type])
@@ -443,4 +472,66 @@ model Appointment {
   @@index([patientId, startsAt])
   @@index([status, startsAt])
   @@map("appointments")
+}
+model LabTest {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  code        String   @unique
+  priceMinor  Int
+  sampleType  String
+  reportHours Int
+  facilityId  String   @db.Uuid
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  facility Facility     @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  bookings LabBooking[]
+
+  @@index([facilityId])
+  @@index([isActive])
+  @@map("lab_tests")
+}
+
+model LabBooking {
+  id          String           @id @default(uuid()) @db.Uuid
+  userId      String           @db.Uuid
+  testId      String           @db.Uuid
+  facilityId  String           @db.Uuid
+  scheduledAt DateTime
+  address     String
+  patientName String
+  phone       String
+  status      LabBookingStatus @default(BOOKED)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test     LabTest  @relation(fields: [testId], references: [id], onDelete: Cascade)
+  facility Facility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scheduledAt])
+  @@index([facilityId, scheduledAt])
+  @@index([status])
+  @@map("lab_bookings")
+}
+
+model BloodRequest {
+  id           String             @id @default(uuid()) @db.Uuid
+  userId       String             @db.Uuid
+  bloodGroup   BloodGroup
+  units        Int
+  city         String
+  hospitalName String?
+  urgency      String             @default("NORMAL")
+  status       BloodRequestStatus @default(OPEN)
+  contactPhone String
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([status, bloodGroup, city])
+  @@map("blood_requests")
 }
