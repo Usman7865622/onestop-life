@@ -1,4 +1,6 @@
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
+import CategoryIcon, { categoryTheme } from '../components/home/CategoryIcon';
 import HeroSearch from '../components/home/HeroSearch';
 import HomeAccountBar from '../components/home/HomeAccountBar';
 import styles from './page.module.css';
@@ -57,8 +59,8 @@ function ProductCard({ product, badge }: { product: Product; badge?: string }) {
   return (
     <article className={styles.productCard}>
       <div className={styles.productImage} role="img" aria-label={`${product.nameEn} product image`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
-        {!product.imageUrl ? product.nameEn.slice(0, 1) : null}
         {badge ? <span className={styles.productBadge}>{badge}</span> : null}
+        <span className={styles.productPill}>{product.category ?? 'Everyday care'}</span>
       </div>
       <div className={styles.productBody}>
         <span className={styles.productCategory}>{product.category ?? 'Everyday care'}</span>
@@ -130,13 +132,18 @@ export default async function HomePage() {
           </div>
           {categories.length ? (
             <div className={styles.categoryGrid}>
-              {categories.map(([category, count]) => (
-                <Link key={category} className={styles.categoryTile} href={`/products#${category.toLowerCase().replaceAll(' ', '-').replaceAll('&', '-')}`}>
-                  <span className={styles.categoryIcon} aria-hidden="true">{category.slice(0, 1)}</span>
-                  <strong>{category}</strong>
-                  <span>{count} product{count === 1 ? '' : 's'}</span>
-                </Link>
-              ))}
+              {categories.map(([category, count]) => {
+                const theme = categoryTheme(category);
+                return (
+                  <Link key={category} className={styles.categoryTile} style={{ '--cat-from': theme.from, '--cat-to': theme.to, '--cat-soft': theme.soft } as CSSProperties} href={`/products#${category.toLowerCase().replaceAll(' ', '-').replaceAll('&', '-')}`}>
+                    <span className={styles.categoryAccent} aria-hidden="true" />
+                    <span className={styles.categoryIconWrap} aria-hidden="true"><CategoryIcon category={category} size={30} /></span>
+                    <strong>{category}</strong>
+                    <span className={styles.categoryCount}>{count} product{count === 1 ? '' : 's'}</span>
+                    <span className={styles.categoryCta}>Shop now <span className={styles.categoryArrow} aria-hidden="true">→</span></span>
+                  </Link>
+                );
+              })}
             </div>
           ) : <p className={styles.emptyNote}>Categories will appear as soon as the catalogue is available.</p>}
         </section>
@@ -162,7 +169,7 @@ export default async function HomePage() {
             <div className={styles.productGrid}>
               {deals.map((product) => (
                 <article className={styles.productCard} key={product.id}>
-                  <div className={styles.productImage} role="img" aria-label={`${product.nameEn} product image`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>{!product.imageUrl ? product.nameEn.slice(0, 1) : null}<span className={styles.dealBadge}>Save 20%</span></div>
+                  <div className={styles.productImage} role="img" aria-label={`${product.nameEn} product image`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}><span className={styles.dealBadge}>Save 20%</span><span className={styles.productPill}>{product.category ?? 'Everyday care'}</span></div>
                   <div className={styles.productBody}>
                     <span className={styles.productCategory}>{product.category ?? 'Everyday care'}</span>
                     <h3>{product.nameEn}</h3>
