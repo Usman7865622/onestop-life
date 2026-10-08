@@ -90,3 +90,36 @@
   .listItem { grid-template-columns: 1fr; }
   .queueItem { overflow-x: auto; }
 }
+
+/* --- Responsive system v2 ---
+   Panels: 2 cols laptop -> 1 col tablet; quick links
+   4 -> 2 -> 1; seller area stacks at tablet. There are no
+   <table> elements here — admin queues are lists that wrap,
+   so the fix is min-width:0 + wrapping, not scroll boxes. */
+.grid, .linkGrid, .summaryList, .queueList, .queueItem { min-width: 0; }
+
+@media (max-width: 1023.98px) {
+  .grid, .sellerGrid { grid-template-columns: 1fr; }
+  .linkGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 767.98px) {
+  .page { padding: 18px 14px 56px; }
+  .formGrid { grid-template-columns: 1fr; }
+  .listItem { grid-template-columns: 1fr; gap: 4px; }
+  .queueHeader { flex-direction: column; }
+  .adminStats { flex-wrap: wrap; }
+  .adminStats div { flex: 1 1 130px; }
+  .field input, .field select { font-size: 16px; min-height: 48px; }
+}
+
+@media (max-width: 480px) {
+  .linkGrid { grid-template-columns: 1fr; }
+  .welcomeCard { flex-direction: column; align-items: stretch; }
+  .reviewActions .primaryButton, .reviewActions .dangerButton { flex: 1 1 100%; min-height: 48px; }
+  .card { padding: 19px; }
+}
+
+@media (pointer: coarse) {
+  .primaryButton, .secondaryButton, .dangerButton, .linkCard { min-height: 44px; }
+}
