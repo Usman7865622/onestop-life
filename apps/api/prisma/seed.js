@@ -104,6 +104,8 @@ async function main() {
     { name: 'OneStop Care Clinic — Gulberg', type: 'CLINIC', address: 'Main Boulevard, Gulberg III', city: 'Lahore', phone: '+924235778899', timings: 'Mon–Sat 9am–9pm', isEmergency: false },
     { name: 'City General Hospital', type: 'HOSPITAL', address: 'Jail Road', city: 'Lahore', phone: '+924299231100', timings: '24/7', isEmergency: true },
     { name: 'OneStop Diagnostics Lab', type: 'LAB', address: 'MM Alam Road', city: 'Lahore', phone: '+924235771122', timings: 'Mon–Sun 7am–11pm', isEmergency: false },
+    { name: 'Karachi Care Clinic', type: 'CLINIC', address: 'Clifton Block 5, Boat Basin', city: 'Karachi', phone: '+922135895500', timings: 'Mon–Sat 10am–10pm', isEmergency: false },
+    { name: 'Islamabad Medical Complex', type: 'HOSPITAL', address: 'Sector G-8, Ibn-e-Sina Road', city: 'Islamabad', phone: '+92519106600', timings: '24/7', isEmergency: true },
   ];
   const facilities = [];
   for (const f of demoFacilities) {
@@ -112,11 +114,20 @@ async function main() {
   }
 
   const demoDoctors = [
-    { email: 'dr.ahmed@onestop.demo', name: 'Dr. Ahmed Khan', speciality: 'Cardiology', qualifications: 'MBBS, FCPS (Cardiology)', experienceYears: 12, feeMinor: 250000, languages: ['English', 'Urdu'], about: 'Consultant cardiologist focused on preventive heart care and hypertension.' },
-    { email: 'dr.fatima@onestop.demo', name: 'Dr. Fatima Noor', speciality: 'Pediatrics', qualifications: 'MBBS, FCPS (Pediatrics)', experienceYears: 9, feeMinor: 180000, languages: ['English', 'Urdu'], about: 'Child specialist for newborns, vaccination and developmental care.' },
-    { email: 'dr.bilal@onestop.demo', name: 'Dr. Bilal Hussain', speciality: 'General Physician', qualifications: 'MBBS', experienceYears: 7, feeMinor: 120000, languages: ['Urdu', 'English', 'Punjabi'], about: 'Family physician for everyday health, diabetes and general check-ups.' },
+    { email: 'dr.ahmed@onestop.demo', name: 'Dr. Ahmed Khan', speciality: 'Cardiology', qualifications: 'MBBS, FCPS (Cardiology)', experienceYears: 12, feeMinor: 250000, languages: ['English', 'Urdu'], about: 'Consultant cardiologist focused on preventive heart care, hypertension and chest pain evaluation.', facilityName: 'City General Hospital' },
+    { email: 'dr.fatima@onestop.demo', name: 'Dr. Fatima Noor', speciality: 'Pediatrics', qualifications: 'MBBS, FCPS (Pediatrics)', experienceYears: 9, feeMinor: 180000, languages: ['English', 'Urdu'], about: 'Child specialist for newborns, vaccination, growth tracking and developmental care.', facilityName: 'OneStop Care Clinic — Gulberg' },
+    { email: 'dr.bilal@onestop.demo', name: 'Dr. Bilal Hussain', speciality: 'General Physician', qualifications: 'MBBS', experienceYears: 7, feeMinor: 120000, languages: ['Urdu', 'English', 'Punjabi'], about: 'Family physician for everyday health, diabetes screening, fever and general check-ups.', facilityName: 'OneStop Care Clinic — Gulberg' },
+    { email: 'dr.ayesha@onestop.demo', name: 'Dr. Ayesha Siddiqui', speciality: 'Dermatology', qualifications: 'MBBS, FCPS (Dermatology)', experienceYears: 10, feeMinor: 200000, languages: ['Urdu', 'English', 'Sindhi'], about: 'Skin, hair and nail specialist for acne, eczema, psoriasis and cosmetic dermatology.', facilityName: 'Karachi Care Clinic' },
+    { email: 'dr.maryam@onestop.demo', name: 'Dr. Maryam Tariq', speciality: 'Gynecology', qualifications: 'MBBS, FCPS (Obstetrics & Gynecology)', experienceYears: 14, feeMinor: 220000, languages: ['English', 'Urdu', 'Punjabi'], about: 'Consultant gynecologist for pregnancy care, PCOS, fertility counselling and women’s health.', facilityName: 'Islamabad Medical Complex' },
+    { email: 'dr.imran@onestop.demo', name: 'Dr. Imran Sheikh', speciality: 'Orthopedics', qualifications: 'MBBS, MS (Orthopedic Surgery)', experienceYears: 15, feeMinor: 280000, languages: ['Urdu', 'English'], about: 'Orthopedic surgeon for joint pain, fractures, sports injuries and arthritis care.', facilityName: 'City General Hospital' },
+    { email: 'dr.sarah@onestop.demo', name: 'Dr. Sarah Ahmed', speciality: 'Dentistry', qualifications: 'BDS, MDS (Operative Dentistry)', experienceYears: 8, feeMinor: 150000, languages: ['English', 'Urdu', 'Sindhi'], about: 'Dentist for painless root canals, implants, braces consultations and cosmetic dentistry.', facilityName: 'Karachi Care Clinic' },
+    { email: 'dr.hassan@onestop.demo', name: 'Dr. Hassan Raza', speciality: 'Ophthalmology', qualifications: 'MBBS, FCPS (Ophthalmology)', experienceYears: 11, feeMinor: 240000, languages: ['Urdu', 'English', 'Punjabi'], about: 'Eye specialist for vision testing, cataract evaluation, glaucoma and diabetic eye care.', facilityName: 'Islamabad Medical Complex' },
+    { email: 'dr.zainab@onestop.demo', name: 'Dr. Zainab Ali', speciality: 'ENT', qualifications: 'MBBS, FCPS (ENT)', experienceYears: 9, feeMinor: 180000, languages: ['Urdu', 'English'], about: 'ENT specialist for ear pain, sinus issues, tonsils, hearing loss and allergy care.', facilityName: 'OneStop Care Clinic — Gulberg' },
+    { email: 'dr.omar@onestop.demo', name: 'Dr. Omar Farooq', speciality: 'Neurology', qualifications: 'MBBS, MD (Neurology)', experienceYears: 16, feeMinor: 350000, languages: ['English', 'Urdu'], about: 'Neurologist for migraine, epilepsy, stroke follow-up, numbness and sleep disorders.', facilityName: 'Islamabad Medical Complex' },
+    { email: 'dr.hira@onestop.demo', name: 'Dr. Hira Shah', speciality: 'Psychiatry', qualifications: 'MBBS, FCPS (Psychiatry)', experienceYears: 7, feeMinor: 250000, languages: ['Urdu', 'English', 'Sindhi'], about: 'Psychiatrist for anxiety, depression, stress, sleep problems and confidential counselling.', facilityName: 'Karachi Care Clinic' },
+    { email: 'dr.ali@onestop.demo', name: 'Dr. Ali Nawaz', speciality: 'Gastroenterology', qualifications: 'MBBS, FCPS (Gastroenterology)', experienceYears: 13, feeMinor: 300000, languages: ['Urdu', 'English', 'Pashto'], about: 'Gastroenterologist for acidity, IBS, liver care, endoscopy advice and digestive health.', facilityName: 'Islamabad Medical Complex' },
   ];
-  for (const [idx, d] of demoDoctors.entries()) {
+  for (const d of demoDoctors) {
     const docUser = await prisma.user.upsert({
       where: { email: d.email },
       update: { name: d.name },
@@ -134,7 +145,7 @@ async function main() {
       update: { speciality: d.speciality, qualifications: d.qualifications, experienceYears: d.experienceYears, feeMinor: d.feeMinor, languages: d.languages, about: d.about, isBookable: true },
       create: { userId: docUser.id, speciality: d.speciality, qualifications: d.qualifications, experienceYears: d.experienceYears, feeMinor: d.feeMinor, languages: d.languages, about: d.about, isBookable: true },
     });
-    const facility = facilities[idx % facilities.length];
+    const facility = facilities.find((f) => f.name === d.facilityName) ?? facilities[0];
     await prisma.doctorFacility.upsert({
       where: { doctorProfileId_facilityId: { doctorProfileId: profile.id, facilityId: facility.id } },
       update: {},
