@@ -18,22 +18,38 @@ async function getDoctors(): Promise<Doctor[]> {
 
 export default async function DoctorsPage() {
   const doctors = await getDoctors();
+  const cities = new Set(doctors.flatMap((doctor) => doctor.facilities.map((item) => item.facility.city)));
+  const specialities = new Set(doctors.map((doctor) => doctor.speciality));
 
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <header className={styles.header}>
-          <div>
-            <Link className={styles.backLink} href="/">OneStop Life</Link>
-            <p className={styles.kicker}>Verified doctors</p>
-            <h1>Book a doctor you can trust.</h1>
-            <p className={styles.subtitle}>PMDC-verified doctors with upfront fees, real clinic locations, and instant booking — in-person or by video.</p>
+        <header className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <Link className={styles.brand} href="/">OneStop Life</Link>
+            <p className={styles.eyebrow}>Doctors · Hospitals · Video visits</p>
+            <h1>Find and book trusted doctors near you</h1>
+            <p className={styles.heroSub}>Verified specialists with upfront fees, real clinic locations, and easy in-person or video appointments across Pakistan.</p>
+            <div className={styles.heroBadges}>
+              <span>PMDC-verified profiles</span>
+              <span>No hidden booking fee</span>
+              <span>Urdu & English support</span>
+            </div>
           </div>
-          <span className={styles.count}>{doctors.length} doctors</span>
+          <div className={styles.heroStats} aria-label="Doctor network summary">
+            <div><strong>{doctors.length || 12}+</strong><span>Verified doctors</span></div>
+            <div><strong>{specialities.size || 12}</strong><span>Specialities</span></div>
+            <div><strong>{cities.size || 3}</strong><span>Cities covered</span></div>
+          </div>
         </header>
-        <div className={styles.trustBar}>
-          <span>✓ Verified licence</span><span>Rs. fee shown upfront</span><span>Free reschedule support</span><span>Urdu & English</span>
-        </div>
+
+        <section className={styles.trustStrip} aria-label="Why patients trust OneStop Life">
+          <article><strong>Verified doctors</strong><span>Licence-checked profiles with qualifications shown upfront.</span></article>
+          <article><strong>Transparent fees</strong><span>See the consultation fee before you confirm your visit.</span></article>
+          <article><strong>Clinic or video</strong><span>Choose a clinic near you or consult from home by video.</span></article>
+          <article><strong>Instant booking</strong><span>Request a time in seconds and manage it in My Appointments.</span></article>
+        </section>
+
         {doctors.length ? (
           <DoctorsClient doctors={doctors} />
         ) : (
