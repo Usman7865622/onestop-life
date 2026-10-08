@@ -21,6 +21,7 @@ type CartLine = Product & { quantity: number };
 type CatalogClientProps = { products: Product[] };
 
 const categoryLabels: Record<string, string> = {
+  'Trending essentials': 'Trending essentials',
   Medicines: 'Medicines',
   'Medical devices': 'Medical devices & appliances',
   Wellness: 'Wellness & supplements',
@@ -34,6 +35,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 const categoryIcons: Record<string, string> = {
+  'Trending essentials': '★',
   Medicines: '✚',
   'Medical devices': '⌁',
   Wellness: '✦',
@@ -87,6 +89,12 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     if (!cartLoaded) return;
     window.localStorage.setItem('onestop-cart', JSON.stringify(cart));
   }, [cart, cartLoaded]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) setSearchTerm(q);
+  }, []);
 
   useEffect(() => {
     const storedWishlist = window.localStorage.getItem('onestop-wishlist');
@@ -170,7 +178,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const checkout = async () => {
     const token = window.localStorage.getItem('onestop-access-token');
     if (!token) {
-      setError('Sign in on the home page before placing an order.');
+      setError('Sign in from the login page before placing an order.');
       return;
     }
     if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) {

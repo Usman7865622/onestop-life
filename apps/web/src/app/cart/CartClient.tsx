@@ -55,7 +55,7 @@ export default function CartClient() {
   const placeOrder = async () => {
     const token = window.localStorage.getItem('onestop-access-token');
     if (!token) {
-      setError('Sign in on the home page before placing an order.');
+      setError('Sign in from the login page before placing an order.');
       return;
     }
     if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) {

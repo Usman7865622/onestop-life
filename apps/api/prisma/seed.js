@@ -40,6 +40,18 @@ async function main() {
   }
 
   const starterProducts = [
+    { nameEn: 'Smart Fitness Band', priceMinor: 499900, unit: 'item', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1575311373937-040b8e1fd5b6?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Electric Toothbrush', priceMinor: 349900, unit: 'item', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Vitamin D3 5000 IU', priceMinor: 145000, unit: 'bottle', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Collagen Powder', priceMinor: 385000, unit: 'tub', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Whey Protein 1kg', priceMinor: 850000, unit: 'tub', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Mini Air Purifier', priceMinor: 999000, unit: 'item', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Massage Gun', priceMinor: 749000, unit: 'item', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1620188467120-5042ed1eb5da?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Sunscreen SPF 50', priceMinor: 125000, unit: 'tube', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Electrolyte Sachets (ORS+)', priceMinor: 95000, unit: 'box', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Posture Corrector', priceMinor: 185000, unit: 'item', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Baby Diapers (Pack of 60)', priceMinor: 245000, unit: 'pack', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=900&q=80' },
+    { nameEn: 'Herbal Green Tea', priceMinor: 78000, unit: 'box', category: 'Trending essentials', imageUrl: 'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=900&q=80' },
     { nameEn: 'Paracetamol 500mg', priceMinor: 12000, unit: 'pack', category: 'Medicines', imageUrl: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=900&q=80' },
     { nameEn: 'Cough Relief Syrup', priceMinor: 28000, unit: 'bottle', category: 'Medicines', imageUrl: 'https://images.unsplash.com/photo-1603398938378-e54eab446ade?auto=format&fit=crop&w=900&q=80' },
     { nameEn: 'Antiseptic Cream', priceMinor: 18000, unit: 'tube', category: 'Medicines', imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=80' },
@@ -58,7 +70,6 @@ async function main() {
     { nameEn: 'Electric Heating Pad', priceMinor: 275000, unit: 'item', category: 'Home health', imageUrl: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?auto=format&fit=crop&w=900&q=80' },
     { nameEn: 'Surgical Gloves', priceMinor: 55000, unit: 'box', category: 'Health essentials', imageUrl: 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?auto=format&fit=crop&w=900&q=80' },
     { nameEn: 'Antibacterial Hand Wash', priceMinor: 39000, unit: 'bottle', category: 'Personal care', imageUrl: 'https://images.unsplash.com/photo-1584744982491-665216d95f8b?auto=format&fit=crop&w=900&q=80' },
-    { nameEn: 'Sunscreen SPF 50', priceMinor: 125000, unit: 'tube', category: 'Personal care', imageUrl: 'https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&w=900&q=80' },
     { nameEn: 'Baby Diaper Pack', priceMinor: 185000, unit: 'pack', category: 'Baby care', imageUrl: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=900&q=80' },
     { nameEn: 'Baby Moisturizing Cream', priceMinor: 98000, unit: 'jar', category: 'Baby care', imageUrl: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=900&q=80' },
     { nameEn: 'Electrolyte Drink Mix', priceMinor: 75000, unit: 'box', category: 'Nutrition', imageUrl: 'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=900&q=80' },
