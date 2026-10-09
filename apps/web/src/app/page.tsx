@@ -48,6 +48,15 @@ async function getDoctors(): Promise<Doctor[]> {
   } catch { return []; }
 }
 
+async function getMedicineCount(): Promise<number> {
+  try {
+    const response = await fetch(`${API_URL}/medicines/classes`, { cache: 'no-store' });
+    if (!response.ok) return 0;
+    const payload = (await response.json()) as { items?: Array<{ count: number }> };
+    return (payload.items ?? []).reduce((sum, item) => sum + item.count, 0);
+  } catch { return 0; }
+}
+
 async function getFacilities(): Promise<Facility[]> {
   try {
     const response = await fetch(`${API_URL}/facilities`, { cache: 'no-store' });
@@ -79,7 +88,7 @@ function ProductCard({ product, badge }: { product: Product; badge?: string }) {
 }
 
 export default async function HomePage() {
-  const [products, doctors, facilities] = await Promise.all([getProducts(), getDoctors(), getFacilities()]);
+  const [products, doctors, facilities, medicineCount] = await Promise.all([getProducts(), getDoctors(), getFacilities(), getMedicineCount()]);
 
   const trending = products.filter((p) => (p.category ?? '').toLowerCase().includes('trending'));
   const trendingToShow = (trending.length ? trending : products).slice(0, 8);
@@ -225,6 +234,30 @@ export default async function HomePage() {
                 </Link>
               );
             }) : <p className={styles.doctorFallback}>Verified doctors will appear here soon. <Link href="/doctors">Browse doctors →</Link></p>}
+          </div>
+        </section>
+
+        <section className={styles.doctorsBanner} aria-labelledby="pharmacy-heading">
+          <div className={styles.doctorsCopy}>
+            <p className={styles.kickerLight}>Pharmacy · Genuine medicines</p>
+            <h2 id="pharmacy-heading">Your pharmacy, delivered</h2>
+            <p>{medicineCount ? `${medicineCount}+ medicines` : '200+ medicines'} across pain relief, antibiotics, diabetes, heart care and more — with prescription-required items clearly marked and genuine sealed packs at your door.</p>
+            <Link className={styles.primaryButton} href="/pharmacy">Browse the pharmacy</Link>
+          </div>
+          <div className={styles.doctorMiniGrid}>
+            {[
+              { title: 'Pain relief & fever', sub: 'Paracetamol, ibuprofen & more from Rs. 40' },
+              { title: 'Diabetes, heart & BP care', sub: 'Monthly essentials with upfront prices' },
+              { title: 'Vitamins & daily wellness', sub: 'Vitamin D, iron, omega-3 and probiotics' },
+            ].map((item) => (
+              <Link key={item.title} className={styles.doctorMiniCard} href="/pharmacy">
+                <span className={styles.doctorMiniBody}>
+                  <strong>{item.title}</strong>
+                  <span>{item.sub}</span>
+                  <span>Browse in the pharmacy →</span>
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
 

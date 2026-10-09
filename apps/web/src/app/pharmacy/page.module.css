@@ -1,0 +1,84 @@
+.page { min-height: 100vh; padding: 24px 20px 72px; color: #172337; background: linear-gradient(180deg, #f4faf6 0, #ffffff 360px); }
+.shell { max-width: 1280px; margin: 0 auto; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 28px; align-items: stretch; padding: 34px; border-radius: 24px; background: radial-gradient(circle at 88% 12%, rgba(74,222,128,.28), transparent 34%), linear-gradient(135deg, #0b2e3d, #15803d); color: #fff; box-shadow: 0 24px 60px rgba(11,46,61,.22); }
+.heroCopy { display: grid; align-content: start; gap: 14px; }
+.eyebrow { color: #86efac; font-size: .72rem; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
+.hero h1 { max-width: 680px; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1; letter-spacing: -.05em; }
+.heroSub { max-width: 650px; color: #d5ecdd; line-height: 1.65; font-size: 1.02rem; }
+.heroBadges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.heroBadges span { padding: 8px 11px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; background: rgba(255,255,255,.08); font-size: .82rem; font-weight: 800; }
+.heroStats { display: grid; gap: 12px; align-content: center; }
+.heroStats div { padding: 18px; border: 1px solid rgba(255,255,255,.18); border-radius: 18px; background: rgba(255,255,255,.1); }
+.heroStats strong { display: block; font-size: 1.8rem; line-height: 1; }
+.heroStats span { color: #c2e6cf; font-size: .86rem; font-weight: 700; }
+.trustStrip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0 20px; }
+.trustStrip article { padding: 16px; border: 1px solid #e3ecf2; border-radius: 16px; background: #fff; box-shadow: 0 10px 28px rgba(23,35,55,.05); }
+.trustStrip strong { display: block; margin-bottom: 5px; font-size: .95rem; }
+.trustStrip span { color: #64748b; font-size: .86rem; line-height: 1.45; }
+.searchPanel { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; align-items: end; padding: 14px; border: 1px solid #dce8ef; border-radius: 18px; background: #fff; box-shadow: 0 16px 34px rgba(23,35,55,.07); }
+.filterField { display: grid; gap: 7px; font-size: .76rem; font-weight: 900; color: #40546b; text-transform: uppercase; }
+.filterField input { width: 100%; padding: 13px 14px; border: 1px solid #cfd8e3; border-radius: 12px; font: inherit; font-size: .95rem; font-weight: 500; text-transform: none; background: #fbfdff; color: #172337; outline: none; }
+.filterField input:focus { border-color: #15803d; box-shadow: 0 0 0 4px rgba(21,128,61,.12); background: #fff; }
+.searchField { min-width: 0; }
+.rxToggle { display: flex; flex-wrap: wrap; gap: 8px; }
+.rxButton, .rxActive { min-height: 44px; padding: 10px 13px; border-radius: 999px; border: 1px solid #cfd8e3; background: #fbfdff; color: #40546b; font-weight: 800; font-size: .84rem; cursor: pointer; }
+.rxButton:hover { border-color: #86efac; }
+.rxActive { background: #15803d; border-color: #15803d; color: #fff; box-shadow: 0 8px 18px rgba(21,128,61,.25); }
+.chipRow { display: flex; gap: 8px; margin: 14px 0 4px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+.chip, .chipActive { flex: 0 0 auto; min-height: 40px; padding: 8px 13px; border-radius: 999px; border: 1px solid #dbe7de; background: #fff; color: #40546b; font-weight: 800; font-size: .84rem; cursor: pointer; white-space: nowrap; }
+.chip span, .chipActive span { margin-left: 5px; padding: 1px 7px; border-radius: 999px; background: #eef6f0; color: #15803d; font-size: .72rem; font-weight: 950; }
+.chip:hover { border-color: #86efac; }
+.chipActive { background: #172337; border-color: #172337; color: #fff; }
+.chipActive span { background: rgba(255,255,255,.16); color: #bbf7d0; }
+.resultsHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0 12px; }
+.resultCount { color: #68798e; font-size: .92rem; font-weight: 650; }
+.clearButton { border: 0; background: transparent; color: #15803d; font-weight: 900; cursor: pointer; text-decoration: none; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 16px; }
+.card { border: 1px solid #e0eaf0; border-radius: 20px; padding: 20px; background: #fff; display: grid; gap: 14px; box-shadow: 0 14px 34px rgba(23,35,55,.06); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.card:hover { transform: translateY(-2px); border-color: #86efac; box-shadow: 0 20px 44px rgba(21,128,61,.12); }
+.cardTop { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.formIcon { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(135deg, #15803d, #4ade80); color: #fff; box-shadow: inset 0 -12px 22px rgba(0,0,0,.16); }
+.formIcon svg { width: 26px; height: 26px; }
+.cardTitle h3 { font-size: 1rem; letter-spacing: -.01em; line-height: 1.3; }
+.generic { margin-top: 4px; color: #68798e; font-size: .82rem; font-weight: 650; line-height: 1.4; }
+.brand { color: #15803d; font-weight: 850; }
+.rxBadge { padding: 5px 9px; border-radius: 999px; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; font-size: .7rem; font-weight: 950; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.otcBadge { padding: 5px 9px; border-radius: 999px; background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; font-size: .7rem; font-weight: 950; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+.metaRow { display: flex; flex-wrap: wrap; gap: 7px; }
+.classPill { padding: 7px 10px; border-radius: 999px; background: #eef6f0; color: #166534; font-size: .78rem; font-weight: 900; }
+.metaChip { padding: 7px 9px; border-radius: 999px; background: #f6f9fb; color: #40546b; font-size: .8rem; font-weight: 700; }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #eef1f5; padding-top: 14px; }
+.fee { display: grid; gap: 1px; }
+.fee strong { font-size: 1.22rem; letter-spacing: -.02em; }
+.fee span { color: #68798e; font-size: .78rem; font-weight: 700; }
+.shopButton { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 12px 14px; border-radius: 12px; background: #f7b928; color: #172337; font-weight: 950; text-decoration: none; box-shadow: 0 10px 20px rgba(247,185,40,.25); white-space: nowrap; }
+.shopButton:hover { background: #eaa806; }
+.emptyState { padding: 42px 22px; border: 1px dashed #cfd8e3; border-radius: 20px; text-align: center; color: #40546b; background: #fff; }
+.emptyState h2 { color: #172337; margin-bottom: 8px; }
+.emptyIcon { width: 52px; height: 52px; margin: 0 auto 12px; display: grid; place-items: center; border-radius: 50%; background: #f0fdf4; color: #15803d; }
+.loadMoreRow { display: flex; justify-content: center; margin-top: 22px; }
+.loadMoreButton { min-height: 48px; padding: 13px 22px; border: 1px solid #bbf7d0; border-radius: 12px; background: #f0fdf4; color: #166534; font-weight: 950; cursor: pointer; }
+.loadMoreButton:hover { background: #dcfce7; }
+.rxNote { margin-top: 20px; padding: 14px 16px; border: 1px solid #fde68a; border-radius: 14px; background: #fffbeb; color: #92400e; font-size: .9rem; line-height: 1.55; }
+@media (max-width: 1023.98px) {
+  .hero { grid-template-columns: 1fr; }
+  .heroStats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .searchPanel { grid-template-columns: 1fr; }
+}
+@media (max-width: 767.98px) {
+  .grid { grid-template-columns: 1fr; }
+  .trustStrip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filterField input { font-size: 16px; min-height: 48px; }
+}
+@media (max-width: 640px) {
+  .page { padding: 14px 12px 48px; }
+  .hero { padding: 24px; border-radius: 18px; }
+  .heroStats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .heroStats div { padding: 12px 10px; }
+  .heroStats strong { font-size: 1.25rem; }
+  .card { padding: 16px; }
+  .cardFooter { flex-direction: column; align-items: stretch; }
+  .shopButton { width: 100%; }
+}
+@media (max-width: 480px) { .trustStrip { grid-template-columns: 1fr; } }

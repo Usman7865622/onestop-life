@@ -18,6 +18,7 @@ export default function SiteFooter() {
           <h2>Explore</h2>
           <Link href="/">Home</Link>
           <Link href="/products">Shop all products</Link>
+          <Link href="/pharmacy">Medicines & pharmacy</Link>
           <Link href="/doctors">Book a doctor</Link>
           <Link href="/facilities">Hospitals, clinics & labs</Link>
           <Link href="/labs">Lab tests at home</Link>
@@ -33,7 +34,7 @@ export default function SiteFooter() {
           <Link href="/products#home-health">Home health</Link>
           <Link href="/products#pet-care">Pet care</Link>
           <Link href="/products#wellness">Wellness</Link>
-          <Link href="/products#medicines">Medicines</Link>
+          <Link href="/pharmacy">Medicines</Link>
         </nav>
 
         <div className={styles.footerColumn} id="footer-support">
