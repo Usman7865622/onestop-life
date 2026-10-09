@@ -3,144 +3,26 @@ import { Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProductsService } from '../products/products.service';
 import { AssistantMessageDto } from './dto/assistant-chat.dto';
-
-export type AssistantCardType = 'doctor' | 'medicine' | 'lab' | 'facility' | 'product';
-
-export type AssistantCard = {
-  type: AssistantCardType;
-  id: string;
-  title: string;
-  subtitle: string;
-  meta: string;
-  priceMinor?: number;
-  badge?: string;
-  href: string;
-  imageUrl?: string;
-  avatarName?: string;
-};
-
-type LegacyProduct = {
-  id?: string;
-  nameEn: string;
-  category: string | null;
-  priceMinor: number;
-  unit: string;
-  imageUrl?: string | null;
-};
-
-type PlatformResult = {
-  reply: string;
-  cards: AssistantCard[];
-  suggestions: string[];
-  products?: LegacyProduct[];
-  source: string;
-};
-
-const CITY_NAMES = ['Lahore', 'Karachi', 'Islamabad'] as const;
-
-const SPECIALITY_MAP: Array<{ speciality: string; patterns: RegExp[] }> = [
-  { speciality: 'Cardiology', patterns: [/\bcardiologist\b/, /\bheart\b/, /\bcardiac\b/, /\bchest pain\b/, /\bpalpitations?\b/, /\bblood pressure\b/, /\bhypertension\b/] },
-  { speciality: 'Dermatology', patterns: [/\bdermatologist\b/, /\bskin\b/, /\brash\b/, /\bacne\b/, /\beczema\b/, /\bhair fall\b/] },
-  { speciality: 'Pediatrics', patterns: [/\bp(a)?ediatrician\b/, /\bchild doctor\b/, /\bkids? doctor\b/, /\bbaby doctor\b/, /\bchild specialist\b/, /\bchildren'?s doctor\b/, /\bchild\b/, /\bkids?\b/, /\bbaby\b/, /\binfant\b/] },
-  { speciality: 'Dentistry', patterns: [/\bdentist\b/, /\bdental\b/, /\bteeth\b/, /\btooth\b/, /\btoothache\b/] },
-  { speciality: 'Ophthalmology', patterns: [/\bophthalmologist\b/, /\beye doctor\b/, /\beye specialist\b/, /\beye\b/, /\bvision\b/, /\beyesight\b/] },
-  { speciality: 'Orthopedics', patterns: [/\borthop(a)?edic\b/, /\bbone\b/, /\bjoint\b/, /\bback pain\b/, /\bknee pain\b/, /\bfracture\b/] },
-  { speciality: 'Gynecology', patterns: [/\bgyn(a)?ecologist\b/, /\bwomen'?s doctor\b/, /\bpregnan(?:cy|t)\b/, /\bperiods?\b/, /\bpregnancy\b/] },
-  { speciality: 'Psychiatry', patterns: [/\bpsychiatrist\b/, /\bmental health\b/, /\banxiety\b/, /\bdepression\b/, /\bstress\b/, /\binsomnia\b/] },
-  { speciality: 'Gastroenterology', patterns: [/\bgastroenterologist\b/, /\bstomach\b/, /\bdigestive\b/, /\bdiarrh(o)?ea\b/, /\bconstipation\b/, /\bacidity\b/] },
-  { speciality: 'ENT', patterns: [/\bent\b/, /\bear\b/, /\bnose\b/, /\bthroat\b/, /\btonsils?\b/, /\bsinus\b/] },
-  { speciality: 'Neurology', patterns: [/\bneurologist\b/, /\bmigraine\b/, /\bnerves?\b/, /\bseizures?\b/] },
-  { speciality: 'General Physician', patterns: [/\bgeneral physician\b/, /\bfamily doctor\b/, /\bfever\b/, /\bflu\b/, /\bcough\b/, /\bcold\b/, /\bcheck[ -]?up\b/] },
-];
-
-const MEDICINE_CLASS_MAP: Array<{ name: string; patterns: RegExp[] }> = [
-  { name: 'Pain Relief', patterns: [/\bpain relief\b/, /\bpainkillers?\b/, /\bheadache\b/, /\bbody pain\b/] },
-  { name: 'Antibiotics', patterns: [/\bantibiotics?\b/, /\binfection medicine\b/] },
-  { name: 'Diabetes Care', patterns: [/\bdiabetes\b/, /\bdiabetic\b/, /\bblood sugar medicine\b/, /\binsulin\b/, /\bmetformin\b/] },
-  { name: 'Heart & BP', patterns: [/\bheart (?:medicine|medication)\b/, /\bblood pressure (?:medicine|medication)\b/, /\bbp medicine\b/, /\bcholesterol medicine\b/] },
-  { name: 'Stomach & Digestion', patterns: [/\bstomach (?:medicine|medication)\b/, /\bacidity medicine\b/, /\bdigestion\b/, /\bdigestive medicine\b/, /\bconstipation medicine\b/] },
-  { name: 'Allergy & Asthma', patterns: [/\ballergy\b/, /\basthma\b/, /\binhaler\b/] },
-  { name: 'Cold, Cough & Flu', patterns: [/\bcold (?:medicine|medication)\b/, /\bcough (?:medicine|syrup)\b/, /\bflu medicine\b/, /\bfever medicine\b/] },
-  { name: 'Vitamins & Supplements', patterns: [/\bvitamins?\b/, /\bsupplements?\b/, /\bmultivitamins?\b/, /\bomega\b/] },
-  { name: 'Skin Care', patterns: [/\bskin (?:cream|ointment|medicine|care)\b/, /\beczema cream\b/, /\bacne cream\b/] },
-  { name: 'Eye & Ear', patterns: [/\beye drops?\b/, /\bear drops?\b/, /\beye (?:medicine|medication)\b/, /\bear (?:medicine|medication)\b/] },
-  { name: 'Mental Health', patterns: [/\bmental health (?:medicine|medication)\b/, /\banxiety (?:medicine|medication)\b/, /\bsleep (?:medicine|tablets?)\b/] },
-  { name: "Women's Health", patterns: [/\bwomen'?s health\b/, /\bpregnancy (?:medicine|vitamins?)\b/, /\bprenatal\b/] },
-  { name: 'Bone & Joint', patterns: [/\bbone (?:medicine|health)\b/, /\bjoint (?:medicine|pain relief)\b/, /\bcalcium (?:tablets?|supplements?)\b/] },
-];
-
-const MEDICINE_TERMS = /\b(medicine|medicines|medication|medications|pharmacy|pharmaceutical|prescription|antibiotic|antibiotics|tablet|tablets|capsule|capsules|syrup|inhaler|ointment|paracetamol|panadol|ibuprofen|brufen|cetirizine|omeprazole|metformin|amoxicillin|augmentin|azithromycin|insulin|vitamin|supplement)\b/i;
-// Conversational filler that must never drive a medicine match on its own
-// (e.g. the "do" in "Do you sell Augmentin?" previously matched Domperidone).
-const MEDICINE_FILLER_TERMS = new Set([
-  'pharmacy', 'rx', 'prescription', 'sell', 'sells', 'selling', 'sold', 'needed', 'need', 'needs',
-  'available', 'availability', 'stock', 'store', 'shop', 'buy', 'buys', 'please', 'show', 'find',
-  'give', 'want', 'wants', 'looking', 'search', 'with', 'without', 'you', 'your', 'have', 'has',
-  'any', 'some', 'what', 'which', 'there', 'this', 'that', 'medicine', 'medicines', 'medication',
-]);
-const SEARCH_STOP_WORDS = new Set([
-  'a', 'an', 'and', 'are', 'book', 'buy', 'can', 'cost', 'doctor', 'doctors', 'find', 'for', 'from', 'get',
-  'give', 'have', 'help', 'i', 'in', 'is', 'it', 'lab', 'labs', 'me', 'medicine', 'medicines', 'my', 'need',
-  'of', 'on', 'or', 'please', 'price', 'product', 'products', 'show', 'some', 'test', 'tests', 'the', 'to',
-  'under', 'want', 'with', 'you',
-]);
-
-function normalize(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9+./-]+/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function fieldTokens(value: string | null | undefined): string[] {
-  return normalize(value ?? '').split(' ').filter((token) => token.length > 1 && token !== '+');
-}
-
-function queryMentionsPhrase(normalizedQuery: string, phrase: string | null | undefined): boolean {
-  const normalizedPhrase = normalize(phrase ?? '');
-  return normalizedPhrase.length >= 3 && normalizedQuery.includes(normalizedPhrase);
-}
-
-function searchTerms(query: string) {
-  return [...new Set(normalize(query).split(' ').filter((term) => term.length > 1 && !SEARCH_STOP_WORDS.has(term)))];
-}
-
-function extractBudget(query: string): number | null {
-  const underBudget = query.match(/\b(?:under|below|less than|max(?:imum)?|within|budget(?: of)?)\s*(?:(?:rs\.?|pkr|rupees)\s*)?([\d,]+(?:\.\d+)?)/i);
-  const currencyAmount = query.match(/\b(?:rs\.?|pkr|rupees)\s*([\d,]+(?:\.\d+)?)/i);
-  const rawAmount = underBudget?.[1] ?? currencyAmount?.[1];
-  if (!rawAmount) return null;
-
-  const amount = Number(rawAmount.replaceAll(',', ''));
-  return Number.isFinite(amount) && amount > 0 ? Math.min(amount, 10_000_000) : null;
-}
-
-function formatRs(priceMinor: number) {
-  const rupees = priceMinor / 100;
-  return `Rs. ${rupees.toLocaleString('en-PK', {
-    minimumFractionDigits: Number.isInteger(rupees) ? 0 : 2,
-    maximumFractionDigits: Number.isInteger(rupees) ? 0 : 2,
-  })}`;
-}
-
-function detectCity(query: string) {
-  return CITY_NAMES.find((city) => new RegExp(`\\b${city}\\b`, 'i').test(query)) ?? null;
-}
-
-function detectSpeciality(query: string) {
-  const lower = query.toLowerCase();
-  return SPECIALITY_MAP.find(({ patterns }) => patterns.some((pattern) => pattern.test(lower)))?.speciality ?? null;
-}
-
-function detectMedicineClass(query: string) {
-  const lower = query.toLowerCase();
-  return MEDICINE_CLASS_MAP.find(({ patterns }) => patterns.some((pattern) => pattern.test(lower)))?.name ?? null;
-}
-
-function isShoppingQuestion(query: string) {
-  return /\b(buy|cart|cost|find|looking for|need|price|product|products|recommend|shop|shopping|show|stock|trending|under|available|sell)\b/i.test(query);
-}
-
-function titleCase(value: string) {
-  return value.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
-}
+import {
+  AssistantCard,
+  LegacyProduct,
+  MEDICINE_FILLER_TERMS,
+  MEDICINE_TERMS,
+  PlatformResult,
+  buildProductResult,
+  detectCity,
+  detectMedicineClass,
+  detectSpeciality,
+  extractBudget,
+  extractNamedItemAvailability,
+  fieldTokens,
+  formatRs,
+  isShoppingQuestion,
+  normalize,
+  queryMentionsPhrase,
+  searchTerms,
+  titleCase,
+} from './assistant.helpers';
 
 @Injectable()
 export class AssistantService {
@@ -170,8 +52,29 @@ export class AssistantService {
     if (intent === 'facilities') return this.facilityResult(query, city);
 
     const productMatches = await this.products.searchForAssistant(query, null, budget) as LegacyProduct[];
+
+    // Named-item availability questions ("Do you sell Xanax?", "Is X available?")
+    // reach this point only when no medicine/doctor/lab match was found. The legacy
+    // product search matches loosely, so keep only products whose name/generic/
+    // brand genuinely contain the item term — and answer honestly when none do,
+    // instead of padding the reply with unrelated "matches".
+    const availabilityItem = extractNamedItemAvailability(query);
+    if (availabilityItem) {
+      const verifiedMatches = await this.filterToNamedItem(productMatches, availabilityItem.terms);
+      if (!verifiedMatches.length) {
+        return {
+          reply: `I couldn't find “${availabilityItem.label}” in the live OneStop catalogue right now. Check the spelling, try the generic name if it has one, or ask me for alternatives by category — for example, “mental health medicines” or “pain relief”.`,
+          products: [],
+          cards: [],
+          suggestions: ['Find medicines', 'Trending products', 'Products under Rs. 1,000', 'Find a doctor'],
+          source: 'live_catalog',
+        } satisfies PlatformResult;
+      }
+      return buildProductResult(verifiedMatches, budget);
+    }
+
     if (productMatches.length && (intent === 'products' || isShoppingQuestion(query) || !query.includes('?'))) {
-      return this.productResult(productMatches, budget);
+      return buildProductResult(productMatches, budget);
     }
 
     if (intent === 'products') {
@@ -563,35 +466,32 @@ export class AssistantService {
     };
   }
 
-  private productResult(productMatches: LegacyProduct[], budget: number | null): PlatformResult {
-    const products = productMatches.map((product) => ({
-      nameEn: product.nameEn,
-      category: product.category,
-      priceMinor: product.priceMinor,
-      unit: product.unit,
-    }));
+  // Narrows legacy product-search hits to products whose name, generic name, or
+  // brand actually contain one of the named item's terms (case-insensitive).
+  // Generic/brand live on Product but are not selected by the legacy search, so
+  // they are resolved here for just the candidate ids.
+  private async filterToNamedItem(products: LegacyProduct[], terms: string[]): Promise<LegacyProduct[]> {
+    if (!products.length) return products;
 
-    const cards: AssistantCard[] = productMatches.slice(0, 4).map((product, index) => ({
-      type: 'product',
-      id: product.id ?? `product-${index}`,
-      title: product.nameEn,
-      subtitle: product.category ?? 'OneStop product',
-      meta: `Sold by ${product.unit}`,
-      priceMinor: product.priceMinor,
-      badge: 'In stock',
-      href: `/products?q=${encodeURIComponent(product.nameEn)}`,
-      imageUrl: product.imageUrl ?? undefined,
-    }));
+    const ids = products.map((product) => product.id).filter((id): id is string => typeof id === 'string' && id.length > 0);
+    const details = ids.length
+      ? await this.prisma.product.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, genericName: true, brandName: true },
+      })
+      : [];
+    const detailById = new Map(details.map((detail) => [detail.id, detail]));
 
-    return {
-      reply: `I found ${cards.length} live in-stock product match${cards.length === 1 ? '' : 'es'}${budget !== null ? ` within ${formatRs(budget * 100)}` : ''}. Prices are taken directly from the current catalogue.`,
-      products,
-      cards,
-      suggestions: ['Trending products', 'Products under Rs. 1,000', 'Find medicines', 'Book a doctor'],
-      source: 'live_catalog',
-    };
+    return products.filter((product) => {
+      const detail = product.id ? detailById.get(product.id) : undefined;
+      const searchable = normalize([
+        product.nameEn,
+        detail?.genericName ?? product.genericName ?? '',
+        detail?.brandName ?? product.brandName ?? '',
+      ].join(' '));
+      return terms.some((term) => searchable.includes(term));
+    });
   }
-
   private async fallback(messages: AssistantMessageDto[], query: string): Promise<PlatformResult> {
     const menuReply = 'I’m OneStop Assistant. I can search live doctors, medicines, lab tests, hospitals and clinics, blood banks, and everyday products across OneStop Life. Tell me what you need—or tap a suggestion below.';
     const suggestions = [
