@@ -18,6 +18,7 @@ import { DoctorsModule } from './modules/doctors/doctors.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { LabsModule } from './modules/labs/labs.module';
 import { BloodModule } from './modules/blood/blood.module';
+import { PharmacyModule } from './modules/pharmacy/pharmacy.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { BloodModule } from './modules/blood/blood.module';
     AppointmentsModule,
     LabsModule,
     BloodModule,
+    PharmacyModule,
     HealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

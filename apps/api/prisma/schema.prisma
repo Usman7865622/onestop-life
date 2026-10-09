@@ -281,15 +281,22 @@ model OutboxEvent {
 }
 
 model Product {
-  id         String   @id @default(uuid()) @db.Uuid
-  sellerId   String?  @db.Uuid
-  nameEn     String
-  nameUr     String?
-  priceMinor Int
-  unit       String   @default("item")
-  category   String?
-  imageUrl   String?
-  inStock    Boolean  @default(true)
+  id               String   @id @default(uuid()) @db.Uuid
+  sellerId         String?  @db.Uuid
+  nameEn           String
+  nameUr           String?
+  priceMinor       Int
+  unit             String   @default("item")
+  category         String?
+  imageUrl         String?
+  inStock          Boolean  @default(true)
+  genericName      String?
+  brandName        String?
+  strength         String?
+  form             String?
+  therapeuticClass String?
+  requiresRx       Boolean  @default(false)
+  packSize         String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
@@ -299,6 +306,7 @@ model Product {
   @@index([category])
   @@index([createdAt])
   @@index([sellerId])
+  @@index([therapeuticClass])
   @@map("products")
 }
 
