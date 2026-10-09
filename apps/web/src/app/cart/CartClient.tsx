@@ -12,6 +12,7 @@ type CartLine = {
   unit?: string;
   imageUrl?: string;
   category?: string;
+  requiresRx?: boolean;
 };
 
 function money(minor: number) {
@@ -27,6 +28,8 @@ export default function CartClient() {
   const [shippingPhone, setShippingPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'CARD'>('COD');
+  const [prescriptionFileKey, setPrescriptionFileKey] = useState('');
+  const [prescriptionRef, setPrescriptionRef] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -41,6 +44,35 @@ export default function CartClient() {
     if (!cartLoaded) return;
     window.localStorage.setItem('onestop-cart', JSON.stringify(cart));
   }, [cart, cartLoaded]);
+
+  // Older saved carts may not carry the requiresRx flag — backfill it from
+  // the catalogue so the prescription gate can't be bypassed by a stale cart.
+  useEffect(() => {
+    if (!cartLoaded || !cart.some((item) => item.requiresRx === undefined)) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await fetch('/api/products');
+        if (!response.ok) return;
+        const payload = await response.json() as { items?: Array<{ id: string; requiresRx?: boolean }> } | Array<{ id: string; requiresRx?: boolean }>;
+        const list = Array.isArray(payload) ? payload : payload.items ?? [];
+        const flags = new Map(list.map((product) => [product.id, Boolean(product.requiresRx)]));
+        if (cancelled) return;
+        setCart((current) => current.map((item) => item.requiresRx === undefined && flags.has(item.id) ? { ...item, requiresRx: flags.get(item.id) } : item));
+      } catch { /* catalogue unavailable — server still enforces the Rx gate */ }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartLoaded]);
+
+  const rxItems = useMemo(() => cart.filter((item) => item.requiresRx), [cart]);
+  const hasRx = rxItems.length > 0;
+  // Prescription is stored as a document key for now (file storage comes
+  // later, same pattern as verification documents): either the chosen file
+  // becomes `rx-<timestamp>-<filename>`, or a typed doctor/prescription
+  // reference becomes `ref-<text>`.
+  const prescriptionKey = prescriptionFileKey || (prescriptionRef.trim() ? `ref-${prescriptionRef.trim()}` : '');
+  const prescriptionReady = prescriptionKey.trim().length >= 3;
 
   const subtotal = useMemo(() => cart.reduce((total, item) => total + item.priceMinor * item.quantity, 0), [cart]);
   const shipping = subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
@@ -62,6 +94,10 @@ export default function CartClient() {
       setError('Complete your delivery details before placing the order.');
       return;
     }
+    if (hasRx && !prescriptionReady) {
+      setError('This order contains prescription medicines. Please add your prescription file or your doctor / prescription reference so our pharmacist can verify it before dispatch.');
+      return;
+    }
 
     setBusy(true);
     setError('');
@@ -76,13 +112,19 @@ export default function CartClient() {
           shippingAddress,
           discountCode: discountCode || undefined,
           paymentMethod,
+          prescriptionKey: hasRx ? prescriptionKey : undefined,
         }),
       });
-      const payload = await response.json() as { message?: string | string[]; order?: { id: string; totalMinor: number } };
+      const payload = await response.json() as { message?: string | string[]; order?: { id: string; totalMinor: number; requiresRx?: boolean; prescriptionStatus?: string | null } };
       if (!response.ok) throw new Error(Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? 'Unable to place order');
+      const placedWithRx = Boolean(payload.order?.requiresRx);
       setCart([]);
       setCheckoutOpen(false);
-      setMessage(`Order ${payload.order?.id.slice(0, 8)} confirmed for ${money(payload.order?.totalMinor ?? total)}.`);
+      setPrescriptionFileKey('');
+      setPrescriptionRef('');
+      setMessage(placedWithRx
+        ? `Order ${payload.order?.id.slice(0, 8)} placed for ${money(payload.order?.totalMinor ?? total)}. Your prescription is with our pharmacist for verification — we will dispatch as soon as it is approved, and we may contact you to share the prescription file.`
+        : `Order ${payload.order?.id.slice(0, 8)} confirmed for ${money(payload.order?.totalMinor ?? total)}.`);
     } catch (orderError) {
       setError(orderError instanceof Error ? orderError.message : 'Unable to place order');
     } finally {
@@ -105,7 +147,7 @@ export default function CartClient() {
         {cart.length ? <section className={styles.cartPageLayout} aria-label="Shopping cart">
           <div className={styles.cartPageLines}>
             {cart.map((item) => <article className={styles.cartPageLine} key={item.id}>
-              <div className={styles.cartProductVisual} role="img" aria-label={`${item.nameEn} product image`} style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}>{!item.imageUrl ? item.nameEn.slice(0, 1) : null}</div><div><h2>{item.nameEn}</h2><p>{money(item.priceMinor)} · {item.unit ?? 'item'}</p></div>
+              <div className={styles.cartProductVisual} role="img" aria-label={`${item.nameEn} product image`} style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}>{!item.imageUrl ? item.nameEn.slice(0, 1) : null}</div><div><h2>{item.nameEn}</h2><p>{money(item.priceMinor)} · {item.unit ?? 'item'}{item.requiresRx ? <> · <span className={styles.rxTag}>Rx required</span></> : null}</p></div>
               <div className={styles.quantityControls}><button onClick={() => updateQuantity(item.id, item.quantity - 1)} aria-label={`Decrease ${item.nameEn}`}>−</button><span>{item.quantity}</span><button onClick={() => updateQuantity(item.id, item.quantity + 1)} aria-label={`Increase ${item.nameEn}`}>+</button></div>
               <strong>{money(item.priceMinor * item.quantity)}</strong>
             </article>)}
@@ -120,7 +162,7 @@ export default function CartClient() {
           <div className={styles.panelHeader}><div><p className={styles.categoryEyebrow}>Secure checkout</p><h2>Complete your order</h2></div><button className={styles.closeButton} onClick={() => setCheckoutOpen(false)} aria-label="Close checkout">×</button></div>
           <div className={styles.checkoutSteps}><span className={styles.stepActive}><b>1</b> Delivery</span><i /> <span><b>2</b> Payment</span><i /> <span><b>3</b> Confirm</span></div>
           <div className={styles.checkoutVisual} style={checkoutProduct?.imageUrl ? { backgroundImage: `linear-gradient(90deg, rgba(23, 35, 55, 0.92), rgba(23, 35, 55, 0.28)), url(${checkoutProduct.imageUrl})` } : undefined}><div><span>ONE STOP SECURE CHECKOUT</span><strong>Your {checkoutCategory.toLowerCase()} order is ready to go.</strong><small>Protected checkout · tracked delivery</small></div></div>
-          <div className={styles.checkoutLayout}><div className={styles.checkoutForm}><div className={styles.formSectionHeading}><span className={styles.formStep}>01</span><div><h3>Delivery details</h3><p>Where should we send your order?</p></div></div><div className={styles.checkoutGrid}><label className={styles.field}><span>Full name</span><input value={shippingName} onChange={(event) => setShippingName(event.target.value)} autoComplete="name" /></label><label className={styles.field}><span>Phone</span><input value={shippingPhone} onChange={(event) => setShippingPhone(event.target.value)} autoComplete="tel" /></label></div><label className={styles.field}><span>Delivery address</span><textarea value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} rows={3} autoComplete="street-address" /></label><div className={styles.deliveryNote}><span className={styles.deliveryIcon} aria-hidden="true">✦</span><div><strong>Tracked doorstep delivery</strong><p>We will keep your order moving from our store to your door.</p></div></div><div className={styles.formSectionHeading}><span className={styles.formStep}>02</span><div><h3>Payment method</h3><p>Choose how you want to pay.</p></div></div><fieldset className={styles.paymentOptions}><legend className={styles.visuallyHidden}>Choose payment</legend><label><input type="radio" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} /> <span>Cash on delivery</span><small>Pay when your order arrives</small></label><label><input type="radio" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} /> <span>Card payment</span><small>Local test mode</small></label><div className={styles.cardBrands}><b>VISA</b><b>MC</b><b>AMEX</b><b>UnionPay</b></div></fieldset><label className={styles.field}><span>Discount code</span><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value.toUpperCase())} placeholder="WELCOME10" /></label><p className={styles.secureNote}>🔒 Your checkout is protected. Discounts are checked securely on the server.</p></div><aside className={styles.checkoutSummary}><p>Order summary</p><div className={styles.summaryIconRow}><span className={styles.summaryBagIcon} aria-hidden="true">▣</span><strong>{cart.reduce((count, item) => count + item.quantity, 0)} items</strong></div><div><span>Subtotal</span><b>{money(subtotal)}</b></div><div><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b></div><div className={styles.checkoutTotal}><span>Total</span><b>{money(total)}</b></div><div className={styles.summaryTrust}><span aria-hidden="true">✓</span><p>Price locked in<br />No surprise charges</p></div><button className={styles.primaryAction} onClick={placeOrder} disabled={busy}><span aria-hidden="true">✓</span> {busy ? 'Processing...' : `Place order · ${money(total)}`}</button><small>Free delivery over Rs. 3,000</small></aside></div>
+          <div className={styles.checkoutLayout}><div className={styles.checkoutForm}><div className={styles.formSectionHeading}><span className={styles.formStep}>01</span><div><h3>Delivery details</h3><p>Where should we send your order?</p></div></div><div className={styles.checkoutGrid}><label className={styles.field}><span>Full name</span><input value={shippingName} onChange={(event) => setShippingName(event.target.value)} autoComplete="name" /></label><label className={styles.field}><span>Phone</span><input value={shippingPhone} onChange={(event) => setShippingPhone(event.target.value)} autoComplete="tel" /></label></div><label className={styles.field}><span>Delivery address</span><textarea value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} rows={3} autoComplete="street-address" /></label><div className={styles.deliveryNote}><span className={styles.deliveryIcon} aria-hidden="true">✦</span><div><strong>Tracked doorstep delivery</strong><p>We will keep your order moving from our store to your door.</p></div></div><div className={styles.formSectionHeading}><span className={styles.formStep}>02</span><div><h3>Payment method</h3><p>Choose how you want to pay.</p></div></div><fieldset className={styles.paymentOptions}><legend className={styles.visuallyHidden}>Choose payment</legend><label><input type="radio" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} /> <span>Cash on delivery</span><small>Pay when your order arrives</small></label><label><input type="radio" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} /> <span>Card payment</span><small>Local test mode</small></label><div className={styles.cardBrands}><b>VISA</b><b>MC</b><b>AMEX</b><b>UnionPay</b></div></fieldset><label className={styles.field}><span>Discount code</span><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value.toUpperCase())} placeholder="WELCOME10" /></label><p className={styles.secureNote}>🔒 Your checkout is protected. Discounts are checked securely on the server.</p>{hasRx ? <div className={styles.rxGate} role="note"><div className={styles.formSectionHeading}><span className={styles.formStep}>03</span><div><h3>Prescription required</h3><p>Our pharmacist will verify it before dispatch.</p></div></div><p className={styles.rxGateText}>This order includes prescription medicines ({rxItems.map((item) => item.nameEn).join(', ')}). DRAP requires medicines like antibiotics to be sold only against a registered doctor&apos;s prescription, so these items leave our pharmacy only after verification.</p><label className={styles.field}><span>Prescription file (photo or PDF)</span><input type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.target.files?.[0]; setPrescriptionFileKey(file ? `rx-${Date.now()}-${file.name}` : ''); }} /></label><label className={styles.field}><span>Or doctor name / prescription reference</span><input value={prescriptionRef} onChange={(event) => setPrescriptionRef(event.target.value)} placeholder="e.g. Dr. Ahmed Khan — prescription dated 5 Oct" /></label><p className={styles.rxGateText}>Uploads are registered by file name for now — our pharmacy team will ask you to share the prescription file with them to complete verification.</p>{prescriptionReady ? <p className={styles.rxReady}>✓ Prescription added — ready to place your order.</p> : <p className={styles.rxMissing}>Add your prescription file or reference to enable Place order.</p>}</div> : null}</div><aside className={styles.checkoutSummary}><p>Order summary</p><div className={styles.summaryIconRow}><span className={styles.summaryBagIcon} aria-hidden="true">▣</span><strong>{cart.reduce((count, item) => count + item.quantity, 0)} items</strong></div><div><span>Subtotal</span><b>{money(subtotal)}</b></div><div><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b></div><div className={styles.checkoutTotal}><span>Total</span><b>{money(total)}</b></div><div className={styles.summaryTrust}><span aria-hidden="true">✓</span><p>Price locked in<br />No surprise charges</p></div><button className={styles.primaryAction} onClick={placeOrder} disabled={busy || (hasRx && !prescriptionReady)}><span aria-hidden="true">✓</span> {busy ? 'Processing...' : `Place order · ${money(total)}`}</button>{hasRx && !prescriptionReady ? <small>Add your prescription above to place this order.</small> : null}<small>Free delivery over Rs. 3,000</small></aside></div>
         </section></div> : null}
       </div>
     </main>
