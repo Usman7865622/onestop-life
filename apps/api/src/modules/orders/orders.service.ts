@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { DiscountType, OrderStatus } from '@prisma/client';
+import { DiscountType, OrderStatus, PrescriptionStatus } from '@prisma/client';
 import { AuthUser } from '../../common/types/auth-user';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PaymentsService } from '../payments/payments.service';
@@ -27,6 +27,20 @@ export class OrdersService {
     if (products.length !== requested.size) throw new NotFoundException('One or more products are no longer available');
     if (products.some((product) => !product.inStock)) throw new BadRequestException('One or more products are out of stock');
 
+    // Rx gating: orders containing prescription medicines must carry a
+    // prescription document key and wait for pharmacist verification before
+    // dispatch (DRAP requires Rx medicines, incl. antibiotics, to be sold
+    // only against a registered doctor's prescription).
+    const rxItems = products.filter((product) => product.requiresRx);
+    const prescriptionKey = dto.prescriptionKey?.trim();
+    if (rxItems.length && (!prescriptionKey || prescriptionKey.length < 3)) {
+      const names = rxItems.map((product) => product.nameEn).join(', ');
+      throw new BadRequestException(
+        `This order contains prescription medicines (${names}). Please attach your prescription so our pharmacist can verify it before dispatch.`,
+      );
+    }
+    const gated = rxItems.length > 0;
+
     const items = products.map((product) => ({
       product,
       quantity: requested.get(product.id) ?? 0,
@@ -39,7 +53,13 @@ export class OrdersService {
     const order = await this.prisma.order.create({
       data: {
         userId: user.id,
-        status: dto.paymentMethod === 'COD' ? OrderStatus.PROCESSING : OrderStatus.PENDING_PAYMENT,
+        // Gated (Rx) orders stay PENDING_PAYMENT while prescriptionStatus is
+        // PENDING — here PENDING_PAYMENT means "awaiting pharmacist
+        // verification", not dispatched. Approval moves them to PROCESSING.
+        status: gated ? OrderStatus.PENDING_PAYMENT : dto.paymentMethod === 'COD' ? OrderStatus.PROCESSING : OrderStatus.PENDING_PAYMENT,
+        requiresRx: gated,
+        prescriptionKey: gated ? prescriptionKey : undefined,
+        prescriptionStatus: gated ? PrescriptionStatus.PENDING : undefined,
         subtotalMinor,
         discountMinor: discount.amountMinor,
         shippingMinor,
@@ -82,7 +102,9 @@ export class OrdersService {
       await this.prisma.discountCode.update({ where: { code: discount.code }, data: { usedCount: { increment: 1 } } });
     }
 
-    if (payment.status === 'PAID') {
+    // Gated orders keep their PENDING_PAYMENT hold until the pharmacist
+    // approves (the payment record itself still shows PAID).
+    if (payment.status === 'PAID' && !gated) {
       await this.prisma.order.update({ where: { id: order.id }, data: { status: OrderStatus.PAID } });
     }
 
@@ -93,10 +115,46 @@ export class OrdersService {
   }
 
   listMine(user: AuthUser) {
+    // Full order rows are returned, so requiresRx / prescriptionStatus /
+    // prescriptionNotes ride along and patients can see review progress.
     return this.prisma.order.findMany({
       where: { userId: user.id },
       include: { items: true, payments: true, refunds: true },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /** Pharmacist/admin queue: Rx orders still awaiting prescription review. */
+  listRxQueue() {
+    return this.prisma.order.findMany({
+      where: { requiresRx: true, prescriptionStatus: PrescriptionStatus.PENDING },
+      include: {
+        items: true,
+        user: { select: { id: true, name: true, phone: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async reviewPrescription(orderId: string, decision: 'APPROVED' | 'REJECTED', notes?: string) {
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order) throw new NotFoundException('Order not found');
+    if (!order.requiresRx) throw new BadRequestException('This order does not contain prescription medicines');
+    if (order.prescriptionStatus !== PrescriptionStatus.PENDING) {
+      throw new BadRequestException('This prescription has already been reviewed');
+    }
+
+    const cleanNotes = notes?.trim() || undefined;
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: {
+        prescriptionStatus: decision === 'APPROVED' ? PrescriptionStatus.APPROVED : PrescriptionStatus.REJECTED,
+        prescriptionNotes: cleanNotes,
+        prescriptionReviewedAt: new Date(),
+        // Approved orders are cleared for dispatch; rejected orders are cancelled.
+        status: decision === 'APPROVED' ? OrderStatus.PROCESSING : OrderStatus.CANCELLED,
+      },
+      include: { items: true },
     });
   }
 

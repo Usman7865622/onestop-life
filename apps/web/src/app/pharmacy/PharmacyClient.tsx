@@ -150,7 +150,7 @@ export default function PharmacyClient({ medicines, classes }: { medicines: Medi
       ) : null}
 
       <p className={styles.rxNote}>
-        Items marked <strong>Rx required</strong> can only be dispensed against a valid prescription — our pharmacy team will ask you to share it before dispatch. All other items can be ordered right away.
+        Items marked <strong>Rx required</strong> can only be dispensed against a valid prescription. At checkout we now collect your prescription, and our pharmacist verifies it before anything is dispatched — DRAP requires medicines like antibiotics to be sold only against a registered doctor&apos;s prescription. All other items can be ordered right away.
       </p>
     </>
   );
