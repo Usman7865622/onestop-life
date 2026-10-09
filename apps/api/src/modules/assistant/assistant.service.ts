@@ -70,6 +70,14 @@ const MEDICINE_CLASS_MAP: Array<{ name: string; patterns: RegExp[] }> = [
 ];
 
 const MEDICINE_TERMS = /\b(medicine|medicines|medication|medications|pharmacy|pharmaceutical|prescription|antibiotic|antibiotics|tablet|tablets|capsule|capsules|syrup|inhaler|ointment|paracetamol|panadol|ibuprofen|brufen|cetirizine|omeprazole|metformin|amoxicillin|augmentin|azithromycin|insulin|vitamin|supplement)\b/i;
+// Conversational filler that must never drive a medicine match on its own
+// (e.g. the "do" in "Do you sell Augmentin?" previously matched Domperidone).
+const MEDICINE_FILLER_TERMS = new Set([
+  'pharmacy', 'rx', 'prescription', 'sell', 'sells', 'selling', 'sold', 'needed', 'need', 'needs',
+  'available', 'availability', 'stock', 'store', 'shop', 'buy', 'buys', 'please', 'show', 'find',
+  'give', 'want', 'wants', 'looking', 'search', 'with', 'without', 'you', 'your', 'have', 'has',
+  'any', 'some', 'what', 'which', 'there', 'this', 'that', 'medicine', 'medicines', 'medication',
+]);
 const SEARCH_STOP_WORDS = new Set([
   'a', 'an', 'and', 'are', 'book', 'buy', 'can', 'cost', 'doctor', 'doctors', 'find', 'for', 'from', 'get',
   'give', 'have', 'help', 'i', 'in', 'is', 'it', 'lab', 'labs', 'me', 'medicine', 'medicines', 'my', 'need',
@@ -79,6 +87,15 @@ const SEARCH_STOP_WORDS = new Set([
 
 function normalize(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9+./-]+/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function fieldTokens(value: string | null | undefined): string[] {
+  return normalize(value ?? '').split(' ').filter((token) => token.length > 1 && token !== '+');
+}
+
+function queryMentionsPhrase(normalizedQuery: string, phrase: string | null | undefined): boolean {
+  const normalizedPhrase = normalize(phrase ?? '');
+  return normalizedPhrase.length >= 3 && normalizedQuery.includes(normalizedPhrase);
 }
 
 function searchTerms(query: string) {
@@ -282,8 +299,11 @@ export class AssistantService {
 
   private async medicineResult(query: string, budget: number | null): Promise<PlatformResult> {
     const medicineClass = detectMedicineClass(query);
+    const normalizedQuery = normalize(query);
+    // Require at least 3 characters and drop conversational filler, so weak
+    // substring hits (e.g. "do" inside "domperidone") can never rank as matches.
     const terms = searchTerms(query).filter((term) => (
-      !['pharmacy', 'rx', 'prescription'].includes(term) && !/^\d+(?:\.\d+)?$/.test(term)
+      term.length >= 3 && !MEDICINE_FILLER_TERMS.has(term) && !/^\d+(?:\.\d+)?$/.test(term)
     ));
     const wantsNoRx = /\b(no prescription|without prescription|non[ -]?prescription|over[ -]?the[ -]?counter|otc)\b/i.test(query);
     const wantsRx = /\b(prescription medicines?|rx medicines?|prescription required)\b/i.test(query) && !wantsNoRx;
@@ -300,31 +320,79 @@ export class AssistantService {
       take: 300,
     });
 
-    const ranked = medicines
-      .map((medicine) => {
-        const searchable = normalize([
-          medicine.nameEn,
-          medicine.genericName ?? '',
-          medicine.brandName ?? '',
-          medicine.therapeuticClass ?? '',
-          medicine.strength ?? '',
-          medicine.form ?? '',
-        ].join(' '));
-        let score = 0;
-        if (medicineClass && medicine.therapeuticClass === medicineClass) score += 100;
-        for (const term of terms) {
-          if (normalize(medicine.nameEn).includes(term)) score += 30;
-          else if (normalize(medicine.genericName ?? '').includes(term) || normalize(medicine.brandName ?? '').includes(term)) score += 24;
-          else if (searchable.includes(term)) score += 8;
+    const scored = medicines.map((medicine) => {
+      const brandTokens = fieldTokens(medicine.brandName);
+      const genericTokens = fieldTokens(medicine.genericName);
+      const nameTokens = fieldTokens(medicine.nameEn);
+      const searchable = normalize([
+        medicine.nameEn,
+        medicine.genericName ?? '',
+        medicine.brandName ?? '',
+        medicine.therapeuticClass ?? '',
+      ].join(' '));
+
+      let score = 0;
+      let named = false;
+      let brandExact = false;
+      let genericExact = false;
+
+      // Exact phrase mentions rank first: brand name, then full name, then generic.
+      if (queryMentionsPhrase(normalizedQuery, medicine.brandName)) {
+        score += 1000;
+        brandExact = true;
+        named = true;
+      }
+      if (queryMentionsPhrase(normalizedQuery, medicine.nameEn)) {
+        score += 950;
+        named = true;
+      }
+      if (queryMentionsPhrase(normalizedQuery, medicine.genericName)) {
+        score += 900;
+        genericExact = true;
+        named = true;
+      }
+
+      // Token matches: the query term must equal (or be a real prefix of) a
+      // brand/generic/product token — never a stray substring inside a word.
+      const allNameTokens = [...brandTokens, ...genericTokens, ...nameTokens];
+      for (const term of terms) {
+        if (brandTokens.includes(term)) {
+          score += 800;
+          named = true;
+        } else if (genericTokens.includes(term)) {
+          score += 780;
+          named = true;
+        } else if (nameTokens.includes(term)) {
+          score += 700;
+          named = true;
+        } else if (term.length >= 4 && allNameTokens.some((token) => token.startsWith(term))) {
+          score += 300;
+          named = true;
         }
-        if (!terms.length && medicineClass) score += 10;
-        if (!terms.length && !medicineClass && budget !== null) score += 1;
-        if (!terms.length && !medicineClass && /\bparacetamol\b/.test(searchable)) score += 5;
-        return { medicine, score };
-      })
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score || a.medicine.priceMinor - b.medicine.priceMinor)
-      .slice(0, 4);
+      }
+
+      // Class relevance only matters when no specific medicine was named.
+      if (medicineClass && medicine.therapeuticClass === medicineClass) score += 100;
+      if (!terms.length && !medicineClass && budget !== null) score += 1;
+      if (!terms.length && !medicineClass && /\bparacetamol\b/.test(searchable)) score += 5;
+
+      return { medicine, score, named, brandExact, genericExact };
+    });
+
+    // If the user named a specific medicine, show only genuine name matches —
+    // never pad the answer with weak token-only filler results.
+    const namedMatches = scored.filter(({ named: isNamed, score }) => isNamed && score >= 300);
+    const ranked = (namedMatches.length
+      ? namedMatches.sort((a, b) => (
+        Number(b.brandExact) - Number(a.brandExact)
+        || Number(b.genericExact) - Number(a.genericExact)
+        || b.score - a.score
+        || a.medicine.priceMinor - b.medicine.priceMinor
+      ))
+      : scored
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score || a.medicine.priceMinor - b.medicine.priceMinor)
+    ).slice(0, 4);
 
     const cards: AssistantCard[] = ranked.map(({ medicine }) => ({
       type: 'medicine',
@@ -338,11 +406,20 @@ export class AssistantService {
       imageUrl: medicine.imageUrl ?? undefined,
     }));
 
+    // The Rx note may only name medicines actually matched and shown above.
     const rxNames = ranked.filter(({ medicine }) => medicine.requiresRx).map(({ medicine }) => medicine.nameEn);
     const budgetText = budget !== null ? ` under ${formatRs(budget * 100)}` : '';
-    let reply = cards.length
-      ? `I found ${cards.length} live medicine match${cards.length === 1 ? '' : 'es'}${budgetText}. Prices and pack details are shown on each card.`
-      : 'I could not find a matching medicine in the live pharmacy catalogue. Try the generic name, brand name, or a condition such as “pain relief”.';
+    let reply: string;
+    if (cards.length) {
+      reply = `I found ${cards.length} live medicine match${cards.length === 1 ? '' : 'es'}${budgetText}. Prices and pack details are shown on each card.`;
+    } else if (terms.length && !medicineClass) {
+      // The user named a specific medicine that is not in the catalogue — say so
+      // honestly instead of substituting unrelated medicines.
+      const namedMedicine = [...terms].sort((a, b) => b.length - a.length)[0];
+      reply = `I couldn't find “${titleCase(namedMedicine)}” in the live OneStop pharmacy catalogue yet. If you know its generic name, try that instead — or browse the Pharmacy page to see everything currently stocked.`;
+    } else {
+      reply = 'I could not find a matching medicine in the live pharmacy catalogue. Try the generic name, brand name, or a condition such as “pain relief”.';
+    }
     if (rxNames.length) {
       reply += ` Prescription required for ${rxNames.join(', ')}—OneStop will ask for a valid prescription during checkout, and a pharmacist must verify it before dispatch.`;
     }
