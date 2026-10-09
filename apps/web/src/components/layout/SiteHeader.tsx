@@ -44,6 +44,7 @@ export default function SiteHeader() {
           <nav className={styles.navigation} aria-label="Main navigation">
             <Link href="/">Home</Link>
             <Link href="/products">Shop</Link>
+            <Link href="/pharmacy">Pharmacy</Link>
             <Link href="/doctors">Doctors</Link>
             <Link href="/facilities">Facilities</Link>
             <Link href="/labs">Labs</Link>
