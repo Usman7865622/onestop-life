@@ -45,6 +45,7 @@ export default function SiteHeader() {
             <Link href="/">Home</Link>
             <Link href="/products">Shop</Link>
             <Link href="/doctors">Doctors</Link>
+            <Link href="/facilities">Facilities</Link>
             <Link href="/labs">Labs</Link>
             <Link href="/blood">Blood</Link>
             <Link href="/appointments">My Appointments</Link>
