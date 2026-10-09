@@ -32,4 +32,9 @@ export class CreateOrderDto {
   @IsString()
   @IsIn(['COD', 'CARD'])
   paymentMethod!: 'COD' | 'CARD';
+
+  /** Document key/reference for the customer's prescription (file storage comes later). Required when any item is an Rx medicine. */
+  @IsOptional()
+  @IsString()
+  prescriptionKey?: string;
 }

@@ -54,6 +54,12 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum PrescriptionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum PaymentRecordStatus {
   PENDING
   REQUIRES_ACTION
@@ -323,6 +329,11 @@ model Order {
   shippingName    String
   shippingPhone   String
   shippingAddress String
+  requiresRx            Boolean             @default(false)
+  prescriptionKey       String?
+  prescriptionStatus    PrescriptionStatus?
+  prescriptionNotes     String?
+  prescriptionReviewedAt DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
