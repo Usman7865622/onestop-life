@@ -750,6 +750,13 @@
   .panel, .cartPanel { min-height: 100%; }
 }
 
+/* --- Rx prescription gate (checkout) --- */
+.rxGate { margin-top: 18px; padding: 16px; border: 1px solid #fde68a; border-radius: 14px; background: #fffbeb; }
+.rxGateText { color: #92400e; font-size: .88rem; line-height: 1.55; margin: 8px 0 12px; }
+.rxReady { color: #15803d; font-weight: 800; font-size: .88rem; margin: 4px 0 0; }
+.rxMissing { color: #b45309; font-weight: 750; font-size: .88rem; margin: 4px 0 0; }
+.rxTag { padding: 2px 7px; border-radius: 999px; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; font-size: .68rem; font-weight: 950; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+
 /* Cart summary: sticky only on laptop+; stacked (and first,
    so totals are visible) below that. */
 @media (min-width: 1024px) {

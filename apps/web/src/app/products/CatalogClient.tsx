@@ -14,6 +14,7 @@ type Product = {
   category?: string;
   imageUrl?: string;
   inStock?: boolean;
+  requiresRx?: boolean;
 };
 
 type CartLine = Product & { quantity: number };
