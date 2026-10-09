@@ -30,7 +30,7 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
   const book = async () => {
     setError('');
     const token = readAccessToken();
-    if (!token) { setError('Please sign in on the home page first, then come back to book.'); return; }
+    if (!token) { setError('Please sign in at /login first, then come back to book.'); return; }
     if (!date || !time) { setError('Choose a date and time for your appointment.'); return; }
     if (!patientName.trim() || !patientPhone.trim()) { setError('Add the patient name and phone number.'); return; }
     const startsAt = toIso(date, time);
