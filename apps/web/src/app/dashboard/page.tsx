@@ -28,6 +28,36 @@ type VerificationRequest = {
 type MyVerificationRequest = Omit<VerificationRequest, 'user'>;
 type VerificationQueue = { items: VerificationRequest[]; total: number };
 
+type MyOrder = {
+  id: string;
+  status: string;
+  totalMinor: number;
+  createdAt: string;
+  requiresRx?: boolean;
+  prescriptionStatus?: string | null;
+  prescriptionNotes?: string | null;
+  items: Array<{ id: string; productName: string; quantity: number }>;
+};
+
+type RxQueueOrder = {
+  id: string;
+  status: string;
+  totalMinor: number;
+  createdAt: string;
+  prescriptionKey: string | null;
+  shippingName: string;
+  shippingPhone: string;
+  shippingAddress: string;
+  items: Array<{ id: string; productName: string; quantity: number }>;
+  user: { id: string; name: string | null; phone: string };
+};
+
+const PRESCRIPTION_PILL: Record<string, { label: string; className: 'rxPillPending' | 'rxPillApproved' | 'rxPillRejected' }> = {
+  PENDING: { label: 'Prescription under review', className: 'rxPillPending' },
+  APPROVED: { label: 'Prescription approved', className: 'rxPillApproved' },
+  REJECTED: { label: 'Prescription rejected', className: 'rxPillRejected' },
+};
+
 type SellerProduct = {
   id: string;
   nameEn: string;
@@ -75,6 +105,9 @@ export default function DashboardPage() {
 
   const [queue, setQueue] = useState<VerificationRequest[]>([]);
   const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
+  const [myOrders, setMyOrders] = useState<MyOrder[]>([]);
+  const [rxQueue, setRxQueue] = useState<RxQueueOrder[]>([]);
+  const [rxNotes, setRxNotes] = useState<Record<string, string>>({});
 
   const loadUser = useCallback(async () => {
     const accessToken = readAccessToken();
@@ -112,7 +145,28 @@ export default function DashboardPage() {
         .then((result) => setQueue(result.items))
         .catch((e) => setError(e instanceof Error ? e.message : 'Unable to load verification queue.'));
     }
+    void apiFetch<MyOrder[]>('/orders/mine', { method: 'GET' }, accessToken).then(setMyOrders).catch(() => setMyOrders([]));
+    if (hasRole(user, 'PHARMACY', 'ADMIN')) {
+      void apiFetch<RxQueueOrder[]>('/orders/rx-queue', { method: 'GET' }, accessToken)
+        .then(setRxQueue)
+        .catch((e) => setError(e instanceof Error ? e.message : 'Unable to load prescription queue.'));
+    }
   }, [user]);
+
+  const reviewPrescription = async (order: RxQueueOrder, decision: 'APPROVED' | 'REJECTED') => {
+    const accessToken = readAccessToken();
+    if (!accessToken) return;
+    setBusy(true); setError(''); setStatus('');
+    try {
+      await apiFetch(`/orders/${order.id}/prescription`, {
+        method: 'PATCH',
+        body: JSON.stringify({ decision, notes: rxNotes[order.id]?.trim() || undefined }),
+      }, accessToken);
+      setRxQueue((current) => current.filter((item) => item.id !== order.id));
+      setStatus(decision === 'APPROVED' ? 'Prescription approved — order cleared for dispatch.' : 'Prescription rejected — order cancelled and patient notified in their orders.');
+    } catch (e) { setError(e instanceof Error ? e.message : 'Unable to review prescription.'); }
+    finally { setBusy(false); }
+  };
 
   const logout = async () => {
     const accessToken = readAccessToken();
@@ -259,6 +313,20 @@ export default function DashboardPage() {
               <Link className={styles.linkCard} href="/products"><strong>Shop essentials</strong><span>Medicines, wellness, baby &amp; pet care.</span></Link>
               <Link className={styles.linkCard} href="/pharmacy"><strong>Pharmacy</strong><span>200+ genuine medicines by condition, delivered to your door.</span></Link>
             </div>
+            <div className={styles.listBlock}>
+              <h3>My orders</h3>
+              {myOrders.length ? myOrders.slice(0, 6).map((order) => {
+                const pill = order.requiresRx && order.prescriptionStatus ? PRESCRIPTION_PILL[order.prescriptionStatus] : null;
+                return (
+                  <div className={styles.listItem} key={order.id}>
+                    <strong>Order {order.id.slice(0, 8)}</strong>
+                    <span>{order.items.map((item) => `${item.productName} ×${item.quantity}`).join(', ')} · {money(order.totalMinor)} · {order.status.replaceAll('_', ' ')}</span>
+                    {pill ? <span className={styles[pill.className]}>{pill.label}</span> : <span>{new Date(order.createdAt).toLocaleDateString('en-PK')}</span>}
+                    {order.requiresRx && order.prescriptionStatus === 'REJECTED' && order.prescriptionNotes ? <span>Pharmacist note: {order.prescriptionNotes}</span> : null}
+                  </div>
+                );
+              }) : <p className={styles.emptyStateInline}>No orders yet. Your shop and pharmacy orders will appear here.</p>}
+            </div>
           </section>
         ) : null}
 
@@ -375,6 +443,32 @@ export default function DashboardPage() {
                 <p>You continued as Admin, but your account ({roleSummary}) does not have the ADMIN role. If you are on the platform team, ask an existing admin to add the role to your account, then sign in again. Otherwise, continue as Patient, Doctor or Business from the <Link href="/login">sign-in page</Link>.</p>
               </div>
             )}
+          </section>
+        ) : null}
+
+        {hasRole(user, 'PHARMACY', 'ADMIN') ? (
+          <section className={styles.card} aria-labelledby="rx-queue-heading">
+            <PanelTitle id="rx-queue-heading" icon="pharmacy" title="Prescription queue" sub="Verify prescriptions before dispatch — Rx medicines only leave the pharmacy after approval." />
+            <div className={styles.adminStats}><div><strong>{rxQueue.length}</strong><span>awaiting review</span></div></div>
+            {rxQueue.length ? (
+              <div className={styles.queueList}>
+                {rxQueue.map((order) => (
+                  <article className={styles.queueItem} key={order.id}>
+                    <div className={styles.queueHeader}>
+                      <div><span className={styles.rxPillPending}>Prescription under review</span><h3>{order.user.name || order.shippingName || 'Patient'}</h3><p>{order.user.phone || order.shippingPhone}</p></div>
+                      <span>{new Date(order.createdAt).toLocaleDateString('en-PK')}</span>
+                    </div>
+                    <p className={styles.queueMeta}>Medicines: <strong>{order.items.map((item) => `${item.productName} ×${item.quantity}`).join(', ')}</strong></p>
+                    <p className={styles.queueMeta}>Prescription: <strong>{order.prescriptionKey ?? 'Not provided'}</strong> · Total: <strong>{money(order.totalMinor)}</strong></p>
+                    <label className={styles.field}><span>Pharmacist note (optional, required to explain a rejection)</span><input value={rxNotes[order.id] ?? ''} onChange={(e) => setRxNotes((current) => ({ ...current, [order.id]: e.target.value }))} placeholder="e.g. Verified with Dr. Ahmed Khan" /></label>
+                    <div className={styles.reviewActions}>
+                      <button className={styles.primaryButton} onClick={() => reviewPrescription(order, 'APPROVED')} disabled={busy}>Approve &amp; dispatch</button>
+                      <button className={styles.dangerButton} onClick={() => reviewPrescription(order, 'REJECTED')} disabled={busy}>Reject &amp; cancel order</button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : <p className={styles.emptyStateInline}>No prescriptions waiting. New Rx orders will appear here for verification.</p>}
           </section>
         ) : null}
       </div>
