@@ -257,6 +257,7 @@ export default function DashboardPage() {
               <Link className={styles.linkCard} href="/labs"><strong>Lab tests at home</strong><span>Book home sample collection and track reports.</span></Link>
               <Link className={styles.linkCard} href="/blood"><strong>Blood banks &amp; requests</strong><span>Find a blood bank or post a donor request.</span></Link>
               <Link className={styles.linkCard} href="/products"><strong>Shop essentials</strong><span>Medicines, wellness, baby &amp; pet care.</span></Link>
+              <Link className={styles.linkCard} href="/pharmacy"><strong>Pharmacy</strong><span>200+ genuine medicines by condition, delivered to your door.</span></Link>
             </div>
           </section>
         ) : null}
