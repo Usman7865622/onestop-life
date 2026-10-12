@@ -856,3 +856,7 @@
     scroll-behavior: auto;
   }
 }
+
+/* --- Login awareness --- */
+.signinNudge { margin-top: 10px; font-size: .88rem; color: #52677d; }
+.signinNudge a { color: #166a91; font-weight: 900; }
