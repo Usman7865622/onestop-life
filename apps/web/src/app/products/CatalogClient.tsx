@@ -48,6 +48,20 @@ const categoryIcons: Record<string, ReactNode> = {
   'Electronics & appliances': <><rect x="4" y="7" width="16" height="11" rx="2" /><path d="M9 21h6M12 18v3" /></>,
 };
 
+const catThemes: Record<string, [string, string]> = {
+  'Trending essentials': ['#f85606', '#ff9a3d'],
+  Medicines: ['#0d7a6f', '#14b8a6'],
+  'Medical devices': ['#4f46e5', '#818cf8'],
+  Wellness: ['#db2777', '#f472b6'],
+  'Health essentials': ['#059669', '#34d399'],
+  'Personal care': ['#c026d3', '#e879f9'],
+  'Baby care': ['#f59e0b', '#fbbf24'],
+  Nutrition: ['#65a30d', '#a3e635'],
+  'Pet care': ['#ea580c', '#fb923c'],
+  'Home health': ['#0284c7', '#38bdf8'],
+  'Electronics & appliances': ['#7c3aed', '#a78bfa'],
+};
+
 function CategoryIcon({ category, className }: { category: string; className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
@@ -332,16 +346,28 @@ export default function CatalogClient({ products }: CatalogClientProps) {
       {/* Category icon rail */}
       <nav className={styles.catRail} aria-label="Shop by category">
         <button className={selectedCategory === 'All products' ? styles.catActive : styles.cat} onClick={() => pickCategory('All products')}>
-          <span className={styles.catIcon}><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg></span>
+          <span className={styles.catIcon} style={{ background: 'linear-gradient(135deg, #17233b, #3b5bdb)' }}><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg></span>
           <span>All</span>
         </button>
-        {categories.map(([category, items]) => (
-          <button key={category} className={selectedCategory === category ? styles.catActive : styles.cat} onClick={() => pickCategory(category)}>
-            <span className={styles.catIcon}><CategoryIcon category={category} /></span>
-            <span>{categoryLabels[category] ?? category}</span>
-            <small>{items.length}</small>
-          </button>
-        ))}
+        {categories.map(([category, items], ci) => {
+          const theme = catThemes[category] ?? ['#0d7a6f', '#14b8a6'];
+          const active = selectedCategory === category;
+          return (
+            <button
+              key={category}
+              className={active ? styles.catActive : styles.cat}
+              onClick={() => pickCategory(category)}
+              style={{ animationDelay: `${Math.min(ci, 11) * 45}ms`, ['--cat-from' as string]: theme[0], ['--cat-to' as string]: theme[1] }}
+            >
+              <span className={styles.catIcon} style={{ background: `linear-gradient(135deg, ${theme[0]}, ${theme[1]})` }}>
+                <CategoryIcon category={category} />
+              </span>
+              <span>{categoryLabels[category] ?? category}</span>
+              <small>{items.length} items</small>
+              {active ? <span className={styles.catGlow} aria-hidden="true" /> : null}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Flash deals */}
