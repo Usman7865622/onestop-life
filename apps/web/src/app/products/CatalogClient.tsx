@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import styles from './page.module.css';
-import ShopAssistant, { type AssistantProduct } from './ShopAssistant';
+
 
 type Product = {
   id: string;
@@ -106,17 +106,6 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     }
     return Array.from(groups.entries());
   }, [products]);
-
-  const assistantProducts = useMemo<AssistantProduct[]>(() => products.map((product) => ({
-    id: product.id,
-    nameEn: product.nameEn,
-    nameUr: product.nameUr ?? null,
-    priceMinor: product.priceMinor,
-    unit: product.unit ?? 'item',
-    category: product.category ?? null,
-    imageUrl: product.imageUrl ?? null,
-    inStock: product.inStock ?? true,
-  })), [products]);
 
   const visibleCategories = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -324,12 +313,6 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           </section>
         </div>
       ) : null}
-      <ShopAssistant catalogProducts={assistantProducts} onAddToCart={(product: AssistantProduct) => addToCart({
-        ...product,
-        nameUr: product.nameUr ?? undefined,
-        category: product.category ?? undefined,
-        imageUrl: product.imageUrl ?? undefined,
-      })} />
     </>
   );
 }
