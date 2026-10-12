@@ -26,9 +26,9 @@ function DropIcon() {
   );
 }
 
-export default function BloodClient({ banks, initialRequests }: { banks: Facility[]; initialRequests: PublicBloodRequest[] }) {
+export default function BloodClient({ banks, initialRequests, initialGroup }: { banks: Facility[]; initialRequests: PublicBloodRequest[]; initialGroup?: string }) {
   const [bankCity, setBankCity] = useState('All cities');
-  const [boardGroup, setBoardGroup] = useState('all');
+  const [boardGroup, setBoardGroup] = useState(initialGroup && initialGroup in BLOOD_GROUP_LABELS ? initialGroup : 'all');
   const [boardCity, setBoardCity] = useState('');
   const [requests, setRequests] = useState<PublicBloodRequest[]>(initialRequests);
   const [token, setToken] = useState<string | null>(null);
@@ -44,6 +44,8 @@ export default function BloodClient({ banks, initialRequests }: { banks: Facilit
   const [busyRequestId, setBusyRequestId] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [revealedPhones, setRevealedPhones] = useState<Record<string, string>>({});
+  const [revealingId, setRevealingId] = useState('');
 
   const bankCities = useMemo(() => ['All cities', ...Array.from(new Set(banks.map((bank) => bank.city))).sort()], [banks]);
   const visibleBanks = useMemo(() => (bankCity === 'All cities' ? banks : banks.filter((bank) => bank.city === bankCity)), [bankCity, banks]);
@@ -76,6 +78,19 @@ export default function BloodClient({ banks, initialRequests }: { banks: Facilit
     setToken(stored);
     if (stored) void loadMine(stored);
   }, [loadMine]);
+
+  const revealContact = async (requestId: string) => {
+    if (!token || revealingId) return;
+    setRevealingId(requestId);
+    try {
+      const result = await apiFetch<{ contactPhone: string }>(`/blood-requests/${requestId}/contact`, { method: 'GET' }, token);
+      setRevealedPhones((current) => ({ ...current, [requestId]: result.contactPhone }));
+    } catch {
+      // Fail silently; the button stays available for another attempt.
+    } finally {
+      setRevealingId('');
+    }
+  };
 
   const formReady = Boolean(city.trim().length >= 2 && contactPhone.trim().length >= 10 && Number(units) >= 1);
 
@@ -240,6 +255,20 @@ export default function BloodClient({ banks, initialRequests }: { banks: Facilit
                   <span>Posted {formatWhen(request.createdAt)}</span>
                 </div>
                 <span className={request.urgency === 'CRITICAL' ? `${styles.urgencyPill} ${styles.urgencyCritical}` : request.urgency === 'URGENT' ? `${styles.urgencyPill} ${styles.urgencyUrgent}` : styles.urgencyPill}>{request.urgency.toLowerCase()}</span>
+                {token ? (
+                  revealedPhones[request.id] ? (
+                    <a className={styles.contactButton} href={`tel:${revealedPhones[request.id].replace(/[^+\d]/g, '')}`}>Call {revealedPhones[request.id]}</a>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.contactButton}
+                      onClick={() => void revealContact(request.id)}
+                      disabled={revealingId === request.id}
+                    >
+                      {revealingId === request.id ? 'Revealing…' : 'Request contact'}
+                    </button>
+                  )
+                ) : null}
               </article>
             ))}
           </div>
