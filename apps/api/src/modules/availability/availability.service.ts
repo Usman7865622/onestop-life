@@ -141,7 +141,9 @@ export class AvailabilityService {
     const dayStartUtc = new Date(`${dateStr}T00:00:00+05:00`);
     if (Number.isNaN(dayStartUtc.getTime())) throw new BadRequestException('Invalid date');
     const dayEndUtc = new Date(dayStartUtc.getTime() + 24 * 60 * 60 * 1000);
-    const weekday = dayStartUtc.getUTCDay(); // midnight Karachi == same calendar day in UTC offset terms
+    // Midnight Karachi (00:00+05:00) is 19:00 UTC the previous calendar day, so
+    // getUTCDay() reads one weekday early. Shift forward to the true Karachi weekday.
+    const weekday = (dayStartUtc.getUTCDay() + 1) % 7; // 0=Sunday..6=Saturday, Asia/Karachi
 
     const entries = await this.prisma.availabilitySlot.findMany({
       where: {
@@ -219,7 +221,8 @@ export class AvailabilityService {
     for (const dateKey of dateKeys) {
       const dayStartUtc = new Date(`${dateKey}T00:00:00+05:00`);
       const dayEndUtc = new Date(dayStartUtc.getTime() + 24 * 60 * 60 * 1000);
-      const weekday = dayStartUtc.getUTCDay();
+      // Same +1 shift as computeDaySlots: midnight Karachi is the previous UTC day.
+      const weekday = (dayStartUtc.getUTCDay() + 1) % 7;
       const dayEntries = entries.filter(
         (e) =>
           e.weekday === weekday &&
