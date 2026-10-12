@@ -12,6 +12,31 @@ const doctorInclude = {
 export class DoctorsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async ratingSummaries(doctorIds: string[]) {
+    if (!doctorIds.length) return new Map<string, { avgRating: number; reviewCount: number }>();
+    const groups = await this.prisma.review.groupBy({
+      by: ['doctorProfileId'],
+      where: { doctorProfileId: { in: doctorIds } },
+      _avg: { rating: true },
+      _count: { rating: true },
+    });
+    const map = new Map<string, { avgRating: number; reviewCount: number }>();
+    for (const group of groups) {
+      map.set(group.doctorProfileId, {
+        avgRating: Math.round((group._avg.rating ?? 0) * 10) / 10,
+        reviewCount: group._count.rating,
+      });
+    }
+    return map;
+  }
+
+  private withRatings<T extends { id: string }>(items: T[], summaries: Map<string, { avgRating: number; reviewCount: number }>) {
+    return items.map((item) => ({
+      ...item,
+      ...(summaries.get(item.id) ?? { avgRating: 0, reviewCount: 0 }),
+    }));
+  }
+
   async list(query: ListDoctorsQueryDto) {
     const where: Prisma.DoctorProfileWhereInput = { isBookable: true };
     if (query.speciality) where.speciality = { contains: query.speciality, mode: 'insensitive' };
@@ -30,13 +55,15 @@ export class DoctorsService {
       include: doctorInclude,
       orderBy: { createdAt: 'desc' },
     });
-    return { items };
+    const summaries = await this.ratingSummaries(items.map((item) => item.id));
+    return { items: this.withRatings(items, summaries) };
   }
 
   async getById(id: string) {
     const doctor = await this.prisma.doctorProfile.findUnique({ where: { id }, include: doctorInclude });
     if (!doctor) throw new NotFoundException('Doctor not found');
-    return doctor;
+    const summaries = await this.ratingSummaries([doctor.id]);
+    return { ...doctor, ...(summaries.get(doctor.id) ?? { avgRating: 0, reviewCount: 0 }) };
   }
 
   async upsertMine(userId: string, dto: UpsertDoctorProfileDto) {
