@@ -122,3 +122,30 @@
   .primaryButton, .segment, .segmentActive { min-height: 48px; }
   .backLink, .textLink, .secondaryLink { display: inline-flex; align-items: center; min-height: 44px; }
 }
+
+/* --- Slot picker (real availability) --- */
+.nextChip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px; background: #e9f6ee; color: #1c6e3a; font-weight: 950; font-size: .78rem; }
+.nextChip::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #27a557; box-shadow: 0 0 0 4px rgba(39,165,87,.18); animation: nextChipPulse 2s infinite; }
+@keyframes nextChipPulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+.nextChipNone { display: inline-flex; align-items: center; padding: 7px 13px; border-radius: 999px; background: #f1f4f8; color: #68798e; font-weight: 950; font-size: .78rem; }
+
+.pickerHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: .85rem; font-weight: 950; color: #24364d; }
+.tzLabel { font-weight: 700; color: #8a9aac; font-size: .75rem; }
+.dateStrip { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 8px; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+.dateChip { flex: 0 0 auto; min-width: 62px; min-height: 44px; display: grid; gap: 1px; justify-items: center; align-content: center; padding: 8px 8px; border: 1px solid #dbe6ee; border-radius: 12px; background: #f6f9fb; cursor: pointer; scroll-snap-align: start; }
+.dateChip strong { font-size: .95rem; color: #172337; line-height: 1.1; }
+.dateChip span { font-size: .7rem; font-weight: 800; color: #8a9aac; text-transform: uppercase; letter-spacing: .05em; }
+.dateChip:hover { border-color: #166a91; }
+.dateChipActive { border-color: #172337; background: #172337; box-shadow: 0 8px 18px rgba(23,35,55,.18); }
+.dateChipActive strong, .dateChipActive span { color: #fff; }
+.timeGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; }
+.timeSlot { min-height: 44px; padding: 10px 6px; border: 1px solid #dbe6ee; border-radius: 12px; background: #fbfdff; font-weight: 900; font-size: .88rem; color: #172337; cursor: pointer; }
+.timeSlot:hover { border-color: #166a91; }
+.timeSlotSelected { background: #f7b928; border-color: #f7b928; color: #172337; box-shadow: 0 8px 18px rgba(247,185,40,.35); }
+.timeSlotBooked { text-decoration: line-through; color: #a5b3c2; background: #f3f6f9; border-color: #e6ecf2; cursor: not-allowed; }
+@media (max-width: 480px) { .timeGrid { grid-template-columns: repeat(3, 1fr); } }
+@media (pointer: coarse) { .dateChip, .timeSlot { min-height: 48px; } }
+
+/* --- Reviews & trust --- */
+.ratingLine { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: .88rem; font-weight: 800; color: #40546b; }
+.ratingMuted { font-weight: 700; color: #8a9aac; }
