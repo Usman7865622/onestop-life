@@ -120,9 +120,11 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All products');
   const [sortOrder, setSortOrder] = useState('featured');
+  const pickCategory = (c: string) => { setSelectedCategory(c); setLimits({}); };
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [quickView, setQuickView] = useState<Product | null>(null);
+  const [limits, setLimits] = useState<Record<string, number>>({});
   const [slide, setSlide] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const [addedId, setAddedId] = useState<string | null>(null);
@@ -303,12 +305,12 @@ export default function CatalogClient({ products }: CatalogClientProps) {
 
       {/* Category icon rail */}
       <nav className={styles.catRail} aria-label="Shop by category">
-        <button className={selectedCategory === 'All products' ? styles.catActive : styles.cat} onClick={() => setSelectedCategory('All products')}>
+        <button className={selectedCategory === 'All products' ? styles.catActive : styles.cat} onClick={() => pickCategory('All products')}>
           <span className={styles.catIcon}><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg></span>
           <span>All</span>
         </button>
         {categories.map(([category, items]) => (
-          <button key={category} className={selectedCategory === category ? styles.catActive : styles.cat} onClick={() => setSelectedCategory(category)}>
+          <button key={category} className={selectedCategory === category ? styles.catActive : styles.cat} onClick={() => pickCategory(category)}>
             <span className={styles.catIcon}><CategoryIcon category={category} /></span>
             <span>{categoryLabels[category] ?? category}</span>
             <small>{items.length}</small>
@@ -378,13 +380,16 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             <option value="name">Name A–Z</option>
           </select></label>
           {(selectedCategory !== 'All products' || searchTerm) ? (
-            <button className={styles.clearBtn} onClick={() => { setSelectedCategory('All products'); setSearchTerm(''); }}>Clear ✕</button>
+            <button className={styles.clearBtn} onClick={() => { setSelectedCategory('All products'); setSearchTerm(''); setLimits({}); }}>Clear ✕</button>
           ) : null}
         </div>
       </div>
 
       {visibleCategories.length ? visibleCategories.map(([category, items]) => {
         const cid = category.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
+        const limit = limits[category] ?? (selectedCategory === 'All products' ? 10 : 20);
+        const shown = items.slice(0, limit);
+        const label = categoryLabels[category] ?? category;
         return (
           <section className={styles.catSection} id={cid} key={category} aria-labelledby={`${cid}-h`}>
             <div className={styles.catSectionHead}>
@@ -393,7 +398,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               <span className={styles.countPill}>{items.length}</span>
             </div>
             <div className={styles.grid}>
-              {items.map((p) => (
+              {shown.map((p) => (
                 <article className={styles.card} key={p.id}>
                   <button className={styles.cardMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
                     {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <CategoryIcon category={category} className={styles.cardIcon} />}
@@ -420,13 +425,20 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 </article>
               ))}
             </div>
+            {items.length > shown.length ? (
+              <button className={styles.viewAllBtn} onClick={() => setLimits((l) => ({ ...l, [category]: (l[category] ?? (selectedCategory === 'All products' ? 10 : 20)) + (selectedCategory === 'All products' ? items.length : 20) }))}>
+                {selectedCategory === 'All products' ? `View all ${items.length} ${label.toLowerCase()} →` : `Show more (${items.length - shown.length} remaining) ↓`}
+              </button>
+            ) : items.length > 10 && selectedCategory === 'All products' ? (
+              <button className={styles.viewAllBtn} onClick={() => setLimits((l) => ({ ...l, [category]: 10 }))}>Show less ↑</button>
+            ) : null}
           </section>
         );
       }) : (
         <section className={styles.noResults}>
           <h2>No products found</h2>
           <p>Try a broader search or browse all categories.</p>
-          <button className={styles.heroCta} onClick={() => { setSearchTerm(''); setSelectedCategory('All products'); }}>Show everything</button>
+          <button className={styles.heroCta} onClick={() => { setSearchTerm(''); setSelectedCategory('All products'); setLimits({}); }}>Show everything</button>
         </section>
       )}
 
