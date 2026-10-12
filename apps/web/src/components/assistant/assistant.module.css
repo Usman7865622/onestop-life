@@ -743,10 +743,16 @@
   }
 }
 
+@media (max-width: 899px) {
+  /* Lift the launcher above the sticky mobile cart pill (bottom:18px + ~54px tall) */
+  .root {
+    bottom: 92px;
+  }
+}
+
 @media (max-width: 640px) {
   .root {
     right: max(12px, env(safe-area-inset-right));
-    bottom: max(12px, env(safe-area-inset-bottom));
     left: max(12px, env(safe-area-inset-left));
   }
 

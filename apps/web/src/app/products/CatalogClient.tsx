@@ -17,7 +17,18 @@ type Product = {
   requiresRx?: boolean;
 };
 
+
 type CartLine = Product & { quantity: number };
+
+/** Image with graceful fallback: a dead/broken URL renders the designed
+ *  category tile instead of a broken-image icon. */
+function ProdImg({ src, category, iconClassName }: { src?: string | null; category?: string | null; iconClassName?: string }) {
+  const [failed, setFailed] = useState(false);
+  if (src && !failed) {
+    return <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} />;
+  }
+  return <CategoryIcon category={category ?? ''} className={iconClassName} />;
+}
 type CatalogClientProps = { products: Product[] };
 
 const categoryLabels: Record<string, string> = {
@@ -392,7 +403,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             {flashDeals.map((p) => (
               <article className={styles.dealCard} key={p.id}>
                 <button className={styles.dealMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
-                  {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <CategoryIcon category={p.category ?? ''} className={styles.dealIcon} />}
+                  {<ProdImg src={p.imageUrl} category={p.category} iconClassName={styles.dealIcon} />}
                   <span className={styles.hotBadge}>HOT</span>
                 </button>
                 <div className={styles.dealBody}>
@@ -455,7 +466,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               {shown.map((p) => (
                 <article className={styles.card} key={p.id}>
                   <button className={styles.cardMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
-                    {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <CategoryIcon category={category} className={styles.cardIcon} />}
+                    {<ProdImg src={p.imageUrl} category={category} iconClassName={styles.cardIcon} />}
                     <span className={styles.wishWrap}>
                       <span role="button" tabIndex={0} aria-label={`${wishlist.includes(p.id) ? 'Remove' : 'Save'} ${p.nameEn}`}
                         className={wishlist.includes(p.id) ? styles.wishOn : styles.wish}
@@ -516,7 +527,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           <section className={styles.qv} role="dialog" aria-modal="true" aria-label={quickView.nameEn}>
             <button className={styles.qvClose} onClick={() => setQuickView(null)} aria-label="Close">×</button>
             <div className={styles.qvMedia}>
-              {quickView.imageUrl ? <img src={quickView.imageUrl} alt="" /> : <CategoryIcon category={quickView.category ?? ''} className={styles.qvIcon} />}
+              {<ProdImg src={quickView.imageUrl} category={quickView.category} iconClassName={styles.qvIcon} />}
               {quickView.requiresRx ? <span className={styles.rxBadge}>Prescription required</span> : null}
             </div>
             <div className={styles.qvBody}>
