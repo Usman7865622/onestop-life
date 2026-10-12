@@ -20,9 +20,36 @@ export type Doctor = {
   languages: string[];
   about?: string | null;
   isBookable: boolean;
+  pmdcNumber?: string | null;
+  consultationCount?: number | null;
+  avgRating: number;
+  reviewCount: number;
   user: { id: string; name: string | null; phone?: string | null; email?: string | null };
   facilities: DoctorFacilityLink[];
 };
+
+export type Review = {
+  id: string;
+  appointmentId: string;
+  doctorProfileId: string;
+  userId: string;
+  rating: number;
+  title?: string | null;
+  text: string;
+  createdAt: string;
+  user: { id: string; name: string | null };
+};
+
+export type ReviewEligibility = {
+  canReview: boolean;
+  reason: 'ELIGIBLE' | 'NOT_YOURS' | 'NOT_COMPLETED' | 'ALREADY_REVIEWED';
+};
+
+export function patientFirstName(name: string | null | undefined): string {
+  const clean = (name ?? 'Patient').replace(/^Dr\.\s*/i, '').trim();
+  const first = clean.split(/\s+/).filter(Boolean)[0] ?? 'Patient';
+  return first.length > 12 ? `${first.slice(0, 11)}…` : first;
+}
 
 export type Appointment = {
   id: string;
