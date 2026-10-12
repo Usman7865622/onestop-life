@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import styles from './page.module.css';
-import dynamic from 'next/dynamic';
-const Hero3D = dynamic(() => import('./Hero3D'), { ssr: false });
+
 
 type Product = {
   id: string;
@@ -281,19 +280,6 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const scrollDeals = (dir: 1 | -1) =>
     dealsRail.current?.scrollBy({ left: dir * 560, behavior: 'smooth' });
 
-  /** 3D tilt-on-hover for cards: rotate toward the cursor + moving glare. */
-  const tiltMove = (e: React.MouseEvent<HTMLElement>) => {
-    const el = e.currentTarget;
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    el.style.transform = `perspective(900px) rotateX(${(-py * 7).toFixed(2)}deg) rotateY(${(px * 9).toFixed(2)}deg) translateY(-5px)`;
-    el.style.setProperty('--gx', `${((px + 0.5) * 100).toFixed(1)}%`);
-    el.style.setProperty('--gy', `${((py + 0.5) * 100).toFixed(1)}%`);
-  };
-  const tiltLeave = (e: React.MouseEvent<HTMLElement>) => {
-    e.currentTarget.style.transform = '';
-  };
 
   const activeSlide = heroSlides[slide];
 
@@ -333,7 +319,6 @@ export default function CatalogClient({ products }: CatalogClientProps) {
       {/* Hero carousel */}
       <section className={styles.hero} aria-label="Featured offers">
         <div className={`${styles.heroSlide} ${activeSlide.theme}`}>
-          <div className={styles.hero3d}><Hero3D /></div>
           <div className={styles.heroCopy}>
             <span className={styles.heroEyebrow}>{activeSlide.eyebrow}</span>
             <h1>{activeSlide.title}</h1>
@@ -405,7 +390,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           </div>
           <div className={styles.dealsRail} ref={dealsRail}>
             {flashDeals.map((p) => (
-              <article className={`${styles.dealCard} ${styles.tilt}`} key={p.id} onMouseMove={tiltMove} onMouseLeave={tiltLeave}>
+              <article className={styles.dealCard} key={p.id}>
                 <button className={styles.dealMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
                   {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <CategoryIcon category={p.category ?? ''} className={styles.dealIcon} />}
                   <span className={styles.hotBadge}>HOT</span>
@@ -468,7 +453,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             </div>
             <div className={styles.grid}>
               {shown.map((p) => (
-                <article className={`${styles.card} ${styles.tilt}`} key={p.id} onMouseMove={tiltMove} onMouseLeave={tiltLeave}>
+                <article className={styles.card} key={p.id}>
                   <button className={styles.cardMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
                     {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <CategoryIcon category={category} className={styles.cardIcon} />}
                     <span className={styles.wishWrap}>
