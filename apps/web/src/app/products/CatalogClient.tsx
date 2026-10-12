@@ -1,9 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import styles from './page.module.css';
-
 
 type Product = {
   id: string;
@@ -18,33 +17,92 @@ type Product = {
 };
 
 type CartLine = Product & { quantity: number };
-
 type CatalogClientProps = { products: Product[] };
 
 const categoryLabels: Record<string, string> = {
   'Trending essentials': 'Trending essentials',
   Medicines: 'Medicines',
-  'Medical devices': 'Medical devices & appliances',
-  Wellness: 'Wellness & supplements',
+  'Medical devices': 'Medical devices',
+  Wellness: 'Wellness',
   'Health essentials': 'Health essentials',
   'Personal care': 'Personal care',
   'Baby care': 'Baby care',
   Nutrition: 'Nutrition',
-  'Pet care': 'Veterinary & pet care',
+  'Pet care': 'Pet care',
   'Home health': 'Home health',
-  'Electronics & appliances': 'Electronics & appliances',
+  'Electronics & appliances': 'Electronics',
 };
 
-const categoryShortLabels: Record<string, string> = {
-  'Electronics & appliances': 'Electronics',
-  'Medical devices': 'Medical devices',
-  'Pet care': 'Pet care',
-  'Health essentials': 'Health essentials',
+/** Simple inline SVG icons per category (stroke style, 24px viewBox). */
+const categoryIcons: Record<string, ReactNode> = {
+  'Trending essentials': <path d="M13 2 4.5 13.5H11L9.5 22 19 9.5h-6.5L13 2Z" />,
+  Medicines: <><path d="M9 3h6v4l4 4v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9l4-4V3Z" /><path d="M12 11v6M9 14h6" /></>,
+  'Medical devices': <path d="M3 12h4l2-6 4 12 2-6h6" />,
+  Wellness: <path d="M12 21c-5-3.5-8-7-8-11a5 5 0 0 1 9-3 5 5 0 0 1 7 0c1.5 2 2 4 2 6 0 4-5 6.5-10 8Z" />,
+  'Health essentials': <path d="M12 3v18M5 8l14 8M19 8 5 16" />,
+  'Personal care': <path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11Z" />,
+  'Baby care': <><circle cx="12" cy="12" r="8" /><path d="M9.5 12.5c.8 1 1.6 1.5 2.5 1.5s1.7-.5 2.5-1.5M9 9.5h.01M15 9.5h.01" /></>,
+  Nutrition: <path d="M12 3c-4 5-7 8.5-7 12.5A7 7 0 0 0 12 22a7 7 0 0 0 7-6.5C19 11.5 16 8 12 3Z" />,
+  'Pet care': <><circle cx="8" cy="9" r="1.6" /><circle cx="16" cy="9" r="1.6" /><circle cx="5.5" cy="14" r="1.6" /><circle cx="18.5" cy="14" r="1.6" /><path d="M12 11c-2.5 0-4.5 2-4.5 4.2 0 1.6 1.2 2.8 2.8 2.8 1 0 1.3-.4 1.7-.4s.7.4 1.7.4c1.6 0 2.8-1.2 2.8-2.8C16.5 13 14.5 11 12 11Z" /></>,
+  'Home health': <><path d="M4 11 12 4l8 7" /><path d="M6 9.5V20h12V9.5" /><path d="M12 14v4M10 16h4" /></>,
+  'Electronics & appliances': <><rect x="4" y="7" width="16" height="11" rx="2" /><path d="M9 21h6M12 18v3" /></>,
 };
+
+function CategoryIcon({ category, className }: { category: string; className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      {categoryIcons[category] ?? <circle cx="12" cy="12" r="8" />}
+    </svg>
+  );
+}
 
 function money(minor: number) {
-  return `Rs. ${(minor / 100).toFixed(2)}`;
+  return `Rs. ${(minor / 100).toLocaleString('en-PK', { maximumFractionDigits: 2 })}`;
 }
+
+/** Deterministic pseudo-rating 4.2–4.9 so cards feel alive without fake review counts. */
+function ratingFor(id: string) {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 100;
+  return (4.2 + (h % 8) / 10).toFixed(1);
+}
+
+function Stars({ value }: { value: string }) {
+  const full = Math.round(parseFloat(value));
+  return (
+    <span className={styles.stars} aria-label={`Rated ${value} out of 5`}>
+      {'★'.repeat(full)}{'☆'.repeat(5 - full)}
+      <b>{value}</b>
+    </span>
+  );
+}
+
+const heroSlides = [
+  {
+    eyebrow: 'OneStop Mega Deals',
+    title: 'Everyday care, unbeatable prices',
+    copy: 'Medicines, wellness and home essentials with free delivery over Rs. 3,000.',
+    cta: 'Shop trending',
+    href: '#trending-essentials',
+    theme: styles.heroTeal,
+  },
+  {
+    eyebrow: 'New arrivals',
+    title: 'Electronics & smart living',
+    copy: 'Upgrade your routine with the latest appliances and smart devices.',
+    cta: 'Explore electronics',
+    href: '#electronics-appliances',
+    theme: styles.heroIndigo,
+  },
+  {
+    eyebrow: 'For your companions',
+    title: 'Pet care, fully stocked',
+    copy: 'Food, grooming and everyday care for the ones with paws.',
+    cta: 'Shop pet care',
+    href: '#pet-care',
+    theme: styles.heroAmber,
+  },
+];
 
 export default function CatalogClient({ products }: CatalogClientProps) {
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -65,38 +123,38 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [quickView, setQuickView] = useState<Product | null>(null);
+  const [slide, setSlide] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  const [addedId, setAddedId] = useState<string | null>(null);
+  const dealsRail = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const stored = window.localStorage.getItem('onestop-cart');
-    if (stored) setCart(JSON.parse(stored) as CartLine[]);
+    if (stored) { try { setCart(JSON.parse(stored) as CartLine[]); } catch { /* ignore */ } }
     setCartLoaded(true);
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('q');
+    if (q) setSearchTerm(q);
+    const wl = window.localStorage.getItem('onestop-wishlist');
+    const rc = window.localStorage.getItem('onestop-recent');
+    if (wl) { try { setWishlist(JSON.parse(wl) as string[]); } catch { /* ignore */ } }
+    if (rc) { try { setRecentlyViewed(JSON.parse(rc) as Product[]); } catch { /* ignore */ } }
   }, []);
 
   useEffect(() => {
     if (!cartLoaded) return;
     window.localStorage.setItem('onestop-cart', JSON.stringify(cart));
   }, [cart, cartLoaded]);
-
+  useEffect(() => { window.localStorage.setItem('onestop-wishlist', JSON.stringify(wishlist)); }, [wishlist]);
+  useEffect(() => { window.localStorage.setItem('onestop-recent', JSON.stringify(recentlyViewed)); }, [recentlyViewed]);
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const q = params.get('q');
-    if (q) setSearchTerm(q);
+    const t = window.setInterval(() => setSlide((s) => (s + 1) % heroSlides.length), 6000);
+    return () => window.clearInterval(t);
   }, []);
-
   useEffect(() => {
-    const storedWishlist = window.localStorage.getItem('onestop-wishlist');
-    const storedRecent = window.localStorage.getItem('onestop-recent');
-    if (storedWishlist) setWishlist(JSON.parse(storedWishlist) as string[]);
-    if (storedRecent) setRecentlyViewed(JSON.parse(storedRecent) as Product[]);
+    const t = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(t);
   }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem('onestop-wishlist', JSON.stringify(wishlist));
-  }, [wishlist]);
-
-  useEffect(() => {
-    window.localStorage.setItem('onestop-recent', JSON.stringify(recentlyViewed));
-  }, [recentlyViewed]);
 
   const categories = useMemo(() => {
     const groups = new Map<string, Product[]>();
@@ -107,212 +165,381 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     return Array.from(groups.entries());
   }, [products]);
 
+  const flashDeals = useMemo(() => {
+    const trending = categories.find(([c]) => c === 'Trending essentials')?.[1] ?? products;
+    return trending.filter((p) => p.inStock !== false).slice(0, 10);
+  }, [categories, products]);
+
   const visibleCategories = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
     return categories
       .map(([category, items]) => [category, items.filter((product) => {
-        const matchesCategory = selectedCategory === 'All products' || selectedCategory === category;
-        const matchesSearch = !normalizedSearch || `${product.nameEn} ${product.nameUr ?? ''} ${category}`.toLowerCase().includes(normalizedSearch);
-        return matchesCategory && matchesSearch;
-      }).sort((first, second) => {
-        if (sortOrder === 'price-low') return first.priceMinor - second.priceMinor;
-        if (sortOrder === 'price-high') return second.priceMinor - first.priceMinor;
-        if (sortOrder === 'name') return first.nameEn.localeCompare(second.nameEn);
+        const okCat = selectedCategory === 'All products' || selectedCategory === category;
+        const okQ = !q || `${product.nameEn} ${product.nameUr ?? ''} ${category}`.toLowerCase().includes(q);
+        return okCat && okQ;
+      }).sort((a, b) => {
+        if (sortOrder === 'price-low') return a.priceMinor - b.priceMinor;
+        if (sortOrder === 'price-high') return b.priceMinor - a.priceMinor;
+        if (sortOrder === 'name') return a.nameEn.localeCompare(b.nameEn);
         return 0;
       })] as [string, Product[]])
       .filter(([, items]) => items.length > 0);
   }, [categories, searchTerm, selectedCategory, sortOrder]);
 
-  const subtotal = cart.reduce((total, item) => total + item.priceMinor * item.quantity, 0);
+  const subtotal = cart.reduce((t, i) => t + i.priceMinor * i.quantity, 0);
   const shipping = subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
   const total = subtotal + shipping;
-  const checkoutProduct = cart[0];
-  const checkoutCategory = checkoutProduct?.category ?? 'everyday essentials';
+  const cartCount = cart.reduce((t, i) => t + i.quantity, 0);
 
   const addToCart = (product: Product) => {
-    setCart((current) => {
-      const existing = current.find((item) => item.id === product.id);
-      if (existing) return current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
-      return [...current, { ...product, quantity: 1 }];
+    setCart((cur) => {
+      const ex = cur.find((i) => i.id === product.id);
+      if (ex) return cur.map((i) => (i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i));
+      return [...cur, { ...product, quantity: 1 }];
     });
-    setMessage(`${product.nameEn} added to your cart.`);
+    setAddedId(product.id);
+    window.setTimeout(() => setAddedId((id) => (id === product.id ? null : id)), 1200);
   };
-
-  const updateQuantity = (productId: string, quantity: number) => {
-    setCart((current) => quantity < 1 ? current.filter((item) => item.id !== productId) : current.map((item) => item.id === productId ? { ...item, quantity } : item));
-  };
-
-  const toggleWishlist = (productId: string) => {
-    setWishlist((current) => current.includes(productId) ? current.filter((id) => id !== productId) : [...current, productId]);
-  };
-
+  const updateQuantity = (id: string, qty: number) =>
+    setCart((cur) => (qty < 1 ? cur.filter((i) => i.id !== id) : cur.map((i) => (i.id === id ? { ...i, quantity: qty } : i))));
+  const toggleWishlist = (id: string) =>
+    setWishlist((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
   const openQuickView = (product: Product) => {
     setQuickView(product);
-    setRecentlyViewed((current) => [product, ...current.filter((item) => item.id !== product.id)].slice(0, 4));
+    setRecentlyViewed((cur) => [product, ...cur.filter((i) => i.id !== product.id)].slice(0, 6));
   };
 
   const checkout = async () => {
     const token = window.localStorage.getItem('onestop-access-token');
-    if (!token) {
-      setError('Sign in from the login page before placing an order.');
-      return;
-    }
+    if (!token) { setError('Sign in from the login page before placing an order.'); return; }
     if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) {
-      setError('Complete your delivery details before placing the order.');
-      return;
+      setError('Complete your delivery details before placing the order.'); return;
     }
-
-    setBusy(true);
-    setError('');
-    setMessage('');
+    setBusy(true); setError(''); setMessage('');
     try {
-      const response = await fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          items: cart.map((item) => ({ productId: item.id, quantity: item.quantity })),
-          shippingName,
-          shippingPhone,
-          shippingAddress,
-          discountCode: discountCode || undefined,
-          paymentMethod,
+          items: cart.map((i) => ({ productId: i.id, quantity: i.quantity })),
+          shippingName, shippingPhone, shippingAddress,
+          discountCode: discountCode || undefined, paymentMethod,
         }),
       });
-      const payload = await response.json() as { message?: string; order?: { id: string; totalMinor: number } };
-      if (!response.ok) throw new Error(Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? 'Unable to place order');
-      setCart([]);
-      setCheckoutOpen(false);
-      setCartOpen(false);
-      setDiscountCode('');
+      const payload = (await res.json()) as { message?: string; order?: { id: string; totalMinor: number } };
+      if (!res.ok) throw new Error(Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? 'Unable to place order');
+      setCart([]); setCheckoutOpen(false); setCartOpen(false); setDiscountCode('');
       setMessage(`Order ${payload.order?.id.slice(0, 8)} confirmed for ${money(payload.order?.totalMinor ?? total)}.`);
-    } catch (checkoutError) {
-      setError(checkoutError instanceof Error ? checkoutError.message : 'Unable to place order');
-    } finally {
-      setBusy(false);
-    }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to place order');
+    } finally { setBusy(false); }
   };
 
+  // Countdown to midnight (flash deals reset daily)
+  const midnight = new Date(); midnight.setHours(24, 0, 0, 0);
+  const remain = Math.max(0, midnight.getTime() - now);
+  const hh = String(Math.floor(remain / 3600000)).padStart(2, '0');
+  const mm = String(Math.floor((remain % 3600000) / 60000)).padStart(2, '0');
+  const ss = String(Math.floor((remain % 60000) / 1000)).padStart(2, '0');
+
+  const scrollDeals = (dir: 1 | -1) =>
+    dealsRail.current?.scrollBy({ left: dir * 560, behavior: 'smooth' });
+
+  const activeSlide = heroSlides[slide];
+
   return (
-    <>
-      <div className={styles.marketHeader}>
-        <form className={styles.searchForm} role="search" onSubmit={(event) => event.preventDefault()}>
-          <label htmlFor="catalog-search">Search the store</label>
-          <input id="catalog-search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search medicines, appliances, pet care..." />
-          <button type="submit" aria-label="Search products"><span aria-hidden="true">⌕</span> Search</button>
+    <div className={styles.store}>
+      {/* Promo marquee */}
+      <div className={styles.promoStrip} aria-label="Store offers">
+        <div className={styles.promoTrack}>
+          {Array.from({ length: 2 }).flatMap((_, k) => [
+            <span key={`a${k}`}>Free delivery on orders over Rs. 3,000</span>,
+            <span key={`b${k}`}>Cash on delivery across Pakistan</span>,
+            <span key={`c${k}`}>100% genuine products</span>,
+            <span key={`d${k}`}>New electronics & pet-care arrivals</span>,
+          ])}
+        </div>
+      </div>
+
+      {/* Store toolbar */}
+      <div className={styles.storeBar}>
+        <form className={styles.searchBox} role="search" onSubmit={(e) => e.preventDefault()}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search medicines, devices, groceries, pet care…" aria-label="Search products" />
+          {searchTerm ? <button type="button" onClick={() => setSearchTerm('')} aria-label="Clear search">×</button> : null}
         </form>
+        <div className={styles.barActions}>
+          <Link href="/cart" className={styles.wishPill} aria-label="Wishlist">♡ <b>{wishlist.length}</b></Link>
+          <button className={styles.cartPill} onClick={() => setCartOpen(true)} aria-label={`Open cart, ${cartCount} items`}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 4.5h2l2.1 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4l1.4-6.1H6.4" /><circle cx="9.3" cy="20" r="1.2" /><circle cx="16.6" cy="20" r="1.2" /></svg>
+            Cart {cartCount > 0 ? <b>{cartCount}</b> : null}
+          </button>
+        </div>
       </div>
-
-      <div className={styles.announcementBar} aria-label="Store announcements">
-        <span className={styles.liveDot} aria-hidden="true" />
-        <strong>OneStop daily edit</strong>
-        <span>Free delivery over Rs. 3,000</span>
-        <span>Cash on delivery available</span>
-        <span>New electronics and pet-care arrivals</span>
-      </div>
-
-      <section className={styles.featuredBand} aria-labelledby="featured-heading">
-        <div><p className={styles.featuredEyebrow}>The OneStop edit</p><h2 id="featured-heading">Everyday care, thoughtfully stocked.</h2><p>Essentials for your home, health, family, and companions, selected for simple repeat shopping.</p></div>
-        <div className={styles.featuredStats}><strong>{products.length}</strong><span>products ready to ship</span><strong>Rs. 3,000</strong><span>free delivery threshold</span></div>
-      </section>
 
       {message ? <p className={styles.storeMessage} role="status">{message}</p> : null}
       {error ? <p className={styles.storeError} role="alert">{error}</p> : null}
 
-      <div className={styles.catalogLayout}>
-        <aside className={styles.filterRail} aria-label="Shop categories">
-          <div className={styles.filterHeading}><span>Browse</span><strong>{products.length}</strong></div>
-          <button className={selectedCategory === 'All products' ? styles.filterActive : styles.filterButton} onClick={() => setSelectedCategory('All products')}><span className={styles.filterName}><i className={styles.categoryDot} aria-hidden="true" />All products</span><span>{products.length}</span></button>
-          {categories.map(([category, items]) => <button className={selectedCategory === category ? styles.filterActive : styles.filterButton} onClick={() => setSelectedCategory(category)} key={category}><span className={styles.filterName}><i className={styles.categoryDot} aria-hidden="true" />{categoryLabels[category] ?? category}</span><span>{items.length}</span></button>)}
-          <div className={styles.railNote}><strong>Simple delivery</strong><p>Free shipping on orders over Rs. 3,000.</p></div>
-        </aside>
+      {/* Hero carousel */}
+      <section className={styles.hero} aria-label="Featured offers">
+        <div className={`${styles.heroSlide} ${activeSlide.theme}`}>
+          <div className={styles.heroCopy}>
+            <span className={styles.heroEyebrow}>{activeSlide.eyebrow}</span>
+            <h1>{activeSlide.title}</h1>
+            <p>{activeSlide.copy}</p>
+            <a href={activeSlide.href} className={styles.heroCta}>{activeSlide.cta} →</a>
+          </div>
+          <div className={styles.heroArt} aria-hidden="true">
+            <span className={styles.heroOrb} /><span className={styles.heroOrb2} />
+            <CategoryIcon category="Trending essentials" className={styles.heroIcon} />
+          </div>
+        </div>
+        <div className={styles.heroDots} role="tablist" aria-label="Choose banner">
+          {heroSlides.map((s, i) => (
+            <button key={s.title} role="tab" aria-selected={i === slide} className={i === slide ? styles.dotActive : styles.dot} onClick={() => setSlide(i)} aria-label={s.title} />
+          ))}
+        </div>
+      </section>
 
-        <div className={styles.resultsColumn}>
-          <div className={styles.resultsToolbar}><span><strong>{visibleCategories.reduce((total, [, items]) => total + items.length, 0)}</strong> results</span><div className={styles.resultActions}><span className={styles.wishlistCount}>{wishlist.length} saved</span><label htmlFor="sort-products">Sort by</label><select id="sort-products" value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name</option></select><button className={styles.clearFilter} onClick={() => { setSelectedCategory('All products'); setSearchTerm(''); setSortOrder('featured'); }}>Clear filters</button></div></div>
-          {visibleCategories.length ? <div className={styles.categorySections}>
-        {visibleCategories.map(([category, items]) => {
-          const categoryId = category.toLowerCase().replaceAll(' ', '-');
-          return (
-            <section className={styles.categorySection} id={categoryId} key={category} aria-labelledby={`${categoryId}-heading`}>
-              <div className={styles.categoryHeader}>
-                <div>
-                  <p className={styles.categoryEyebrow}>Product type</p>
-                  <h2 id={`${categoryId}-heading`}>{categoryLabels[category] ?? category}</h2>
+      {/* Category icon rail */}
+      <nav className={styles.catRail} aria-label="Shop by category">
+        <button className={selectedCategory === 'All products' ? styles.catActive : styles.cat} onClick={() => setSelectedCategory('All products')}>
+          <span className={styles.catIcon}><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg></span>
+          <span>All</span>
+        </button>
+        {categories.map(([category, items]) => (
+          <button key={category} className={selectedCategory === category ? styles.catActive : styles.cat} onClick={() => setSelectedCategory(category)}>
+            <span className={styles.catIcon}><CategoryIcon category={category} /></span>
+            <span>{categoryLabels[category] ?? category}</span>
+            <small>{items.length}</small>
+          </button>
+        ))}
+      </nav>
+
+      {/* Flash deals */}
+      {selectedCategory === 'All products' && !searchTerm && flashDeals.length > 0 ? (
+        <section className={styles.flash} aria-labelledby="flash-heading">
+          <div className={styles.flashHead}>
+            <div>
+              <p className={styles.flashEyebrow}><span className={styles.bolt} aria-hidden="true">⚡</span> Flash deals</p>
+              <h2 id="flash-heading">Today&apos;s hottest picks</h2>
+            </div>
+            <div className={styles.countdown} aria-label={`Deals refresh in ${hh} hours ${mm} minutes`}>
+              <span>Ends in</span><b>{hh}</b>:<b>{mm}</b>:<b>{ss}</b>
+            </div>
+            <div className={styles.railNav}>
+              <button onClick={() => scrollDeals(-1)} aria-label="Scroll deals left">‹</button>
+              <button onClick={() => scrollDeals(1)} aria-label="Scroll deals right">›</button>
+            </div>
+          </div>
+          <div className={styles.dealsRail} ref={dealsRail}>
+            {flashDeals.map((p) => (
+              <article className={styles.dealCard} key={p.id}>
+                <button className={styles.dealMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
+                  {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <CategoryIcon category={p.category ?? ''} className={styles.dealIcon} />}
+                  <span className={styles.hotBadge}>HOT</span>
+                </button>
+                <div className={styles.dealBody}>
+                  <h3>{p.nameEn}</h3>
+                  <Stars value={ratingFor(p.id)} />
+                  <div className={styles.priceRow}><strong>{money(p.priceMinor)}</strong><span>{p.unit ?? 'per item'}</span></div>
+                  <button className={styles.addBtn} onClick={() => addToCart(p)}>Add to cart</button>
                 </div>
-                <span>{items.length} {items.length === 1 ? 'product' : 'products'}</span>
-              </div>
-              <div className={styles.grid}>
-                {items.map((product) => (
-                  <article className={styles.card} key={product.id}>
-                    <div className={styles.productImage} role="img" aria-label={`${product.nameEn} product image`} style={product.imageUrl ? { backgroundImage: `url(${product.imageUrl})` } : undefined}>
-                      {!product.imageUrl ? product.nameEn.slice(0, 1) : null}
-                      <span className={styles.imageCategoryBadge}><i className={styles.categoryDotLight} aria-hidden="true" />{categoryShortLabels[category] ?? categoryLabels[category] ?? category}</span>
-                    </div>
-                    <div className={styles.cardBody}>
-                          <div className={styles.productMeta}><span>{product.inStock === false ? 'Unavailable' : 'In stock'}</span><span aria-label="Customer rating">★★★★★</span></div>
-                          <button className={styles.wishlistButton} onClick={() => toggleWishlist(product.id)} aria-label={`${wishlist.includes(product.id) ? 'Remove' : 'Save'} ${product.nameEn} ${wishlist.includes(product.id) ? 'from' : 'to'} wishlist`}>{wishlist.includes(product.id) ? '♥ Saved' : '♡ Save'}</button>
-                          <h3>{product.nameEn}</h3>
-                      {product.nameUr ? <p className={styles.urdu}>{product.nameUr}</p> : null}
-                      <div className={styles.cardFooter}>
-                        <strong>{money(product.priceMinor)}</strong>
-                        <span>{product.unit ?? 'per item'}</span>
-                      </div>
-                          <span className={product.inStock === false ? styles.outOfStock : styles.inStock}>{product.inStock === false ? 'Out of stock' : 'Ready to ship'}</span>
-                          <div className={styles.cardActions}><button className={styles.quickViewButton} onClick={() => openQuickView(product)}><span aria-hidden="true">◉</span> Quick view</button><button className={styles.addButton} onClick={() => addToCart(product)} disabled={product.inStock === false}><span aria-hidden="true">+</span> Add to cart</button></div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          );
-        })}
-          </div> : <section className={styles.noResults}><h2>No products found</h2><p>Try a broader search or browse all categories.</p></section>}
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Trust badges */}
+      <section className={styles.trustRow} aria-label="Why shop with OneStop">
+        {[
+          { t: '100% genuine', s: 'Sourced from verified distributors', i: <path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3Z" /> },
+          { t: 'Cash on delivery', s: 'Pay at your doorstep, nationwide', i: <rect x="3" y="7" width="18" height="11" rx="2" /> },
+          { t: 'Fast dispatch', s: 'Orders ship within 24 hours', i: <path d="M3 12h4l2-6 4 12 2-6h6" /> },
+          { t: 'Easy returns', s: '7-day hassle-free returns', i: <><path d="M4 9a8 8 0 1 1-1 5" /><path d="M4 4v5h5" /></> },
+        ].map((b) => (
+          <div className={styles.trustBadge} key={b.t}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">{b.i}</svg>
+            <div><strong>{b.t}</strong><span>{b.s}</span></div>
+          </div>
+        ))}
+      </section>
+
+      {/* Catalogue */}
+      <div className={styles.catalogHead}>
+        <h2>{selectedCategory === 'All products' ? 'Shop all categories' : categoryLabels[selectedCategory] ?? selectedCategory}</h2>
+        <div className={styles.catalogTools}>
+          <span><b>{visibleCategories.reduce((t, [, items]) => t + items.length, 0)}</b> products</span>
+          <label>Sort <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} aria-label="Sort products">
+            <option value="featured">Featured</option>
+            <option value="price-low">Price: low → high</option>
+            <option value="price-high">Price: high → low</option>
+            <option value="name">Name A–Z</option>
+          </select></label>
+          {(selectedCategory !== 'All products' || searchTerm) ? (
+            <button className={styles.clearBtn} onClick={() => { setSelectedCategory('All products'); setSearchTerm(''); }}>Clear ✕</button>
+          ) : null}
         </div>
       </div>
 
-      <section className={styles.shopSuggestions} aria-labelledby="shop-smarter-heading">
-        <div className={styles.suggestionIntro}><p className={styles.categoryEyebrow}>More from OneStop</p><h2 id="shop-smarter-heading">Shop smarter, every day.</h2><span>Helpful shortcuts for the way you buy.</span></div>
-        <Link href="/cart" className={styles.suggestionCard}><span className={styles.suggestionIcon} aria-hidden="true">↻</span><strong>Repeat a useful order</strong><span>Keep essentials close.</span><b>Open cart -&gt;</b></Link>
-        <Link href="#home-health" className={styles.suggestionCard}><span className={styles.suggestionIcon} aria-hidden="true">✓</span><strong>Build a care kit</strong><span>Home health essentials.</span><b>Explore picks -&gt;</b></Link>
-        <Link href="#electronics-&-appliances" className={styles.suggestionCard}><span className={styles.suggestionIcon} aria-hidden="true">✦</span><strong>Upgrade your routine</strong><span>Smart living arrivals.</span><b>See electronics -&gt;</b></Link>
-      </section>
-
-      {recentlyViewed.length ? <section className={styles.recentSection} aria-labelledby="recent-heading"><div className={styles.recentHeader}><div><p className={styles.categoryEyebrow}>Your browsing trail</p><h2 id="recent-heading">Recently viewed</h2></div><span>Saved on this device</span></div><div className={styles.recentGrid}>{recentlyViewed.map((product) => <button className={styles.recentItem} key={product.id} onClick={() => openQuickView(product)}><span>{product.category ?? 'Product'}</span><strong>{product.nameEn}</strong><small>{money(product.priceMinor)}</small></button>)}</div></section> : null}
-
-      {quickView ? <div className={`${styles.overlay} ${styles.centerOverlay}`} role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setQuickView(null)}><section className={styles.quickViewPanel} role="dialog" aria-modal="true" aria-labelledby="quick-view-title"><button className={styles.closeButton} onClick={() => setQuickView(null)} aria-label="Close quick view">×</button><div className={styles.quickViewImage} role="img" aria-label={`${quickView.nameEn} product image`} style={quickView.imageUrl ? { backgroundImage: `url(${quickView.imageUrl})` } : undefined} /><div className={styles.quickViewBody}><p className={styles.categoryEyebrow}>{quickView.category ?? 'OneStop essential'}</p><h2 id="quick-view-title">{quickView.nameEn}</h2><div className={styles.quickViewRating}>★★★★★ <span>Trusted everyday pick</span></div><strong>{money(quickView.priceMinor)}</strong><p>Ready for everyday use, with reliable delivery and easy checkout through OneStop Life.</p><div className={styles.quickViewMeta}><span>In stock</span><span>Fast delivery</span></div><button className={styles.primaryAction} onClick={() => { addToCart(quickView); setQuickView(null); }}>Add to cart</button></div></section></div> : null}
-
-      {cartOpen ? (
-        <div className={styles.overlay} role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setCartOpen(false)}>
-          <aside className={styles.cartPanel} aria-label="Shopping cart">
-            <div className={styles.panelHeader}>
-              <div><p className={styles.categoryEyebrow}>Your order</p><h2>Shopping cart</h2></div>
-              <button className={styles.closeButton} onClick={() => setCartOpen(false)} aria-label="Close shopping cart">×</button>
+      {visibleCategories.length ? visibleCategories.map(([category, items]) => {
+        const cid = category.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-');
+        return (
+          <section className={styles.catSection} id={cid} key={category} aria-labelledby={`${cid}-h`}>
+            <div className={styles.catSectionHead}>
+              <span className={styles.catSectionIcon}><CategoryIcon category={category} /></span>
+              <h3 id={`${cid}-h`}>{categoryLabels[category] ?? category}</h3>
+              <span className={styles.countPill}>{items.length}</span>
             </div>
-            {cart.length ? <div className={styles.cartLines}>{cart.map((item) => (
-              <div className={styles.cartLine} key={item.id}>
-                <div><strong>{item.nameEn}</strong><span>{money(item.priceMinor)}</span></div>
-                <div className={styles.quantityControls}>
-                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} aria-label={`Decrease ${item.nameEn}`}>−</button>
-                  <span>{item.quantity}</span>
-                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} aria-label={`Increase ${item.nameEn}`}>+</button>
+            <div className={styles.grid}>
+              {items.map((p) => (
+                <article className={styles.card} key={p.id}>
+                  <button className={styles.cardMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
+                    {p.imageUrl ? <img src={p.imageUrl} alt="" loading="lazy" /> : <CategoryIcon category={category} className={styles.cardIcon} />}
+                    <span className={styles.wishWrap}>
+                      <span role="button" tabIndex={0} aria-label={`${wishlist.includes(p.id) ? 'Remove' : 'Save'} ${p.nameEn}`}
+                        className={wishlist.includes(p.id) ? styles.wishOn : styles.wish}
+                        onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleWishlist(p.id); } }}>
+                        {wishlist.includes(p.id) ? '♥' : '♡'}
+                      </span>
+                    </span>
+                    {p.requiresRx ? <span className={styles.rxBadge}>Rx</span> : null}
+                    {p.inStock === false ? <span className={styles.soldOut}>Sold out</span> : null}
+                  </button>
+                  <div className={styles.cardBody}>
+                    <p className={styles.cardCat}>{categoryLabels[category] ?? category}</p>
+                    <h4>{p.nameEn}</h4>
+                    <Stars value={ratingFor(p.id)} />
+                    <div className={styles.priceRow}><strong>{money(p.priceMinor)}</strong><span>{p.unit ?? 'per item'}</span></div>
+                    <button className={addedId === p.id ? styles.addedBtn : styles.addBtn} disabled={p.inStock === false} onClick={() => addToCart(p)}>
+                      {addedId === p.id ? '✓ Added' : p.inStock === false ? 'Out of stock' : 'Add to cart'}
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        );
+      }) : (
+        <section className={styles.noResults}>
+          <h2>No products found</h2>
+          <p>Try a broader search or browse all categories.</p>
+          <button className={styles.heroCta} onClick={() => { setSearchTerm(''); setSelectedCategory('All products'); }}>Show everything</button>
+        </section>
+      )}
+
+      {/* Recently viewed */}
+      {recentlyViewed.length > 0 ? (
+        <section className={styles.recent} aria-labelledby="recent-h">
+          <h3 id="recent-h">Recently viewed</h3>
+          <div className={styles.recentRail}>
+            {recentlyViewed.map((p) => (
+              <button key={p.id} className={styles.recentItem} onClick={() => openQuickView(p)}>
+                <strong>{p.nameEn}</strong><span>{money(p.priceMinor)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {/* Quick view */}
+      {quickView ? (
+        <div className={styles.overlay} role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setQuickView(null); }}>
+          <section className={styles.qv} role="dialog" aria-modal="true" aria-label={quickView.nameEn}>
+            <button className={styles.qvClose} onClick={() => setQuickView(null)} aria-label="Close">×</button>
+            <div className={styles.qvMedia}>
+              {quickView.imageUrl ? <img src={quickView.imageUrl} alt="" /> : <CategoryIcon category={quickView.category ?? ''} className={styles.qvIcon} />}
+              {quickView.requiresRx ? <span className={styles.rxBadge}>Prescription required</span> : null}
+            </div>
+            <div className={styles.qvBody}>
+              <p className={styles.cardCat}>{quickView.category ?? 'OneStop essential'}</p>
+              <h2>{quickView.nameEn}</h2>
+              {quickView.nameUr ? <p className={styles.urdu}>{quickView.nameUr}</p> : null}
+              <Stars value={ratingFor(quickView.id)} />
+              <div className={styles.qvPrice}><strong>{money(quickView.priceMinor)}</strong><span>{quickView.unit ?? 'per item'}</span></div>
+              <p className={styles.qvCopy}>Genuine product, quality-checked by OneStop. {quickView.requiresRx ? 'A valid prescription is required at checkout.' : 'Ready to ship with cash on delivery.'}</p>
+              <div className={styles.qvMeta}><span>✓ In stock</span><span>✓ Ships in 24h</span><span>✓ COD available</span></div>
+              <button className={styles.addBtn} disabled={quickView.inStock === false} onClick={() => { addToCart(quickView); setQuickView(null); }}>
+                {quickView.inStock === false ? 'Out of stock' : 'Add to cart'}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {/* Cart drawer */}
+      {cartOpen ? (
+        <div className={styles.overlay} role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setCartOpen(false); }}>
+          <aside className={styles.cartDrawer} aria-label="Shopping cart">
+            <div className={styles.drawerHead}>
+              <div><p className={styles.cardCat}>Your order</p><h2>Cart {cartCount > 0 ? `(${cartCount})` : ''}</h2></div>
+              <button className={styles.qvClose} onClick={() => setCartOpen(false)} aria-label="Close cart">×</button>
+            </div>
+            {cart.length ? (
+              <>
+                <div className={styles.cartLines}>
+                  {cart.map((i) => (
+                    <div className={styles.cartLine} key={i.id}>
+                      <div className={styles.lineInfo}><strong>{i.nameEn}</strong><span>{money(i.priceMinor)} {i.unit ? `/ ${i.unit}` : ''}</span></div>
+                      <div className={styles.qty}>
+                        <button onClick={() => updateQuantity(i.id, i.quantity - 1)} aria-label={`Remove one ${i.nameEn}`}>−</button>
+                        <span>{i.quantity}</span>
+                        <button onClick={() => updateQuantity(i.id, i.quantity + 1)} aria-label={`Add one ${i.nameEn}`}>+</button>
+                      </div>
+                      <b>{money(i.priceMinor * i.quantity)}</b>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}</div> : <p className={styles.emptyCart}>Your cart is ready for something useful.</p>}
-            <div className={styles.cartSummary}><span>Subtotal</span><strong>{money(subtotal)}</strong><span>Delivery</span><strong>{shipping ? money(shipping) : 'Free'}</strong><span className={styles.totalLabel}>Total</span><strong className={styles.totalValue}>{money(total)}</strong></div>
-            <button className={styles.primaryAction} onClick={() => { setCheckoutOpen(true); setCartOpen(false); }} disabled={!cart.length}>Continue to checkout</button>
+                <div className={styles.cartFoot}>
+                  <div className={styles.totals}><span>Subtotal</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
+                  {shipping > 0 ? <p className={styles.freeShipNote}>Add {money(300000 - subtotal)} more for free delivery</p> : <p className={styles.freeShipNote}>🎉 You unlocked free delivery</p>}
+                  <button className={styles.checkoutBtn} onClick={() => { setCheckoutOpen(true); setCartOpen(false); }}>Checkout →</button>
+                </div>
+              </>
+            ) : <p className={styles.emptyCart}>Your cart is empty — grab a deal above.</p>}
           </aside>
         </div>
       ) : null}
 
+      {/* Checkout */}
       {checkoutOpen ? (
         <div className={styles.overlay} role="presentation">
-          <section className={styles.checkoutPanel} aria-label="Checkout">
-            <div className={styles.panelHeader}><div><p className={styles.categoryEyebrow}>Secure checkout</p><h2>Complete your order</h2></div><button className={styles.closeButton} onClick={() => setCheckoutOpen(false)} aria-label="Close checkout">×</button></div>
-            <div className={styles.checkoutSteps}><span className={styles.stepActive}><b>1</b> Delivery</span><i /> <span><b>2</b> Payment</span><i /> <span><b>3</b> Confirm</span></div>
-            <div className={styles.checkoutVisual} style={checkoutProduct?.imageUrl ? { backgroundImage: `linear-gradient(90deg, rgba(23, 35, 55, 0.92), rgba(23, 35, 55, 0.28)), url(${checkoutProduct.imageUrl})` } : undefined}><div><span>ONE STOP SECURE CHECKOUT</span><strong>Your {checkoutCategory.toLowerCase()} order is ready to go.</strong><small>Protected checkout · tracked delivery</small></div></div>
-            <div className={styles.checkoutLayout}><div className={styles.checkoutForm}><h3>Delivery details</h3><div className={styles.checkoutGrid}><label className={styles.field}><span>Full name</span><input value={shippingName} onChange={(event) => setShippingName(event.target.value)} autoComplete="name" /></label><label className={styles.field}><span>Phone</span><input value={shippingPhone} onChange={(event) => setShippingPhone(event.target.value)} autoComplete="tel" /></label></div><label className={styles.field}><span>Delivery address</span><textarea value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} rows={3} autoComplete="street-address" /></label><label className={styles.field}><span>Discount code</span><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value.toUpperCase())} placeholder="WELCOME10" /></label><fieldset className={styles.paymentOptions}><legend>Choose payment</legend><label><input type="radio" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} /> <span>Cash on delivery</span><small>Pay when your order arrives</small></label><label><input type="radio" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} /> <span>Card payment</span><small>Local test mode</small></label><div className={styles.cardBrands}><b>VISA</b><b>MC</b><b>AMEX</b><b>UnionPay</b></div></fieldset><p className={styles.secureNote}>🔒 Your checkout is protected. Discounts are checked securely on the server.</p></div><aside className={styles.checkoutSummary}><p>Order summary</p><strong>{cart.length} {cart.length === 1 ? 'item' : 'items'}</strong><div><span>Subtotal</span><b>{money(subtotal)}</b></div><div><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b></div><div className={styles.checkoutTotal}><span>Total</span><b>{money(total)}</b></div><button className={styles.primaryAction} onClick={checkout} disabled={busy}>{busy ? 'Processing...' : `Place order · ${money(total)}`}</button><small>Free delivery over Rs. 3,000</small></aside></div>
+          <section className={styles.checkout} aria-label="Checkout">
+            <div className={styles.drawerHead}>
+              <div><p className={styles.cardCat}>Secure checkout</p><h2>Delivery & payment</h2></div>
+              <button className={styles.qvClose} onClick={() => setCheckoutOpen(false)} aria-label="Close checkout">×</button>
+            </div>
+            <div className={styles.coSteps}><span className={styles.stepOn}><b>1</b> Details</span><i /><span><b>2</b> Payment</span><i /><span><b>3</b> Done</span></div>
+            <div className={styles.coGrid}>
+              <div className={styles.coForm}>
+                <label><span>Full name</span><input value={shippingName} onChange={(e) => setShippingName(e.target.value)} autoComplete="name" /></label>
+                <label><span>Phone</span><input value={shippingPhone} onChange={(e) => setShippingPhone(e.target.value)} autoComplete="tel" /></label>
+                <label><span>Delivery address</span><textarea value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} rows={3} autoComplete="street-address" /></label>
+                <label><span>Discount code</span><input value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} placeholder="WELCOME10" /></label>
+                <fieldset className={styles.payBox}><legend>Payment method</legend>
+                  <label><input type="radio" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} /><span>Cash on delivery</span><small>Pay at your door</small></label>
+                  <label><input type="radio" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} /><span>Card</span><small>Test mode</small></label>
+                </fieldset>
+              </div>
+              <aside className={styles.coSummary}>
+                <p>Order summary</p>
+                <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
+                <button className={styles.checkoutBtn} onClick={checkout} disabled={busy}>{busy ? 'Placing…' : `Place order · ${money(total)}`}</button>
+                <small>🔒 Protected checkout · tracked delivery</small>
+              </aside>
+            </div>
           </section>
         </div>
       ) : null}
-    </>
+
+      {/* Sticky mobile cart */}
+      {cartCount > 0 && !cartOpen && !checkoutOpen ? (
+        <button className={styles.stickyCart} onClick={() => setCartOpen(true)} aria-label={`Open cart, ${cartCount} items, ${money(total)}`}>
+          <span>🛒 {cartCount} item{cartCount === 1 ? '' : 's'}</span><b>{money(total)} →</b>
+        </button>
+      ) : null}
+    </div>
   );
 }
