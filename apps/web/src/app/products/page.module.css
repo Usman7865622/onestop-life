@@ -315,16 +315,3 @@
 }
 .viewAllBtn:hover { border-color: var(--brand); background: #eaf7f5; transform: translateY(-1px); box-shadow: 0 8px 18px rgba(13, 122, 111, 0.15); }
 
-/* 3D scene layer behind hero */
-.hero3d { position: absolute; inset: 0; pointer-events: none; opacity: 0.6; }
-.hero3d-mount, .hero3d-mount canvas { width: 100% !important; height: 100% !important; display: block; }
-.heroCopy, .heroArt { position: relative; z-index: 1; }
-
-/* 3D tilt cards with cursor-tracked glare */
-.tilt { position: relative; transition: transform 0.18s ease-out, box-shadow 0.2s; transform-style: preserve-3d; will-change: transform; }
-.tilt::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: radial-gradient(420px circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, 0.28), transparent 55%);
-  opacity: 0; transition: opacity 0.25s;
-}
-.tilt:hover::after { opacity: 1; }
