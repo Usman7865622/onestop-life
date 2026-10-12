@@ -82,3 +82,10 @@
   .shopButton { width: 100%; }
 }
 @media (max-width: 480px) { .trustStrip { grid-template-columns: 1fr; } }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 26px; }
+.pageBtn, .pageActive { min-width: 44px; min-height: 44px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: #fff; font-weight: 700; font-size: 14px; color: #334155; cursor: pointer; transition: all 0.15s; }
+.pageBtn:hover:not(:disabled) { border-color: #0d7a6f; color: #0a5f57; transform: translateY(-1px); }
+.pageBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.pageActive { background: #0d7a6f; border-color: #0d7a6f; color: #fff; box-shadow: 0 6px 16px rgba(13, 122, 111, 0.3); }
+.pageEllipsis { color: #94a3b8; padding: 0 4px; }

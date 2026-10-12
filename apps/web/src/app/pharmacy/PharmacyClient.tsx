@@ -10,7 +10,7 @@ import type { Medicine, MedicineClass } from '../../lib/pharmacy/types';
 
 type RxFilter = 'all' | 'otc' | 'rx';
 
-const PAGE_STEP = 24;
+const PAGE_SIZE = 12;
 
 const rxOptions: Array<{ value: RxFilter; label: string }> = [
   { value: 'all', label: 'All medicines' },
@@ -30,7 +30,7 @@ export default function PharmacyClient({
   const [search, setSearch] = useState(initialSearch ?? '');
   const [selectedClass, setSelectedClass] = useState('all');
   const [rxFilter, setRxFilter] = useState<RxFilter>('all');
-  const [visibleCount, setVisibleCount] = useState(PAGE_STEP);
+  const [page, setPage] = useState(1);
 
   const visible = useMemo(() => medicines.filter((medicine) => {
     const text = `${medicine.nameEn} ${medicine.genericName ?? ''} ${medicine.brandName ?? ''} ${medicine.therapeuticClass ?? ''}`.toLowerCase();
@@ -40,15 +40,28 @@ export default function PharmacyClient({
     return matchesSearch && matchesClass && matchesRx;
   }), [medicines, rxFilter, search, selectedClass]);
 
-  const shown = visible.slice(0, visibleCount);
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const shown = visible.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const pageNumbers = useMemo(() => {
+    const all = Array.from({ length: pageCount }, (_, i) => i + 1);
+    const keep = all.filter((n) => n === 1 || n === pageCount || Math.abs(n - safePage) <= 2);
+    const out: Array<number | 'gap'> = [];
+    keep.forEach((n, i) => {
+      if (i > 0 && n - keep[i - 1] > 1) out.push('gap');
+      out.push(n);
+    });
+    return out;
+  }, [pageCount, safePage]);
   const hasFilters = Boolean(search.trim()) || selectedClass !== 'all' || rxFilter !== 'all';
 
   const clearFilters = () => {
     setSearch('');
     setSelectedClass('all');
     setRxFilter('all');
-    setVisibleCount(PAGE_STEP);
+    setPage(1);
   };
+  const resetPage = () => setPage(1);
 
   return (
     <>
@@ -57,7 +70,7 @@ export default function PharmacyClient({
           <span>Search medicines</span>
           <input
             value={search}
-            onChange={(event) => { setSearch(event.target.value); setVisibleCount(PAGE_STEP); }}
+            onChange={(event) => { setSearch(event.target.value); resetPage(); }}
             placeholder="Try paracetamol, Panadol, metformin, vitamin D…"
           />
         </label>
@@ -67,7 +80,7 @@ export default function PharmacyClient({
               key={option.value}
               type="button"
               className={rxFilter === option.value ? styles.rxActive : styles.rxButton}
-              onClick={() => { setRxFilter(option.value); setVisibleCount(PAGE_STEP); }}
+              onClick={() => { setRxFilter(option.value); resetPage(); }}
               aria-pressed={rxFilter === option.value}
             >
               {option.label}
@@ -80,7 +93,7 @@ export default function PharmacyClient({
         <button
           type="button"
           className={selectedClass === 'all' ? styles.chipActive : styles.chip}
-          onClick={() => { setSelectedClass('all'); setVisibleCount(PAGE_STEP); }}
+          onClick={() => { setSelectedClass('all'); resetPage(); }}
         >
           All categories <span>{medicines.length}</span>
         </button>
@@ -89,7 +102,7 @@ export default function PharmacyClient({
             key={item.name}
             type="button"
             className={selectedClass === item.name ? styles.chipActive : styles.chip}
-            onClick={() => { setSelectedClass(item.name); setVisibleCount(PAGE_STEP); }}
+            onClick={() => { setSelectedClass(item.name); resetPage(); }}
           >
             {item.name} <span>{item.count}</span>
           </button>
@@ -98,7 +111,7 @@ export default function PharmacyClient({
 
       <div className={styles.resultsHeader}>
         <p className={styles.resultCount}>
-          {visible.length} {visible.length === 1 ? 'medicine' : 'medicines'} found
+          {visible.length} {visible.length === 1 ? 'medicine' : 'medicines'} found{pageCount > 1 ? <> · page {safePage} of {pageCount}</> : null}
           {selectedClass !== 'all' ? <> in <strong>{selectedClass}</strong></> : null}
         </p>
         {hasFilters ? <button type="button" className={styles.clearButton} onClick={clearFilters}>Clear filters</button> : null}
@@ -150,12 +163,14 @@ export default function PharmacyClient({
         </section>
       )}
 
-      {visible.length > shown.length ? (
-        <div className={styles.loadMoreRow}>
-          <button type="button" className={styles.loadMoreButton} onClick={() => setVisibleCount((count) => count + PAGE_STEP)}>
-            Show more medicines ({visible.length - shown.length} remaining)
-          </button>
-        </div>
+      {pageCount > 1 ? (
+        <nav className={styles.pagination} aria-label="Medicine pages">
+          <button type="button" className={styles.pageBtn} disabled={safePage === 1} onClick={() => setPage(safePage - 1)} aria-label="Previous page">‹ Prev</button>
+          {pageNumbers.map((n, i) => n === 'gap'
+            ? <span key={`gap${i}`} className={styles.pageEllipsis}>…</span>
+            : <button key={n} type="button" className={n === safePage ? styles.pageActive : styles.pageBtn} onClick={() => setPage(n)} aria-label={`Page ${n}`} aria-current={n === safePage ? 'page' : undefined}>{n}</button>)}
+          <button type="button" className={styles.pageBtn} disabled={safePage === pageCount} onClick={() => setPage(safePage + 1)} aria-label="Next page">Next ›</button>
+        </nav>
       ) : null}
 
       <p className={styles.rxNote}>
