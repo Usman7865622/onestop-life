@@ -3,6 +3,9 @@
 import { useEffect, useRef } from 'react';
 import type { BufferGeometry, Material, Mesh } from 'three';
 
+type ThreeModule = typeof import('three');
+const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js';
+
 /**
  * Ambient 3D scene behind the store hero: softly-lit floating capsules,
  * rings and orbs in brand colours with gentle drift + mouse parallax.
@@ -16,7 +19,7 @@ export default function Hero3D() {
     let cleanup = () => {};
 
     (async () => {
-      const THREE: typeof import('three') = await import('three');
+      const THREE = (await import(/* webpackIgnore: true */ THREE_CDN)) as ThreeModule;
       if (cancelled || !mount.current) return;
 
       const el = mount.current;
