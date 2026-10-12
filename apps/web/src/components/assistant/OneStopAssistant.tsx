@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { type FormEvent, useEffect, useId, useRef, useState } from 'react';
 import DoctorAvatar from '../doctors/DoctorAvatar';
+import MedicineVisual from '../pharmacy/MedicineVisual';
+import { readAccessToken } from '../../lib/auth/session';
 import styles from './assistant.module.css';
 
 export type AssistantCard = {
@@ -16,6 +18,8 @@ export type AssistantCard = {
   href: string;
   imageUrl?: string;
   avatarName?: string;
+  form?: string;
+  therapeuticClass?: string;
 };
 
 type LegacyProduct = {
@@ -149,13 +153,15 @@ function CardVisual({ card }: { card: AssistantCard }) {
     return <DoctorAvatar name={card.avatarName ?? card.title} size={54} className={styles.doctorAvatar} />;
   }
 
+  if (card.type === 'medicine') {
+    return <MedicineVisual form={card.form} therapeuticClass={card.therapeuticClass} name={card.title} />;
+  }
+
   if (card.type === 'product' && card.imageUrl) {
     return <img className={styles.cardImage} src={card.imageUrl} alt="" loading="lazy" />;
   }
 
-  const symbol = card.type === 'medicine'
-    ? 'Rx'
-    : card.type === 'lab'
+  const symbol = card.type === 'lab'
       ? '◉'
       : card.type === 'facility'
         ? '+'
@@ -204,11 +210,13 @@ export default function OneStopAssistant() {
   const [lastFailedPrompt, setLastFailedPrompt] = useState('');
   const [hasUnread, setHasUnread] = useState(true);
   const [storageLoaded, setStorageLoaded] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     try {
+      setSignedIn(Boolean(readAccessToken()));
       const saved = window.localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as unknown;
@@ -323,6 +331,13 @@ export default function OneStopAssistant() {
   const openAssistant = () => {
     setOpen(true);
     setHasUnread(false);
+    // Refresh login state each time the chat opens — the token may have
+    // changed since the widget first mounted (sign in/out elsewhere).
+    try {
+      setSignedIn(Boolean(readAccessToken()));
+    } catch {
+      setSignedIn(false);
+    }
   };
 
   const latestAssistantIndex = messages.reduce(
@@ -339,7 +354,7 @@ export default function OneStopAssistant() {
               <BotAvatar />
               <div>
                 <strong>OneStop Assistant</strong>
-                <span><i className={styles.onlineDot} aria-hidden="true" /> Online — replies instantly</span>
+                <span><i className={styles.onlineDot} aria-hidden="true" /> Online — replies instantly{signedIn ? ' · Signed in' : ''}</span>
               </div>
             </div>
             <div className={styles.headerActions}>
@@ -358,10 +373,16 @@ export default function OneStopAssistant() {
             {messages.length === 0 ? (
               <div className={styles.welcome}>
                 <span className={styles.welcomeEyebrow}>OneStop care, one chat</span>
-                <h2>How can I help today?</h2>
+                <h2>{signedIn ? 'Welcome back — how can I help?' : 'How can I help today?'}</h2>
                 <p>
                   I can search live doctors, medicines, lab tests, hospitals, blood banks, and everyday products—then take you straight to booking or shopping.
+                  {signedIn ? ' You are signed in, so booking and ordering work right away.' : null}
                 </p>
+                {!signedIn ? (
+                  <p className={styles.signinNudge}>
+                    <Link href="/login">Sign in</Link> to book appointments and order medicines with one tap.
+                  </p>
+                ) : null}
                 <div className={styles.capabilities} aria-label="What OneStop Assistant can do">
                   <span><b>+</b> Doctors & appointments</span>
                   <span><b>Rx</b> Pharmacy & Rx guidance</span>
