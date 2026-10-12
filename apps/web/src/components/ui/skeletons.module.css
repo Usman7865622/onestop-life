@@ -1,0 +1,67 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid #e6edf2;
+  border-radius: 20px;
+  padding: 20px;
+  background: #fff;
+  display: grid;
+  gap: 12px;
+}
+
+.bar {
+  border-radius: 8px;
+  background: linear-gradient(100deg, #eef3f6 40%, #f8fbfc 50%, #eef3f6 60%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.barImage {
+  height: 120px;
+  border-radius: 12px;
+}
+
+.barTitle {
+  height: 18px;
+  width: 72%;
+}
+
+.barLine {
+  height: 12px;
+  width: 100%;
+}
+
+.barShort {
+  height: 12px;
+  width: 45%;
+}
+
+.barRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.barPrice {
+  height: 22px;
+  width: 84px;
+}
+
+.barButton {
+  height: 38px;
+  width: 118px;
+  border-radius: 10px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 180% 0; }
+  100% { background-position: -20% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar { animation: none; }
+}

@@ -15,7 +15,12 @@ async function getJson<T>(path: string): Promise<T | null> {
   }
 }
 
-export default async function BloodPage() {
+export default async function BloodPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ group?: string }>;
+}) {
+  const params = (await searchParams) ?? {};
   const [banksPayload, requestsPayload] = await Promise.all([
     getJson<{ items?: Facility[] } | Facility[]>('/blood-banks'),
     getJson<{ items?: PublicBloodRequest[] }>('/blood-requests'),
@@ -53,7 +58,7 @@ export default async function BloodPage() {
           <article><strong>Privacy first</strong><span>Your phone number is never shown publicly — only to coordinate your own requests.</span></article>
         </section>
 
-        <BloodClient banks={banks} initialRequests={requests} />
+        <BloodClient banks={banks} initialRequests={requests} initialGroup={params.group} />
       </div>
     </main>
   );
