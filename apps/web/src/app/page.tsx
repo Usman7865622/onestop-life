@@ -7,7 +7,7 @@ import HomeAccountBar from '../components/home/HomeAccountBar';
 import styles from './page.module.css';
 import DoctorAvatar from '../components/doctors/DoctorAvatar';
 import type { Doctor, Facility } from '../lib/doctors/types';
-import { money as doctorMoney } from '../lib/doctors/types';
+import { money as doctorMoney, patientFirstName } from '../lib/doctors/types';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api-production-7a91a.up.railway.app';
 
@@ -66,6 +66,25 @@ async function getFacilities(): Promise<Facility[]> {
   } catch { return []; }
 }
 
+type HomeReview = {
+  id: string;
+  rating: number;
+  title?: string | null;
+  text: string;
+  createdAt: string;
+  user: { id: string; name: string | null };
+  doctorProfile: { id: string; speciality: string; user: { name: string | null } };
+};
+
+async function getLatestReviews(): Promise<HomeReview[]> {
+  try {
+    const response = await fetch(`${API_URL}/reviews/latest`, { cache: 'no-store' });
+    if (!response.ok) return [];
+    const payload = (await response.json()) as { items?: HomeReview[] };
+    return payload.items ?? [];
+  } catch { return []; }
+}
+
 function ProductCard({ product, badge }: { product: Product; badge?: string }) {
   return (
     <article className={styles.productCard}>
@@ -88,7 +107,7 @@ function ProductCard({ product, badge }: { product: Product; badge?: string }) {
 }
 
 export default async function HomePage() {
-  const [products, doctors, facilities, medicineCount] = await Promise.all([getProducts(), getDoctors(), getFacilities(), getMedicineCount()]);
+  const [products, doctors, facilities, medicineCount, latestReviews] = await Promise.all([getProducts(), getDoctors(), getFacilities(), getMedicineCount(), getLatestReviews()]);
 
   const trending = products.filter((p) => (p.category ?? '').toLowerCase().includes('trending'));
   const trendingToShow = (trending.length ? trending : products).slice(0, 8);
@@ -99,7 +118,9 @@ export default async function HomePage() {
     categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
   }
   const categories = Array.from(categoryCounts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  const topDoctors = doctors.slice(0, 3);
+  const topDoctors = [...doctors]
+    .sort((a, b) => ((b.avgRating ?? 0) - (a.avgRating ?? 0)) || ((b.reviewCount ?? 0) - (a.reviewCount ?? 0)))
+    .slice(0, 3);
   const cities = new Set<string>();
   for (const f of facilities) if (f.city) cities.add(f.city);
   for (const d of doctors) for (const link of d.facilities ?? []) if (link.facility?.city) cities.add(link.facility.city);
@@ -229,6 +250,12 @@ export default async function HomePage() {
                   <span className={styles.doctorMiniBody}>
                     <strong>{doctor.user.name ?? 'Doctor'}</strong>
                     <span>{doctor.speciality}{facility ? ` · ${facility.city}` : ''}</span>
+                    <span className={styles.miniRating}>
+                      {[0, 1, 2, 3, 4].map((i) => (
+                        <span key={i} style={i < Math.round(doctor.avgRating ?? 0) ? undefined : { color: '#cbd5e1' }}><SectionIcon name="star" size={12} /></span>
+                      ))}
+                      <b>{doctor.reviewCount > 0 ? `${doctor.avgRating.toFixed(1)} (${doctor.reviewCount})` : 'New'}</b>
+                    </span>
                     <span>{doctorMoney(doctor.feeMinor)} · {doctor.experienceYears} yrs exp.</span>
                   </span>
                 </Link>
@@ -306,36 +333,36 @@ export default async function HomePage() {
             <div><p className={styles.kicker}>Simple by design</p><h2 id="how-heading">How it works</h2></div>
           </div>
           <div className={styles.stepsGrid}>
-            <article><span className={styles.stepBadge}>1</span><span className={styles.stepIcon}><SectionIcon name="signin" size={22} /></span><h3>Choose your path</h3><p>Sign in as a patient, doctor, pharmacy/business or admin — we ask first, every time.</p></article>
-            <article><span className={styles.stepBadge}>2</span><span className={styles.stepIcon}><SectionIcon name="calendar" size={22} /></span><h3>Book or shop</h3><p>Pick a doctor with an upfront fee, or add genuine essentials to your cart.</p></article>
-            <article><span className={styles.stepBadge}>3</span><span className={styles.stepIcon}><SectionIcon name="truck" size={22} /></span><h3>Relax, we deliver care</h3><p>Visit the clinic, join by video, or pay COD at your door. Track everything in your dashboard.</p></article>
+            <article><span className={styles.stepBadge}>1</span><span className={styles.stepIcon}><SectionIcon name="stethoscope" size={22} /></span><h3>Find care that fits</h3><p>Search verified doctors by speciality and city, compare upfront fees and patient reviews, or browse labs, blood banks and 222+ genuine medicines.</p></article>
+            <article><span className={styles.stepBadge}>2</span><span className={styles.stepIcon}><SectionIcon name="calendar" size={22} /></span><h3>Book or order securely</h3><p>Pick a real appointment time, book lab tests with home collection, or order medicines — prescriptions are verified by our pharmacist before dispatch.</p></article>
+            <article><span className={styles.stepBadge}>3</span><span className={styles.stepIcon}><SectionIcon name="star" size={22} /></span><h3>Track, pay & review</h3><p>Pay cash on delivery, follow your orders and appointments from your dashboard, and rate your visit to help other patients.</p></article>
           </div>
         </section>
 
+        {latestReviews.length ? (
         <section className={styles.section} aria-labelledby="stories-heading">
           <div className={styles.sectionHeader}>
-            <div><p className={styles.kicker}>Customer stories</p><h2 id="stories-heading">Loved for everyday care</h2><p>Demo stories from early OneStop Life customers.</p></div>
+            <div><p className={styles.kicker}>Patient reviews</p><h2 id="stories-heading">Real visits, real ratings</h2><p>Verified reviews from patients after their appointments.</p></div>
           </div>
           <div className={styles.testimonialGrid}>
-            {[
-              { quote: 'Booked a dermatologist in Lahore the same evening. Fee was clear before I confirmed — no surprises at the clinic.', name: 'Ayesha K.', city: 'Lahore', role: 'Doctor booking', initials: 'AK', from: '#db2777', to: '#f472b6' },
-              { quote: 'My monthly vitamins and baby essentials arrive together now. COD makes it easy for my parents to order too.', name: 'Bilal R.', city: 'Karachi', role: 'Store customer', initials: 'BR', from: '#0284c7', to: '#38bdf8' },
-              { quote: 'As a seller, verification was straightforward and my products were live without chasing support.', name: 'Pharmacy partner', city: 'Islamabad', role: 'Business', initials: 'PP', from: '#059669', to: '#34d399' },
-            ].map((t) => (
-              <figure key={t.name} className={styles.storyCard}>
+            {latestReviews.map((review) => {
+              const initials = patientFirstName(review.user?.name).slice(0, 2).toUpperCase();
+              return (
+              <figure key={review.id} className={styles.storyCard}>
                 <span className={styles.quoteIcon}><SectionIcon name="quote" size={20} /></span>
-                <span className={styles.stars} role="img" aria-label="Rated 5 out of 5">{[0, 1, 2, 3, 4].map((i) => <SectionIcon key={i} name="star" size={15} />)}</span>
-                <blockquote>“{t.quote}”</blockquote>
+                <span className={styles.stars} role="img" aria-label={`Rated ${review.rating} out of 5`}>{[0, 1, 2, 3, 4].map((i) => <span key={i} style={i < review.rating ? undefined : { color: '#cbd5e1' }}><SectionIcon name="star" size={15} /></span>)}</span>
+                <blockquote>“{review.text}”</blockquote>
                 <figcaption>
-                  <span className={styles.storyAvatar} style={{ background: `linear-gradient(135deg, ${t.from}, ${t.to})` }} aria-hidden="true">{t.initials}</span>
-                  <span className={styles.storyPerson}><strong>{t.name}</strong><span>{t.city}</span></span>
-                  <span className={styles.rolePill}>{t.role}</span>
+                  <span className={styles.storyAvatar} aria-hidden="true">{initials}</span>
+                  <span className={styles.storyPerson}><strong>{patientFirstName(review.user?.name)}</strong><span>Visited {review.doctorProfile?.user?.name ?? 'a doctor'}</span></span>
+                  <span className={styles.rolePill}>Verified visit</span>
                 </figcaption>
               </figure>
-            ))}
+              );
+            })}
           </div>
-          <p className={styles.demoNote}>Demo stories shared by early OneStop Life users.</p>
         </section>
+        ) : null}
 
         <section className={styles.ctaSection} id="contact" aria-labelledby="cta-heading">
           <div>
