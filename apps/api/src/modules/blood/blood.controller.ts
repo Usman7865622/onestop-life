@@ -31,6 +31,11 @@ export class BloodController {
     return this.blood.listMine(user);
   }
 
+  @Get('blood-requests/:id/contact')
+  revealContact(@Param('id', new ParseUUIDPipe()) id: string) {
+    return this.blood.revealContact(id);
+  }
+
   @Patch('blood-requests/:id/cancel')
   cancel(@Param('id', new ParseUUIDPipe()) id: string, @CurrentUser() user: AuthUser) {
     return this.blood.cancel(id, user);

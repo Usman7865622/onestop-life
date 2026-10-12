@@ -16,9 +16,11 @@ import { AssistantModule } from './modules/assistant/assistant.module';
 import { FacilitiesModule } from './modules/facilities/facilities.module';
 import { DoctorsModule } from './modules/doctors/doctors.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
+import { AvailabilityModule } from './modules/availability/availability.module';
 import { LabsModule } from './modules/labs/labs.module';
 import { BloodModule } from './modules/blood/blood.module';
 import { PharmacyModule } from './modules/pharmacy/pharmacy.module';
+import { ReviewsModule } from './modules/reviews/reviews.module';
 
 @Module({
   imports: [
@@ -37,10 +39,12 @@ import { PharmacyModule } from './modules/pharmacy/pharmacy.module';
     FacilitiesModule,
     DoctorsModule,
     AppointmentsModule,
+    AvailabilityModule,
     LabsModule,
     BloodModule,
     PharmacyModule,
     HealthModule,
+    ReviewsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

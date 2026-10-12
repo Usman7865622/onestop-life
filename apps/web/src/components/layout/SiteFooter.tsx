@@ -37,6 +37,15 @@ export default function SiteFooter() {
           <Link href="/pharmacy">Medicines</Link>
         </nav>
 
+        <div className={styles.footerColumn} aria-label="Regulatory and trust">
+          <h2>Regulatory & trust</h2>
+          <span>Pharmacy orders are dispensed by DRAP-licensed partner pharmacies.</span>
+          <span>Clinic and lab partners operate under provincial healthcare commission rules.</span>
+          <span>Doctor profiles list PMDC-verified credentials on file.</span>
+          <span>Prescription medicines need a valid prescription before dispatch.</span>
+          <span>Emergency? Call <a href="tel:15">15</a> or <a href="tel:1122">Rescue 1122</a>.</span>
+        </div>
+
         <div className={styles.footerColumn} id="footer-support">
           <h2>We’re here to help</h2>
           <p>Questions about products, delivery, or an order?</p>

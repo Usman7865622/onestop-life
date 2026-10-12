@@ -75,4 +75,17 @@ export class BloodService {
       data: { status: BloodRequestStatus.CANCELLED },
     });
   }
+
+  /** Signed-in users may reveal a requester's contact number to coordinate a donation. */
+  async revealContact(id: string) {
+    const request = await this.prisma.bloodRequest.findUnique({
+      where: { id },
+      select: { id: true, status: true, contactPhone: true },
+    });
+    if (!request) throw new NotFoundException('Blood request not found');
+    if (request.status !== BloodRequestStatus.OPEN) {
+      throw new BadRequestException('This blood request is no longer open');
+    }
+    return { id: request.id, contactPhone: request.contactPhone };
+  }
 }

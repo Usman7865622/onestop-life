@@ -1,5 +1,7 @@
+import { Suspense } from 'react';
 import PharmacyClient from './PharmacyClient';
 import styles from './page.module.css';
+import { CardGridSkeleton } from '../../components/ui/Skeletons';
 import type { Medicine, MedicineClass } from '../../lib/pharmacy/types';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api-production-7a91a.up.railway.app';
@@ -34,7 +36,7 @@ async function getMedicines(): Promise<Medicine[]> {
   return all;
 }
 
-export default async function PharmacyPage() {
+async function PharmacyContent({ initialSearch }: { initialSearch?: string }) {
   const [medicines, classes] = await Promise.all([getMedicines(), getMedicineClasses()]);
   const totalFromClasses = classes.reduce((sum, item) => sum + item.count, 0);
   const total = totalFromClasses || medicines.length;
@@ -42,34 +44,64 @@ export default async function PharmacyPage() {
   const otcCount = medicines.length - rxCount;
 
   return (
+    <>
+      <header className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>Pharmacy · Genuine Medicines · Home Delivery</p>
+          <h1>Your pharmacy, delivered</h1>
+          <p className={styles.heroSub}>Browse genuine medicines by condition, compare pack sizes and prices upfront, and order for cash-on-delivery. Prescription-required items are clearly marked before you check out.</p>
+          <div className={styles.heroBadges}>
+            <span>Genuine, sealed packs</span>
+            <span>Upfront prices</span>
+            <span>COD available</span>
+          </div>
+        </div>
+        <div className={styles.heroStats} aria-label="Pharmacy summary">
+          <div><strong>{total || 200}+</strong><span>Medicines listed</span></div>
+          <div><strong>{classes.length || 13}</strong><span>Care categories</span></div>
+          <div><strong>{otcCount}</strong><span>No prescription needed</span></div>
+        </div>
+      </header>
+
+      <section className={styles.trustStrip} aria-label="Why order medicines with OneStop Life">
+        <article><strong>Licensed pharmacy partners</strong><span>Medicines are dispensed by licensed pharmacies.</span></article>
+        <article><strong>Rx checked before dispatch</strong><span>Items marked “Rx required” need a valid prescription, which our team will ask for before delivery.</span></article>
+        <article><strong>Sealed &amp; in-date packs</strong><span>Every pack is sealed and checked before it leaves the shelf.</span></article>
+        <article><strong>Free delivery over Rs. 3,000</strong><span>Standard delivery is Rs. 150, free above the threshold.</span></article>
+      </section>
+
+      <PharmacyClient medicines={medicines} classes={classes} initialSearch={initialSearch} />
+    </>
+  );
+}
+
+function PharmacyFallback() {
+  return (
+    <>
+      <header className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <p className={styles.eyebrow}>Pharmacy · Genuine Medicines · Home Delivery</p>
+          <h1>Your pharmacy, delivered</h1>
+        </div>
+      </header>
+      <CardGridSkeleton />
+    </>
+  );
+}
+
+export default async function PharmacyPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string }>;
+}) {
+  const params = (await searchParams) ?? {};
+
+  return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <header className={styles.hero}>
-          <div className={styles.heroCopy}>
-            <p className={styles.eyebrow}>Pharmacy · Genuine Medicines · Home Delivery</p>
-            <h1>Your pharmacy, delivered</h1>
-            <p className={styles.heroSub}>Browse genuine medicines by condition, compare pack sizes and prices upfront, and order for cash-on-delivery. Prescription-required items are clearly marked before you check out.</p>
-            <div className={styles.heroBadges}>
-              <span>Genuine, sealed packs</span>
-              <span>Upfront prices</span>
-              <span>COD available</span>
-            </div>
-          </div>
-          <div className={styles.heroStats} aria-label="Pharmacy summary">
-            <div><strong>{total || 200}+</strong><span>Medicines listed</span></div>
-            <div><strong>{classes.length || 13}</strong><span>Care categories</span></div>
-            <div><strong>{otcCount}</strong><span>No prescription needed</span></div>
-          </div>
-        </header>
-
-        <section className={styles.trustStrip} aria-label="Why order medicines with OneStop Life">
-          <article><strong>Licensed pharmacy partners</strong><span>Medicines are dispensed by licensed pharmacies.</span></article>
-          <article><strong>Rx checked before dispatch</strong><span>Items marked “Rx required” need a valid prescription, which our team will ask for before delivery.</span></article>
-          <article><strong>Sealed &amp; in-date packs</strong><span>Every pack is sealed and checked before it leaves the shelf.</span></article>
-          <article><strong>Free delivery over Rs. 3,000</strong><span>Standard delivery is Rs. 150, free above the threshold.</span></article>
-        </section>
-
-        <PharmacyClient medicines={medicines} classes={classes} />
+        <Suspense fallback={<PharmacyFallback />}>
+          <PharmacyContent initialSearch={params.q} />
+        </Suspense>
       </div>
     </main>
   );

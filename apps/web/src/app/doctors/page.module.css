@@ -119,3 +119,12 @@
   .hero { padding: 20px; }
   .hero h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); }
 }
+
+/* --- Reviews & trust badges --- */
+.ratingRow { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
+.ratingText { font-size: .82rem; font-weight: 800; color: #40546b; }
+.ratingTextMuted { font-size: .82rem; font-weight: 700; color: #8a9aac; }
+.pmdcShield { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 999px; background: #e8f6ee; color: #147a3d; font-size: .7rem; font-weight: 950; text-transform: uppercase; letter-spacing: .04em; }
+.pmdcShield svg { flex: 0 0 auto; }
+.consultPill { padding: 7px 9px; border-radius: 999px; background: #f6f9fb; color: #40546b; font-size: .8rem; font-weight: 700; }
+.consultPill strong { color: #172337; }

@@ -307,6 +307,8 @@ export class AssistantService {
       badge: medicine.requiresRx ? 'Rx required' : 'No Rx needed',
       href: `/products?q=${encodeURIComponent(medicine.nameEn)}`,
       imageUrl: medicine.imageUrl ?? undefined,
+      form: medicine.form ?? undefined,
+      therapeuticClass: medicine.therapeuticClass ?? undefined,
     }));
 
     // The Rx note may only name medicines actually matched and shown above.

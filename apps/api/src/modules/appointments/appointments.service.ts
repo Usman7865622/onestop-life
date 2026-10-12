@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { AppointmentStatus, RoleKey } from '@prisma/client';
 import { AuthUser } from '../../common/types/auth-user';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AvailabilityService, karachiDateKey } from '../availability/availability.service';
 import { CreateAppointmentDto } from './dto/appointment.dto';
 
 const appointmentInclude = {
@@ -12,15 +13,12 @@ const appointmentInclude = {
 
 @Injectable()
 export class AppointmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly availability: AvailabilityService,
+  ) {}
 
   async create(patient: AuthUser, dto: CreateAppointmentDto) {
-    const startsAt = new Date(dto.startsAt);
-    const endsAt = new Date(dto.endsAt);
-    if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) {
-      throw new BadRequestException('endsAt must be after startsAt');
-    }
-
     const doctor = await this.prisma.doctorProfile.findUnique({ where: { id: dto.doctorProfileId } });
     if (!doctor) throw new NotFoundException('Doctor not found');
     if (!doctor.isBookable) throw new BadRequestException('This doctor is not currently bookable');
@@ -30,6 +28,37 @@ export class AppointmentsService {
       if (!facility) throw new NotFoundException('Facility not found');
     }
 
+    let startsAt: Date;
+    let endsAt: Date;
+
+    if (dto.slotStart) {
+      // --- Slot-based booking (real availability) ---
+      // The requested slot must exactly match a currently FREE slot on the doctor's
+      // schedule. The appointment window is taken from the schedule slot itself, so
+      // clients cannot invent times outside the doctor's working hours.
+      const slotStartIso = new Date(dto.slotStart);
+      if (Number.isNaN(slotStartIso.getTime())) throw new BadRequestException('slotStart must be a valid ISO date');
+      const dateStr = karachiDateKey(slotStartIso);
+      const daySlots = await this.availability.computeDaySlots(dto.doctorProfileId, dateStr);
+      const match = daySlots.find((s) => s.status === 'free' && s.startsAt === slotStartIso.toISOString());
+      if (!match) throw new BadRequestException('This slot is no longer available');
+      startsAt = new Date(match.startsAt);
+      endsAt = new Date(match.endsAt);
+    } else {
+      // --- Legacy free-form booking ---
+      // Once a doctor publishes a real schedule, patients must pick one of the
+      // generated slots instead of typing arbitrary times.
+      if (await this.availability.hasActiveSchedule(dto.doctorProfileId)) {
+        throw new BadRequestException('Please choose an available slot to book this doctor.');
+      }
+      startsAt = new Date(dto.startsAt);
+      endsAt = new Date(dto.endsAt);
+      if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) {
+        throw new BadRequestException('endsAt must be after startsAt');
+      }
+    }
+
+    // Final guard against double-booking races (same predicate as slot computation).
     const overlap = await this.prisma.appointment.findFirst({
       where: {
         doctorProfileId: dto.doctorProfileId,

@@ -12,6 +12,10 @@ export class CreateAppointmentDto {
   @IsString()
   facilityId?: string;
 
+  @IsOptional()
+  @IsDateString()
+  slotStart?: string;
+
   @IsDateString()
   startsAt!: string;
 

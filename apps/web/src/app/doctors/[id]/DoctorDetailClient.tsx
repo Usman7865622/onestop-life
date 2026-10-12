@@ -1,20 +1,38 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './detail.module.css';
 import { apiFetch } from '../../../lib/auth/api';
 import { readAccessToken } from '../../../lib/auth/session';
 import DoctorAvatar from '../../../components/doctors/DoctorAvatar';
+import StarRating from '../../../components/doctors/StarRating';
+import ReviewsSection from '../../../components/doctors/ReviewsSection';
 import { money, type Appointment, type Doctor } from '../../../lib/doctors/types';
 
-function toIso(date: string, time: string) {
-  return new Date(`${date}T${time}:00`).toISOString();
+type SlotInfo = { startsAt: string; endsAt: string; status: 'free' | 'booked' };
+
+function formatSlotTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-PK', {
+    hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Karachi',
+  });
+}
+
+function formatChipDate(dateKey: string) {
+  return new Date(`${dateKey}T12:00:00+05:00`).toLocaleDateString('en-PK', {
+    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Karachi',
+  });
+}
+
+function dateKeyParts(dateKey: string) {
+  const d = new Date(`${dateKey}T12:00:00+05:00`);
+  return {
+    dayName: d.toLocaleDateString('en-PK', { weekday: 'short', timeZone: 'Asia/Karachi' }),
+    dayNumber: d.toLocaleDateString('en-PK', { day: 'numeric', timeZone: 'Asia/Karachi' }),
+  };
 }
 
 export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('10:00');
   const [type, setType] = useState<'IN_PERSON' | 'VIDEO'>('IN_PERSON');
   const [reason, setReason] = useState('');
   const [patientName, setPatientName] = useState('');
@@ -24,18 +42,47 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<Appointment | null>(null);
 
-  const minDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // Real availability: doctor's published weekly schedule -> concrete slots.
+  const [dates, setDates] = useState<string[]>([]);
+  const [datesLoaded, setDatesLoaded] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [slots, setSlots] = useState<SlotInfo[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<{ startsAt: string; endsAt: string } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    apiFetch<Array<{ date: string }>>(`/doctors/${doctor.id}/available-dates`, { method: 'GET' })
+      .then((rows) => {
+        if (!alive) return;
+        const keys = rows.map((row) => row.date);
+        setDates(keys);
+        setSelectedDate((current) => current || keys[0] || '');
+        setDatesLoaded(true);
+      })
+      .catch(() => { if (alive) { setDates([]); setDatesLoaded(true); } });
+    return () => { alive = false; };
+  }, [doctor.id]);
+
+  useEffect(() => {
+    if (!selectedDate) { setSlots([]); setSelectedSlot(null); return; }
+    let alive = true;
+    setSlotsLoading(true);
+    setSelectedSlot(null);
+    apiFetch<SlotInfo[]>(`/doctors/${doctor.id}/slots?date=${selectedDate}`, { method: 'GET' })
+      .then((rows) => { if (alive) { setSlots(rows); setSlotsLoading(false); } })
+      .catch(() => { if (alive) { setSlots([]); setSlotsLoading(false); } });
+    return () => { alive = false; };
+  }, [doctor.id, selectedDate]);
+
   const facility = doctor.facilities.find((item) => item.facility.id === facilityId)?.facility ?? doctor.facilities[0]?.facility;
 
   const book = async () => {
     setError('');
     const token = readAccessToken();
     if (!token) { setError('Please sign in at /login first, then come back to book.'); return; }
-    if (!date || !time) { setError('Choose a date and time for your appointment.'); return; }
+    if (!selectedSlot) { setError('Choose an available time slot to book this appointment.'); return; }
     if (!patientName.trim() || !patientPhone.trim()) { setError('Add the patient name and phone number.'); return; }
-    const startsAt = toIso(date, time);
-    const endsAt = new Date(new Date(startsAt).getTime() + 30 * 60 * 1000).toISOString();
-    if (new Date(startsAt) <= new Date()) { setError('Choose a future date and time.'); return; }
     setBusy(true);
     try {
       const appt = await apiFetch<Appointment>('/appointments', {
@@ -43,13 +90,16 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
         body: JSON.stringify({
           doctorProfileId: doctor.id,
           facilityId: type === 'IN_PERSON' && facilityId ? facilityId : undefined,
-          startsAt, endsAt, type, reason: reason.trim() || undefined,
+          slotStart: selectedSlot.startsAt,
+          startsAt: selectedSlot.startsAt,
+          endsAt: selectedSlot.endsAt,
+          type, reason: reason.trim() || undefined,
           patientName: patientName.trim(), patientPhone: patientPhone.trim(),
         }),
       }, token);
       setSuccess(appt);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not book this appointment. Try another time.');
+      setError(e instanceof Error ? e.message : 'Could not book this appointment. Try another slot.');
     } finally { setBusy(false); }
   };
 
@@ -59,7 +109,7 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
         <span className={styles.successIcon}>✓</span>
         <p className={styles.successKicker}>Booking request received</p>
         <h2>Appointment requested</h2>
-        <p>Your appointment with <strong>{doctor.user.name}</strong> is <strong>{success.status}</strong> for {new Date(success.startsAt).toLocaleString('en-PK')}.</p>
+        <p>Your appointment with <strong>{doctor.user.name}</strong> is <strong>{success.status}</strong> for {new Date(success.startsAt).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} (Asia/Karachi).</p>
         <div className={styles.successGrid}>
           <span><strong>{money(success.feeMinor)}</strong>Fee</span>
           <span><strong>{success.type === 'VIDEO' ? 'Video' : 'In-person'}</strong>Visit type</span>
@@ -80,14 +130,28 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
             <div className={styles.identity}>
               <div className={styles.nameRow}>
                 <h1>{doctor.user.name ?? 'Doctor'}</h1>
-                <span className={styles.verified}>Verified doctor</span>
+                {doctor.pmdcNumber ? <span className={styles.verified}>PMDC {doctor.pmdcNumber}</span> : <span className={styles.verified}>Verified doctor</span>}
               </div>
               <p className={styles.speciality}>{doctor.speciality}</p>
               {doctor.qualifications ? <p className={styles.qual}>{doctor.qualifications}</p> : null}
+              <div className={styles.ratingLine}>
+                <StarRating value={doctor.avgRating ?? 0} size={16} />
+                {doctor.reviewCount > 0 ? (
+                  <span>{doctor.avgRating.toFixed(1)} · {doctor.reviewCount} patient review{doctor.reviewCount === 1 ? '' : 's'}</span>
+                ) : (
+                  <span className={styles.ratingMuted}>No reviews yet — be the first after your visit</span>
+                )}
+              </div>
               <div className={styles.badgeRow}>
                 <span>{doctor.experienceYears} years experience</span>
+                {doctor.consultationCount ? <span>{doctor.consultationCount.toLocaleString('en-PK')}+ consultations</span> : null}
                 <span>{doctor.languages.join(' · ')}</span>
                 <span>In-person & video</span>
+                {dates.length ? (
+                  <span className={styles.nextChip}>Next available: {formatChipDate(dates[0])}</span>
+                ) : datesLoaded ? (
+                  <span className={styles.nextChipNone}>Schedule coming soon</span>
+                ) : null}
               </div>
             </div>
           </div>
@@ -106,8 +170,12 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
             <div><span>Qualifications</span><strong>{doctor.qualifications || 'MBBS'}</strong></div>
             <div><span>Experience</span><strong>{doctor.experienceYears} years</strong></div>
             <div><span>Languages</span><strong>{doctor.languages.join(', ')}</strong></div>
+            {doctor.pmdcNumber ? <div><span>PMDC registration</span><strong>{doctor.pmdcNumber}</strong></div> : null}
+            {doctor.consultationCount ? <div><span>Consultations</span><strong>{doctor.consultationCount.toLocaleString('en-PK')}+</strong></div> : null}
           </div>
         </section>
+
+        <ReviewsSection doctorId={doctor.id} doctorName={doctor.user.name} avgRating={doctor.avgRating ?? 0} reviewCount={doctor.reviewCount ?? 0} />
 
         <section className={styles.sectionCard}>
           <div className={styles.sectionHeader}><h2>Clinic locations</h2><span>Choose a clinic when booking in-person</span></div>
@@ -155,10 +223,61 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
         {facility && type === 'IN_PERSON' ? <p className={styles.hint}>{facility.address}, {facility.city}{facility.timings ? ` · ${facility.timings}` : ''}</p> : null}
         {type === 'VIDEO' ? <p className={styles.hint}>Video link and instructions will be shared after the clinic confirms your request.</p> : null}
 
-        <div className={styles.twoCol}>
-          <label className={styles.field}><span>Date</span><input type="date" min={minDate} value={date} onChange={(event) => setDate(event.target.value)} /></label>
-          <label className={styles.field}><span>Time</span><input type="time" value={time} onChange={(event) => setTime(event.target.value)} /></label>
+        <div className={styles.pickerHead}>
+          <span>Pick a date &amp; time</span>
+          <span className={styles.tzLabel}>Times in Asia/Karachi</span>
         </div>
+
+        {!datesLoaded ? <p className={styles.hint}>Loading this doctor&apos;s availability…</p>
+          : dates.length === 0 ? <p className={styles.hint}>Schedule coming soon — this doctor has not published weekly hours yet. Check back later.</p>
+          : (
+            <>
+              <div className={styles.dateStrip} role="listbox" aria-label="Available dates">
+                {dates.slice(0, 14).map((dateKey) => {
+                  const parts = dateKeyParts(dateKey);
+                  const active = dateKey === selectedDate;
+                  return (
+                    <button
+                      type="button"
+                      key={dateKey}
+                      role="option"
+                      aria-selected={active}
+                      className={active ? `${styles.dateChip} ${styles.dateChipActive}` : styles.dateChip}
+                      onClick={() => setSelectedDate(dateKey)}
+                    >
+                      <span>{parts.dayName}</span>
+                      <strong>{parts.dayNumber}</strong>
+                    </button>
+                  );
+                })}
+              </div>
+              {dates.length > 14 ? <p className={styles.hint}>Showing the next 14 days with availability — more dates are ahead.</p> : null}
+              {slotsLoading ? <p className={styles.hint}>Loading time slots…</p>
+                : slots.length === 0 ? <p className={styles.hint}>No slots left on this date — pick another day.</p>
+                : (
+                  <div className={styles.timeGrid}>
+                    {slots.map((slot) => {
+                      const isBooked = slot.status === 'booked';
+                      const isSelected = selectedSlot?.startsAt === slot.startsAt;
+                      return (
+                        <button
+                          type="button"
+                          key={slot.startsAt}
+                          disabled={isBooked}
+                          aria-pressed={isSelected}
+                          title={isBooked ? 'Already booked' : formatChipDate(selectedDate)}
+                          className={isBooked ? `${styles.timeSlot} ${styles.timeSlotBooked}` : isSelected ? `${styles.timeSlot} ${styles.timeSlotSelected}` : styles.timeSlot}
+                          onClick={() => setSelectedSlot({ startsAt: slot.startsAt, endsAt: slot.endsAt })}
+                        >
+                          {formatSlotTime(slot.startsAt)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+            </>
+          )}
+
         <label className={styles.field}><span>Patient name</span><input value={patientName} onChange={(event) => setPatientName(event.target.value)} placeholder="e.g. Muhammad Usman" autoComplete="name" /></label>
         <label className={styles.field}><span>Patient phone</span><input value={patientPhone} onChange={(event) => setPatientPhone(event.target.value)} placeholder="0300 1234567" autoComplete="tel" /></label>
         <label className={styles.field}><span>Reason for visit <em>optional</em></span><textarea rows={3} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Briefly describe your concern" /></label>
@@ -169,7 +288,7 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
           <span>Duration</span><strong>30 minutes</strong>
         </div>
 
-        <button className={styles.primaryButton} onClick={book} disabled={busy}>{busy ? 'Booking…' : `Confirm booking · ${money(doctor.feeMinor)}`}</button>
+        <button className={styles.primaryButton} onClick={book} disabled={busy || !selectedSlot}>{busy ? 'Booking…' : `Confirm booking · ${money(doctor.feeMinor)}`}</button>
         <p className={styles.hint}>Free cancellation before confirmation. Please arrive 10 minutes early for in-person visits.</p>
       </aside>
     </div>

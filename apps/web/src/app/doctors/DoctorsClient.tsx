@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import styles from './page.module.css';
 import DoctorAvatar from '../../components/doctors/DoctorAvatar';
+import StarRating from '../../components/doctors/StarRating';
 import { money, type Doctor } from '../../lib/doctors/types';
 
 function countBy(doctors: Doctor[], value: (doctor: Doctor) => string[]) {
@@ -12,13 +13,20 @@ function countBy(doctors: Doctor[], value: (doctor: Doctor) => string[]) {
   return counts;
 }
 
-export default function DoctorsClient({ doctors }: { doctors: Doctor[] }) {
+export default function DoctorsClient({
+  doctors,
+  initialSpeciality,
+  initialCity,
+}: {
+  doctors: Doctor[];
+  initialSpeciality?: string;
+  initialCity?: string;
+}) {
   const [search, setSearch] = useState('');
-  const [speciality, setSpeciality] = useState('All specialities');
-  const [city, setCity] = useState('All cities');
-
   const specialities = useMemo(() => ['All specialities', ...Array.from(new Set(doctors.map((doctor) => doctor.speciality))).sort()], [doctors]);
   const cities = useMemo(() => ['All cities', ...Array.from(new Set(doctors.flatMap((doctor) => doctor.facilities.map((item) => item.facility.city)))).sort()], [doctors]);
+  const [speciality, setSpeciality] = useState(() => (initialSpeciality && specialities.includes(initialSpeciality) ? initialSpeciality : 'All specialities'));
+  const [city, setCity] = useState(() => (initialCity && cities.includes(initialCity) ? initialCity : 'All cities'));
   const specialityCounts = useMemo(() => countBy(doctors, (doctor) => [doctor.speciality]), [doctors]);
 
   const visible = useMemo(() => doctors.filter((doctor) => {
@@ -80,14 +88,23 @@ export default function DoctorsClient({ doctors }: { doctors: Doctor[] }) {
                 <div className={styles.cardTop}>
                   <DoctorAvatar name={doctor.user.name} size={64} className={styles.avatar} />
                   <div className={styles.cardTitle}>
-                    <div className={styles.nameRow}><h3>{doctor.user.name ?? 'Doctor'}</h3><span className={styles.verified}>Verified</span></div>
+                    <div className={styles.nameRow}><h3>{doctor.user.name ?? 'Doctor'}</h3>{doctor.pmdcNumber ? <span className={styles.verified}>PMDC verified</span> : <span className={styles.verified}>Verified</span>}</div>
                     <p className={styles.speciality}>{doctor.speciality}</p>
                     {doctor.qualifications ? <p className={styles.qual}>{doctor.qualifications}</p> : null}
+                    <div className={styles.ratingRow}>
+                      <StarRating value={doctor.avgRating ?? 0} size={14} />
+                      {doctor.reviewCount > 0 ? (
+                        <span className={styles.ratingText}>{doctor.avgRating.toFixed(1)} · {doctor.reviewCount} review{doctor.reviewCount === 1 ? '' : 's'}</span>
+                      ) : (
+                        <span className={styles.ratingTextMuted}>New on OneStop</span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 <div className={styles.quickStats}>
                   <span><strong>{doctor.experienceYears} yrs</strong> experience</span>
+                  {doctor.consultationCount ? <span><strong>{doctor.consultationCount.toLocaleString('en-PK')}+</strong> consultations</span> : null}
                   <span>{doctor.languages.join(' · ')}</span>
                   <span>{facility ? `${facility.city}` : 'Video available'}</span>
                 </div>
