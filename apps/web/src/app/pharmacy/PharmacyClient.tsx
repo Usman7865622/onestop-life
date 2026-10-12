@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import styles from './page.module.css';
 import FormIcon from '../../components/pharmacy/FormIcon';
+import MedicineVisual from '../../components/pharmacy/MedicineVisual';
 import { money } from '../../lib/doctors/types';
 import type { Medicine, MedicineClass } from '../../lib/pharmacy/types';
 
@@ -17,8 +18,16 @@ const rxOptions: Array<{ value: RxFilter; label: string }> = [
   { value: 'rx', label: 'Prescription required' },
 ];
 
-export default function PharmacyClient({ medicines, classes }: { medicines: Medicine[]; classes: MedicineClass[] }) {
-  const [search, setSearch] = useState('');
+export default function PharmacyClient({
+  medicines,
+  classes,
+  initialSearch,
+}: {
+  medicines: Medicine[];
+  classes: MedicineClass[];
+  initialSearch?: string;
+}) {
+  const [search, setSearch] = useState(initialSearch ?? '');
   const [selectedClass, setSelectedClass] = useState('all');
   const [rxFilter, setRxFilter] = useState<RxFilter>('all');
   const [visibleCount, setVisibleCount] = useState(PAGE_STEP);
@@ -100,7 +109,7 @@ export default function PharmacyClient({ medicines, classes }: { medicines: Medi
           {shown.map((medicine) => (
             <article className={styles.card} key={medicine.id}>
               <div className={styles.cardTop}>
-                <div className={styles.formIcon} aria-hidden="true"><FormIcon form={medicine.form} /></div>
+                <MedicineVisual form={medicine.form} therapeuticClass={medicine.therapeuticClass} name={medicine.genericName ?? medicine.nameEn} />
                 <div className={styles.cardTitle}>
                   <h3>{medicine.nameEn}</h3>
                   <p className={styles.generic}>
