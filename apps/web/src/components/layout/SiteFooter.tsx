@@ -37,28 +37,28 @@ export default function SiteFooter() {
           <Link href="/pharmacy">Medicines</Link>
         </nav>
 
-        <div className={styles.footerColumn} aria-label="Regulatory and trust">
-          <h2>Regulatory & trust</h2>
-          <span>Pharmacy orders are dispensed by DRAP-licensed partner pharmacies.</span>
-          <span>Clinic and lab partners operate under provincial healthcare commission rules.</span>
-          <span>Doctor profiles list PMDC-verified credentials on file.</span>
-          <span>Prescription medicines need a valid prescription before dispatch.</span>
-          <span>Emergency? Call <a href="tel:15">15</a> or <a href="tel:1122">Rescue 1122</a>.</span>
-        </div>
-
         <div className={styles.footerColumn} id="footer-support">
-          <h2>We’re here to help</h2>
+          <h2>We&rsquo;re here to help</h2>
           <p>Questions about products, delivery, or an order?</p>
           <a href="mailto:support@onestop.life">support@onestop.life</a>
           <a href="tel:+923001234567">+92 300 1234567</a>
-          <span>Mon–Fri, 9:00–18:00 PKT</span>
+          <span>Mon&ndash;Fri, 9:00&ndash;18:00 PKT</span>
+        </div>
+      </div>
+
+      <div className={styles.trustStrip}>
+        <div className={styles.container}>
+          <span>DRAP-licensed partner pharmacies</span>
+          <span>Provincial healthcare commission rules</span>
+          <span>PMDC-verified doctor credentials</span>
+          <span>Valid prescription needed for Rx medicines</span>
+          <span className={styles.trustEmergency}>Emergency? Call <a href="tel:15">15</a> or <a href="tel:1122">Rescue 1122</a></span>
         </div>
       </div>
 
       <div className={styles.footerBottom}>
         <div className={styles.container}>
-          <span>© {new Date().getFullYear()} OneStop Life. All rights reserved.</span>
-          <span>Carefully chosen. Clearly delivered.</span>
+          <span>&copy; {new Date().getFullYear()} OneStop Life. All rights reserved. &middot; Carefully chosen. Clearly delivered.</span>
         </div>
       </div>
     </footer>

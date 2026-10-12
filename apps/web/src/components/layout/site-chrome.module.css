@@ -122,10 +122,25 @@
 
 .footerMain {
   display: grid;
-  grid-template-columns: minmax(230px, 1.5fr) repeat(3, minmax(140px, 1fr));
-  gap: clamp(28px, 5vw, 76px);
-  padding-block: 56px 50px;
+  grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+  gap: clamp(24px, 4vw, 56px);
+  padding-block: 48px 40px;
 }
+
+/* Slim regulatory trust strip: keeps DRAP/PMDC assurances without a towering column */
+.trustStrip { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.trustStrip > div {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 30px;
+  padding-block: 15px;
+}
+.trustStrip span {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: #9fb0c2; font-size: 0.74rem;
+}
+.trustStrip span::before { content: "\2713"; color: #4ade80; font-weight: 800; }
+.trustStrip a { color: #ffd166; text-decoration: none; }
+.trustStrip a:hover { text-decoration: underline; }
+.trustEmergency::before { content: none !important; }
 
 .footerBrand { max-width: 320px; }
 .footerLogo { color: #fff; }
@@ -159,7 +174,7 @@
 .footerColumn > p { margin: 0 0 2px; font-size: 0.79rem; }
 
 .footerBottom { border-top: 1px solid rgba(255, 255, 255, 0.12); }
-.footerBottom > div { display: flex; min-height: 58px; align-items: center; justify-content: space-between; gap: 16px; color: #99aaba; font-size: 0.72rem; }
+.footerBottom > div { display: flex; min-height: 58px; align-items: center; justify-content: flex-start; gap: 16px; color: #99aaba; font-size: 0.72rem; }
 
 @media (max-width: 940px) {
   .mainBarInner { flex-wrap: wrap; gap: 13px 24px; padding-block: 14px; }
