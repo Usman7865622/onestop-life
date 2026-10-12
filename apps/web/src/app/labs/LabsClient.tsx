@@ -24,8 +24,8 @@ function FlaskIcon() {
   );
 }
 
-export default function LabsClient({ tests }: { tests: LabTest[] }) {
-  const [search, setSearch] = useState('');
+export default function LabsClient({ tests, initialSearch }: { tests: LabTest[]; initialSearch?: string }) {
+  const [search, setSearch] = useState(initialSearch ?? '');
   const [facilityId, setFacilityId] = useState('all');
   const [selected, setSelected] = useState<LabTest | null>(null);
   const [token, setToken] = useState<string | null>(null);
