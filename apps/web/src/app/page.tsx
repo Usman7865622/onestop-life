@@ -271,17 +271,18 @@ export default async function HomePage() {
             <p>{medicineCount ? `${medicineCount}+ medicines` : '200+ medicines'} across pain relief, antibiotics, diabetes, heart care and more — with prescription-required items clearly marked and genuine sealed packs at your door.</p>
             <Link className={styles.primaryButton} href="/pharmacy">Browse the pharmacy</Link>
           </div>
-          <div className={styles.doctorMiniGrid}>
+          <div className={styles.pharmacyMiniGrid}>
             {[
-              { title: 'Pain relief & fever', sub: 'Paracetamol, ibuprofen & more from Rs. 40' },
-              { title: 'Diabetes, heart & BP care', sub: 'Monthly essentials with upfront prices' },
-              { title: 'Vitamins & daily wellness', sub: 'Vitamin D, iron, omega-3 and probiotics' },
+              { title: 'Pain relief & fever', sub: 'Paracetamol, ibuprofen & more from Rs. 40', icon: 'shield' as const, href: '/pharmacy?q=pain' },
+              { title: 'Diabetes, heart & BP care', sub: 'Monthly essentials with upfront prices', icon: 'heart' as const, href: '/pharmacy?q=diabetes' },
+              { title: 'Vitamins & daily wellness', sub: 'Vitamin D, iron, omega-3 and probiotics', icon: 'spark' as const, href: '/pharmacy?q=vitamin' },
             ].map((item) => (
-              <Link key={item.title} className={styles.doctorMiniCard} href="/pharmacy">
-                <span className={styles.doctorMiniBody}>
+              <Link key={item.title} className={styles.pharmacyMiniCard} href={item.href}>
+                <span className={styles.pharmacyMiniIcon}><SectionIcon name={item.icon} size={26} /></span>
+                <span className={styles.pharmacyMiniBody}>
                   <strong>{item.title}</strong>
                   <span>{item.sub}</span>
-                  <span>Browse in the pharmacy →</span>
+                  <span className={styles.pharmacyMiniLink}>Browse in the pharmacy →</span>
                 </span>
               </Link>
             ))}
