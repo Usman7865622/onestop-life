@@ -85,6 +85,12 @@ const heroSlides = [
     cta: 'Shop trending',
     href: '#trending-essentials',
     theme: styles.heroTeal,
+    image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=900&q=70',
+    alt: 'Medicine blister packs',
+    chips: [
+      { icon: '★', title: 'Top rated', sub: 'Genuine sealed packs' },
+      { icon: '✓', title: 'Free delivery', sub: 'On orders Rs. 3,000+' },
+    ],
   },
   {
     eyebrow: 'New arrivals',
@@ -93,6 +99,12 @@ const heroSlides = [
     cta: 'Explore electronics',
     href: '#electronics-appliances',
     theme: styles.heroIndigo,
+    image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=900&q=70',
+    alt: 'Headphones, keyboard and mouse',
+    chips: [
+      { icon: '✦', title: 'New in store', sub: 'Latest gadgets' },
+      { icon: '✓', title: 'COD available', sub: 'Pay at your door' },
+    ],
   },
   {
     eyebrow: 'For your companions',
@@ -101,6 +113,12 @@ const heroSlides = [
     cta: 'Shop pet care',
     href: '#pet-care',
     theme: styles.heroAmber,
+    image: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=70',
+    alt: 'Two happy dogs running',
+    chips: [
+      { icon: '♥', title: 'Loved by pets', sub: 'Vet-approved picks' },
+      { icon: '✓', title: 'Ships in 24h', sub: 'Fast dispatch' },
+    ],
   },
 ];
 
@@ -292,8 +310,16 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             <a href={activeSlide.href} className={styles.heroCta}>{activeSlide.cta} →</a>
           </div>
           <div className={styles.heroArt} aria-hidden="true">
-            <span className={styles.heroOrb} /><span className={styles.heroOrb2} />
-            <CategoryIcon category="Trending essentials" className={styles.heroIcon} />
+            <div className={styles.heroImgWrap}>
+              <img key={activeSlide.image} src={activeSlide.image} alt="" className={styles.heroImg} loading="eager" />
+              <span className={styles.heroShade} />
+            </div>
+            {activeSlide.chips.map((chip, i) => (
+              <div key={chip.title} className={`${styles.heroChip} ${i === 0 ? styles.chipA : styles.chipB}`}>
+                <span className={styles.chipIcon}>{chip.icon}</span>
+                <span><b>{chip.title}</b><small>{chip.sub}</small></span>
+              </div>
+            ))}
           </div>
         </div>
         <div className={styles.heroDots} role="tablist" aria-label="Choose banner">

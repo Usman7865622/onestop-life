@@ -76,12 +76,26 @@
 .heroSlide p { margin: 0 0 22px; opacity: 0.9; font-size: clamp(14px, 1.6vw, 17px); max-width: 420px; }
 .heroCta { display: inline-block; background: #fff; color: var(--ink); font-weight: 700; padding: 13px 26px; border-radius: 999px; text-decoration: none; font-size: 15px; transition: transform 0.15s, box-shadow 0.15s; }
 .heroCta:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25); }
-.heroArt { position: relative; width: 220px; height: 180px; flex-shrink: 0; display: none; }
+.heroArt { position: relative; width: 340px; height: 240px; flex-shrink: 0; display: none; }
 @media (min-width: 768px) { .heroArt { display: block; } }
-.heroOrb, .heroOrb2 { position: absolute; border-radius: 50%; background: rgba(255, 255, 255, 0.16); }
-.heroOrb { width: 170px; height: 170px; right: 10px; top: 0; }
-.heroOrb2 { width: 90px; height: 90px; right: 150px; bottom: 0; background: rgba(255, 255, 255, 0.1); }
-.heroIcon { position: absolute; right: 45px; top: 35px; width: 100px; height: 100px; stroke: rgba(255, 255, 255, 0.9); }
+@media (min-width: 1200px) { .heroArt { width: 420px; height: 280px; } }
+.heroImgWrap { position: absolute; inset: 0; border-radius: 22px; overflow: hidden; transform: rotate(2deg); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.35); }
+.heroImg { width: 100%; height: 100%; object-fit: cover; display: block; animation: heroZoom 9s ease-in-out infinite alternate; }
+@keyframes heroZoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+.heroShade { position: absolute; inset: 0; background: linear-gradient(200deg, transparent 55%, rgba(0, 0, 0, 0.28)); }
+.heroChip {
+  position: absolute; display: flex; align-items: center; gap: 10px;
+  background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(8px);
+  border-radius: 16px; padding: 10px 14px; color: var(--ink);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  animation: chipFloat 5s ease-in-out infinite;
+}
+.heroChip b { display: block; font-size: 13px; }
+.heroChip small { display: block; font-size: 11.5px; color: var(--muted); }
+.chipIcon { width: 34px; height: 34px; flex-shrink: 0; border-radius: 11px; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+.chipA { left: -34px; top: 26px; animation-delay: 0s; }
+.chipB { right: -20px; bottom: 30px; animation-delay: 2.4s; }
+@keyframes chipFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
 .heroDots { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
 .dot, .dotActive { width: 26px; height: 6px; border-radius: 999px; border: 0; cursor: pointer; background: #cbd5e1; transition: background 0.2s, width 0.2s; }
 .dotActive { background: var(--brand); width: 40px; }
