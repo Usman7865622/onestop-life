@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import styles from './page.module.css';
+import StripePaymentPanel, { validateCardFields } from '../../components/checkout/StripePaymentPanel';
 
 
 type Product = {
@@ -158,6 +159,11 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const [shippingPhone, setShippingPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'CARD'>('COD');
+  const [cardEmail, setCardEmail] = useState('');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+  const [cardName, setCardName] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -255,12 +261,15 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     setRecentlyViewed((cur) => [product, ...cur.filter((i) => i.id !== product.id)].slice(0, 6));
   };
 
-  const checkout = async () => {
+  const precheck = () => {
     const token = window.localStorage.getItem('onestop-access-token');
-    if (!token) { setError('Sign in from the login page before placing an order.'); return; }
-    if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) {
-      setError('Complete your delivery details before placing the order.'); return;
-    }
+    if (!token) return 'Sign in from the login page before placing an order.';
+    if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) return 'Complete your delivery details before placing the order.';
+    return null;
+  };
+
+  const submitCheckout = async () => {
+    const token = window.localStorage.getItem('onestop-access-token');
     setBusy(true); setError(''); setMessage('');
     try {
       const res = await fetch('/api/orders', {
@@ -279,6 +288,24 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to place order');
     } finally { setBusy(false); }
+  };
+
+  const checkout = async () => {
+    const blocked = precheck();
+    if (blocked) { setError(blocked); return; }
+    await submitCheckout();
+  };
+
+  /** Test-mode card payment: validates the card form, simulates gateway
+   *  processing, then places the order. No real charge is ever made. */
+  const payWithCard = async () => {
+    const blocked = precheck();
+    if (blocked) { setError(blocked); return; }
+    const cardError = validateCardFields({ email: cardEmail, number: cardNumber, expiry: cardExpiry, cvc: cardCvc, name: cardName });
+    if (cardError) { setError(cardError); return; }
+    setBusy(true); setError('');
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+    await submitCheckout();
   };
 
   // Countdown to midnight (flash deals reset daily)
@@ -597,15 +624,12 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 <label><span>Phone</span><input value={shippingPhone} onChange={(e) => setShippingPhone(e.target.value)} autoComplete="tel" /></label>
                 <label><span>Delivery address</span><textarea value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} rows={3} autoComplete="street-address" /></label>
                 <label><span>Discount code</span><input value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} placeholder="WELCOME10" /></label>
-                <fieldset className={styles.payBox}><legend>Payment method</legend>
-                  <label><input type="radio" checked={paymentMethod === 'COD'} onChange={() => setPaymentMethod('COD')} /><span>Cash on delivery</span><small>Pay at your door</small></label>
-                  <label><input type="radio" checked={paymentMethod === 'CARD'} onChange={() => setPaymentMethod('CARD')} /><span>Card</span><small>Test mode</small></label>
-                </fieldset>
+                <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} busy={busy} onPayWithCard={payWithCard} money={money} />
               </div>
               <aside className={styles.coSummary}>
                 <p>Order summary</p>
                 <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
-                <button className={styles.checkoutBtn} onClick={checkout} disabled={busy}>{busy ? 'Placing…' : `Place order · ${money(total)}`}</button>
+                <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : checkout} disabled={busy}>{busy ? 'Placing…' : `Place order · ${money(total)}`}</button>
                 <small>🔒 Protected checkout · tracked delivery</small>
               </aside>
             </div>
