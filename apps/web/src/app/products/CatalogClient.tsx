@@ -466,7 +466,9 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               {shown.map((p) => (
                 <article className={styles.card} key={p.id}>
                   <button className={styles.cardMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
-                    {<ProdImg src={p.imageUrl} category={category} iconClassName={styles.cardIcon} />}
+                    <span className={styles.cardMediaFrame}>
+                      {<ProdImg src={p.imageUrl} category={category} iconClassName={styles.cardIcon} />}
+                    </span>
                     <span className={styles.wishWrap}>
                       <span role="button" tabIndex={0} aria-label={`${wishlist.includes(p.id) ? 'Remove' : 'Save'} ${p.nameEn}`}
                         className={wishlist.includes(p.id) ? styles.wishOn : styles.wish}
