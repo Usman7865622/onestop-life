@@ -10,7 +10,7 @@ import type { Medicine, MedicineClass } from '../../lib/pharmacy/types';
 
 type RxFilter = 'all' | 'otc' | 'rx';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 5;
 
 const rxOptions: Array<{ value: RxFilter; label: string }> = [
   { value: 'all', label: 'All medicines' },
