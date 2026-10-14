@@ -32,6 +32,21 @@ export function formatWalletNumber(value: string) {
   return `${digits.slice(0, 4)} ${digits.slice(4)}`;
 }
 
+/** Brand icons for each payment method — inline SVG, no external assets. */
+function MethodIcon({ id, className }: { id: PaymentMethodId; className?: string }) {
+  const common = { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
+  if (id === 'CARD') {
+    return (<svg {...common}><rect x="2.5" y="5.5" width="19" height="13" rx="2.5" /><path d="M2.5 10h19" /><path d="M6 14.5h4" /></svg>);
+  }
+  if (id === 'JAZZCASH' || id === 'EASYPAISA') {
+    return (<svg {...common}><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M10.5 5h3" /><circle cx="12" cy="18.5" r="0.8" fill="currentColor" /></svg>);
+  }
+  if (id === 'WALLET') {
+    return (<svg {...common}><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h11A2.5 2.5 0 0 1 19 7.5V9" /><rect x="3" y="7.5" width="18" height="11" rx="2.5" /><circle cx="16.5" cy="13" r="1.1" fill="currentColor" stroke="none" /></svg>);
+  }
+  return (<svg {...common}><rect x="2.5" y="6.5" width="19" height="11" rx="2" /><circle cx="12" cy="12" r="2.6" /><path d="M5.5 9.5h.01M18.5 14.5h.01" /></svg>);
+}
+
 export function validateWalletFields(fields: { number: string; name: string }, label: string) {
   if (!/^03\d{9}$/.test(fields.number.replace(/\D/g, ''))) return `Enter your ${label} mobile number as 03XX XXXXXXX.`;
   if (!fields.name.trim()) return 'Enter the mobile account holder name.';
@@ -53,12 +68,12 @@ export type StripeItem = { id: string; nameEn: string; priceMinor: number; quant
 
 export type PaymentMethodId = 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA' | 'WALLET';
 
-export const PAYMENT_TABS: Array<{ id: PaymentMethodId; label: string; dot: string }> = [
-  { id: 'CARD', label: 'Card', dot: '#166a91' },
-  { id: 'JAZZCASH', label: 'JazzCash', dot: '#d9261c' },
-  { id: 'EASYPAISA', label: 'Easypaisa', dot: '#3d9a3d' },
-  { id: 'WALLET', label: 'OneStop Wallet', dot: '#7c3aed' },
-  { id: 'COD', label: 'Cash on delivery', dot: '#8a6d1c' },
+export const PAYMENT_TABS: Array<{ id: PaymentMethodId; label: string; sub: string; brand: string; tint: string }> = [
+  { id: 'CARD', label: 'Card', sub: 'Debit / Credit', brand: '#166a91', tint: '#e8f1f7' },
+  { id: 'JAZZCASH', label: 'JazzCash', sub: 'Mobile account', brand: '#d9261c', tint: '#fdeeee' },
+  { id: 'EASYPAISA', label: 'Easypaisa', sub: 'Mobile account', brand: '#2f8f3d', tint: '#ebf6ec' },
+  { id: 'WALLET', label: 'OneStop Wallet', sub: 'Store balance', brand: '#7c3aed', tint: '#f1eafe' },
+  { id: 'COD', label: 'Cash on Delivery', sub: 'Pay at doorstep', brand: '#8a6d1c', tint: '#faf3df' },
 ];
 
 export const EMI_PLANS = [
@@ -128,20 +143,26 @@ export default function StripePaymentPanel(props: Props) {
           </div>
         </div>
         <div className={styles.stripeForm}>
-          <div className={styles.stripeTabs} role="tablist">
-            {PAYMENT_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={paymentMethod === tab.id}
-                className={paymentMethod === tab.id ? styles.stripeTabActive : styles.stripeTab}
-                onClick={() => onPaymentMethodChange(tab.id)}
-              >
-                <span className={styles.stripeTabDot} style={{ background: tab.dot }} aria-hidden="true" />
-                {tab.label}
-              </button>
-            ))}
+          <div className={styles.payGrid} role="tablist" aria-label="Payment method">
+            {PAYMENT_TABS.map((tab) => {
+              const active = paymentMethod === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={active ? styles.payBtnActive : styles.payBtn}
+                  style={active ? { borderColor: tab.brand, background: tab.tint } : undefined}
+                  onClick={() => onPaymentMethodChange(tab.id)}
+                >
+                  <span className={styles.payIcon} style={{ color: tab.brand }}><MethodIcon id={tab.id} /></span>
+                  <span className={styles.payLabel}>{tab.label}</span>
+                  <span className={styles.paySub}>{tab.sub}</span>
+                  {active ? <span className={styles.payCheck} style={{ background: tab.brand }} aria-hidden="true">✓</span> : null}
+                </button>
+              );
+            })}
           </div>
           {paymentMethod === 'CARD' ? (
             <>
