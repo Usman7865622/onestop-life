@@ -19,9 +19,15 @@ export default function ContactPage() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError('Please enter a valid email address, e.g. you@example.com.');
+      return;
+    }
+    setEmailError('');
     setStatus('sending');
     setError('');
     try {
@@ -58,14 +64,28 @@ export default function ContactPage() {
           <p style={{ margin: '8px 0 0' }}>Thank you for reaching out — we will get back to you shortly.</p>
         </div>
       ) : (
-        <form onSubmit={onSubmit} style={{ display: 'grid', gap: 16, marginTop: 24 }}>
+        <form onSubmit={onSubmit} noValidate style={{ display: 'grid', gap: 16, marginTop: 24 }}>
           <label style={{ display: 'grid', gap: 6 }}>
             Your name
             <input style={inputStyle} value={name} onChange={(e) => setName(e.target.value)} required maxLength={120} placeholder="e.g. Ahmed Raza" />
           </label>
           <label style={{ display: 'grid', gap: 6 }}>
             Email
-            <input style={inputStyle} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={160} placeholder="you@example.com" />
+            <input
+              style={{ ...inputStyle, borderColor: emailError ? '#b91c1c' : inputStyle.borderColor }}
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(''); }}
+              onBlur={() => { if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) setEmailError('Please enter a valid email address, e.g. you@example.com.'); }}
+              required
+              maxLength={160}
+              placeholder="you@example.com"
+              aria-invalid={emailError ? true : undefined}
+              aria-describedby={emailError ? 'contact-email-error' : undefined}
+            />
+            {emailError && (
+              <span id="contact-email-error" style={{ color: '#b91c1c', fontSize: 13 }}>{emailError}</span>
+            )}
           </label>
           <label style={{ display: 'grid', gap: 6 }}>
             Subject

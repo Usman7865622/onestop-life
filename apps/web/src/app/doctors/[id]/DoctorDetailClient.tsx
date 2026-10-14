@@ -130,7 +130,7 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
             <div className={styles.identity}>
               <div className={styles.nameRow}>
                 <h1>{doctor.user.name ?? 'Doctor'}</h1>
-                {doctor.pmdcNumber ? <span className={styles.verified}>PMDC {doctor.pmdcNumber}</span> : <span className={styles.verified}>Verified doctor</span>}
+                {doctor.pmdcNumber ? <span className={styles.verified}>{doctor.pmdcNumber}</span> : <span className={styles.verified}>Verified doctor</span>}
               </div>
               <p className={styles.speciality}>{doctor.speciality}</p>
               {doctor.qualifications ? <p className={styles.qual}>{doctor.qualifications}</p> : null}
