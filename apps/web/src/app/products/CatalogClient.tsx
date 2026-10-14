@@ -160,6 +160,22 @@ const heroSlides = [
 
 const PAKISTAN_CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar', 'Quetta', 'Hyderabad', 'Sialkot', 'Gujranwala', 'Bahawalpur', 'Sargodha', 'Abbottabad', 'Other'];
 
+function formatPhone(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 4) return digits;
+  return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+}
+
+function deliveryWindow(speed: 'STANDARD' | 'EXPRESS') {
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', day: 'numeric', month: 'short' });
+  const day = 86400000;
+  const now = Date.now();
+  if (speed === 'EXPRESS') return `Tomorrow, ${fmt.format(new Date(now + day))}`;
+  return `${fmt.format(new Date(now + 2 * day))} – ${fmt.format(new Date(now + 4 * day))}`;
+}
+
+const PAYMENT_LABELS: Record<string, string> = { CARD: 'Card', JAZZCASH: 'JazzCash', EASYPAISA: 'Easypaisa', COD: 'Cash on delivery' };
+
 export default function CatalogClient({ products }: CatalogClientProps) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartLoaded, setCartLoaded] = useState(false);
@@ -183,6 +199,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const [walletNumber, setWalletNumber] = useState('');
   const [walletName, setWalletName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [saveDetails, setSaveDetails] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -202,6 +219,19 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     const stored = window.localStorage.getItem('onestop-cart');
     if (stored) { try { setCart(JSON.parse(stored) as CartLine[]); } catch { /* ignore */ } }
     setCartLoaded(true);
+    try {
+      const saved = JSON.parse(window.localStorage.getItem('onestop-delivery') ?? 'null') as null | { name?: string; phone?: string; address?: string; city?: string; postal?: string; label?: string; notes?: string };
+      if (saved) {
+        if (saved.name) setShippingName(saved.name);
+        if (saved.phone) setShippingPhone(saved.phone);
+        if (saved.address) setShippingAddress(saved.address);
+        if (saved.city) setShippingCity(saved.city);
+        if (saved.postal) setShippingPostalCode(saved.postal);
+        if (saved.label) setAddressLabel(saved.label);
+        if (saved.notes) setDeliveryNotes(saved.notes);
+        setSaveDetails(true);
+      }
+    } catch { /* ignore corrupt saved details */ }
     const params = new URLSearchParams(window.location.search);
     const q = params.get('q');
     if (q) setSearchTerm(q);
@@ -283,6 +313,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     const token = window.localStorage.getItem('onestop-access-token');
     if (!token) return 'Sign in from the login page before placing an order.';
     if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim() || !shippingCity.trim()) return 'Complete your delivery details (name, phone, address and city) before placing the order.';
+    if (!/^03\d{9}$/.test(shippingPhone.replace(/\D/g, ''))) return 'Enter a valid mobile number (03XX XXXXXXX).';
     return null;
   };
 
@@ -303,6 +334,11 @@ export default function CatalogClient({ products }: CatalogClientProps) {
       });
       const payload = (await res.json()) as { message?: string; order?: { id: string; totalMinor: number } };
       if (!res.ok) throw new Error(Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? 'Unable to place order');
+      if (saveDetails) {
+        window.localStorage.setItem('onestop-delivery', JSON.stringify({ name: shippingName, phone: shippingPhone, address: shippingAddress, city: shippingCity, postal: shippingPostalCode, label: addressLabel, notes: deliveryNotes }));
+      } else {
+        window.localStorage.removeItem('onestop-delivery');
+      }
       setCart([]); setCheckoutOpen(false); setCartOpen(false); setDiscountCode('');
       setMessage(`Order ${payload.order?.id.slice(0, 8)} confirmed for ${money(payload.order?.totalMinor ?? total)}.`);
     } catch (e) {
@@ -656,7 +692,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               <div className={styles.coForm}>
                 <div className={styles.coRow}>
                   <label><span>Full name</span><input value={shippingName} onChange={(e) => setShippingName(e.target.value)} autoComplete="name" /></label>
-                  <label><span>Phone</span><input value={shippingPhone} onChange={(e) => setShippingPhone(e.target.value)} autoComplete="tel" /></label>
+                  <label><span>Phone</span><input value={shippingPhone} onChange={(e) => setShippingPhone(formatPhone(e.target.value))} autoComplete="tel" inputMode="numeric" placeholder="03XX XXXXXXX" /></label>
                 </div>
                 <label><span>Delivery address</span><textarea value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} rows={3} autoComplete="street-address" placeholder="House, street, area" /></label>
                 <div className={styles.coRow}>
@@ -665,9 +701,10 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 </div>
                 <div className={styles.chipRow} role="group" aria-label="Address type">{['Home', 'Office', 'Other'].map((label) => <button key={label} type="button" className={addressLabel === label ? styles.chipActive : styles.chip} onClick={() => setAddressLabel(label)}>{label}</button>)}</div>
                 <label><span>Delivery notes <i>(optional)</i></span><textarea value={deliveryNotes} onChange={(e) => setDeliveryNotes(e.target.value)} rows={2} placeholder="Gate code, landmark, rider instructions…" /></label>
+                <label className={styles.rememberRow}><input type="checkbox" checked={saveDetails} onChange={(e) => setSaveDetails(e.target.checked)} /><span>Save my delivery details for next time</span></label>
                 <div className={styles.speedRow} role="radiogroup" aria-label="Delivery speed">
-                  <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('STANDARD')}><span aria-hidden="true">🚚</span><span><b>Standard</b><small>2–4 working days</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
-                  <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('EXPRESS')}><span aria-hidden="true">⚡</span><span><b>Express</b><small>Within 24 hours</small></span><b>{money(25000)}</b></button>
+                  <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('STANDARD')}><span aria-hidden="true">🚚</span><span><b>Standard</b><small>{deliveryWindow('STANDARD')}</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
+                  <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('EXPRESS')}><span aria-hidden="true">⚡</span><span><b>Express</b><small>{deliveryWindow('EXPRESS')}</small></span><b>{money(25000)}</b></button>
                 </div>
                 <label><span>Discount code</span><input value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} placeholder="WELCOME10" /></label>
                 <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} />
@@ -675,6 +712,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               <aside className={styles.coSummary}>
                 <p>Order summary</p>
                 <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
+                <div className={styles.reviewBlock} aria-label="Order review"><div><span aria-hidden="true">📍</span><p>{[shippingAddress.trim(), shippingCity.trim()].filter(Boolean).join(', ') || 'Add your address'} <i>({addressLabel})</i></p></div><div><span aria-hidden="true">{deliverySpeed === 'EXPRESS' ? '⚡' : '🚚'}</span><p>{deliverySpeed === 'EXPRESS' ? 'Express' : 'Standard'} · {deliveryWindow(deliverySpeed)}</p></div><div><span aria-hidden="true">💳</span><p>{PAYMENT_LABELS[paymentMethod]}</p></div></div>
                 <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : isWallet ? payWithWallet : checkout} disabled={busy}>{busy ? 'Placing…' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(total)}` : paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(total)}` : `Place order · ${money(total)}`}</button>
                 <small>🔒 Protected checkout · tracked delivery</small>
               </aside>
