@@ -51,13 +51,21 @@ export function validateCardFields(fields: { email: string; number: string; expi
 
 export type StripeItem = { id: string; nameEn: string; priceMinor: number; quantity: number; imageUrl?: string };
 
-export type PaymentMethodId = 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA';
+export type PaymentMethodId = 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA' | 'WALLET';
 
 export const PAYMENT_TABS: Array<{ id: PaymentMethodId; label: string; dot: string }> = [
   { id: 'CARD', label: 'Card', dot: '#166a91' },
   { id: 'JAZZCASH', label: 'JazzCash', dot: '#d9261c' },
   { id: 'EASYPAISA', label: 'Easypaisa', dot: '#3d9a3d' },
+  { id: 'WALLET', label: 'OneStop Wallet', dot: '#7c3aed' },
   { id: 'COD', label: 'Cash on delivery', dot: '#8a6d1c' },
+];
+
+export const EMI_PLANS = [
+  { id: '', label: 'Pay in full', months: 1 },
+  { id: '3', label: '3 months', months: 3 },
+  { id: '6', label: '6 months', months: 6 },
+  { id: '12', label: '12 months', months: 12 },
 ];
 
 type Props = {
@@ -82,6 +90,9 @@ type Props = {
   cardName: string;
   setCardName: (value: string) => void;
   money: (minor: number) => string;
+  storeWalletBalance: number | null;
+  emiPlan: string;
+  setEmiPlan: (value: string) => void;
 };
 
 export default function StripePaymentPanel(props: Props) {
@@ -90,9 +101,11 @@ export default function StripePaymentPanel(props: Props) {
     cardEmail, setCardEmail, cardNumber, setCardNumber, cardExpiry, setCardExpiry,
     cardCvc, setCardCvc, cardName, setCardName,
     walletNumber, setWalletNumber, walletName, setWalletName, money,
+    storeWalletBalance, emiPlan, setEmiPlan,
   } = props;
   const walletLabel = paymentMethod === 'JAZZCASH' ? 'JazzCash' : 'Easypaisa';
   const isWallet = paymentMethod === 'JAZZCASH' || paymentMethod === 'EASYPAISA';
+  const walletShort = storeWalletBalance !== null && storeWalletBalance < total;
   return (
     <div className={styles.stripeWrap}>
       <div className={styles.stripeCard}>
@@ -142,7 +155,40 @@ export default function StripePaymentPanel(props: Props) {
                 <label className={styles.stripeField}><span>Name on card</span><input value={cardName} onChange={(event) => setCardName(event.target.value)} autoComplete="cc-name" placeholder="Full name" /></label>
               </div>
               <p className={styles.stripeTestNote}>Test mode — no real charge is made. Use card 4242 4242 4242 4242, any future expiry and any CVC.</p>
+              <div className={styles.stripeEmi}>
+                <span className={styles.stripeField}><span>Pay in installments</span></span>
+                <div className={styles.stripeEmiRow} role="radiogroup" aria-label="Installment plan">
+                  {EMI_PLANS.map((plan) => {
+                    const monthly = plan.months === 1 ? total : Math.ceil(total / plan.months);
+                    return (
+                      <button
+                        key={plan.id || 'full'}
+                        type="button"
+                        role="radio"
+                        aria-checked={emiPlan === plan.id}
+                        className={emiPlan === plan.id ? styles.stripeEmiActive : styles.stripeEmi}
+                        onClick={() => setEmiPlan(plan.id)}
+                      >
+                        <b>{plan.label}</b>
+                        <small>{plan.months === 1 ? money(total) : `${money(monthly)} × ${plan.months}`}</small>
+                      </button>
+                    );
+                  })}
+                </div>
+                {emiPlan ? <p className={styles.stripeTestNote}>Test mode — EMI is simulated. Real installment plans need a bank partnership.</p> : null}
+              </div>
             </>
+          ) : paymentMethod === 'WALLET' ? (
+            <div className={styles.stripeCod}>
+              <strong>Pay from your OneStop wallet.</strong>
+              {storeWalletBalance === null ? (
+                <p>Sign in to use your wallet balance.</p>
+              ) : (
+                <p>Available balance: <b>{money(storeWalletBalance)}</b><br />
+                {walletShort ? 'Insufficient balance for this order — top up from your dashboard or choose another method.' : `${money(total)} will be deducted when you place the order.`}</p>
+              )}
+              <p className={styles.stripeTestNote}>Refunds are returned to your wallet as store credit.</p>
+            </div>
           ) : isWallet ? (
             <>
               <label className={styles.stripeField}><span>{walletLabel} mobile number</span><input value={walletNumber} onChange={(event) => setWalletNumber(formatWalletNumber(event.target.value))} autoComplete="tel" inputMode="numeric" placeholder="03XX XXXXXXX" maxLength={12} /></label>
