@@ -138,3 +138,15 @@
   .cartPageLine { grid-template-columns: 64px 1fr; }
   .cartProductVisual { width: 64px; height: 64px; }
 }
+
+/* Advanced checkout: slot picker, discount apply, gift wrap */
+.slotSection { margin: 2px 0 14px; }
+.slotLabel { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.discountRow { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+.discountRow .field { margin-bottom: 0; }
+.applyBtn { border: 1.5px solid var(--brand); background: #fff; color: var(--brand); border-radius: 10px; padding: 11px 18px; font-size: 14px; font-weight: 800; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.applyBtn:hover { background: #f0faf8; }
+.applyBtn:disabled { opacity: 0.6; cursor: wait; }
+.discountOk { color: #147a3d; font-size: 13px; font-weight: 700; margin: 8px 0 0; }
+.discountErr { color: #b91c1c; font-size: 13px; font-weight: 600; margin: 8px 0 0; }
+.discountLine span, .discountLine b { color: #147a3d; }
