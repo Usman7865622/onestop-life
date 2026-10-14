@@ -140,6 +140,7 @@ model User {
   lastLoginAt     DateTime?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+  walletBalanceMinor Int    @default(0)
 
   roles                UserRole[]
   refreshTokens        RefreshToken[]
@@ -147,6 +148,8 @@ model User {
   reviewedRequests     VerificationRequest[] @relation("Reviewer")
   auditLogs            AuditLog[]
   orders               Order[]
+  addresses            Address[]
+  walletTransactions   WalletTransaction[]
   products             Product[] @relation("SellerProducts")
   doctorProfile        DoctorProfile?
   patientAppointments  Appointment[] @relation("PatientAppointments")
@@ -338,6 +341,10 @@ model Order {
   deliverySlot       String?
   giftWrap           Boolean  @default(false)
   giftMessage        String?
+  emiPlan            String?
+  returnRequested    Boolean   @default(false)
+  returnReason       String?
+  returnRequestedAt  DateTime?
   requiresRx            Boolean             @default(false)
   prescriptionKey       String?
   prescriptionStatus    PrescriptionStatus?
@@ -619,4 +626,37 @@ model ContactMessage {
 
   @@index([isRead, createdAt])
   @@map("contact_messages")
+}
+
+model Address {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  label      String
+  name       String
+  phone      String
+  address    String
+  city       String
+  postalCode String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model WalletTransaction {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @db.Uuid
+  amountMinor Int
+  type        String
+  reference   String?
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("wallet_transactions")
 }

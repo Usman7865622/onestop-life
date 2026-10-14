@@ -30,8 +30,8 @@ export class CreateOrderDto {
   discountCode?: string;
 
   @IsString()
-  @IsIn(['COD', 'CARD', 'JAZZCASH', 'EASYPAISA'])
-  paymentMethod!: 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA';
+  @IsIn(['COD', 'CARD', 'JAZZCASH', 'EASYPAISA', 'WALLET'])
+  paymentMethod!: 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA' | 'WALLET';
 
   @IsOptional()
   @IsString()
@@ -52,6 +52,10 @@ export class CreateOrderDto {
   @IsOptional()
   @IsIn(['STANDARD', 'EXPRESS'])
   deliverySpeed?: 'STANDARD' | 'EXPRESS';
+
+  @IsOptional()
+  @IsString()
+  emiPlan?: string;
 
   @IsOptional()
   @IsString()

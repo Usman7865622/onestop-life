@@ -54,6 +54,13 @@ export class OrdersService {
     const giftWrapMinor = dto.giftWrap ? GIFT_WRAP_MINOR : 0;
     const totalMinor = subtotalMinor - discount.amountMinor + shippingMinor + giftWrapMinor;
 
+    if (dto.paymentMethod === 'WALLET') {
+      const wallet = await this.prisma.user.findUnique({ where: { id: user.id }, select: { walletBalanceMinor: true } });
+      if (!wallet || wallet.walletBalanceMinor < totalMinor) {
+        throw new BadRequestException('Insufficient wallet balance for this order');
+      }
+    }
+
     const order = await this.prisma.order.create({
       data: {
         userId: user.id,
@@ -80,6 +87,7 @@ export class OrdersService {
         deliverySlot: dto.deliverySlot?.trim() || undefined,
         giftWrap: Boolean(dto.giftWrap),
         giftMessage: dto.giftMessage?.trim() || undefined,
+        emiPlan: dto.emiPlan?.trim() || undefined,
         items: {
           create: items.map(({ product, quantity }) => ({
             productId: product.id,
@@ -97,6 +105,7 @@ export class OrdersService {
       amountMinor: totalMinor,
       currency: 'PKR',
       customerPhone: dto.shippingPhone,
+      customerId: user.id,
       idempotencyKey: order.id,
     });
 
@@ -133,6 +142,20 @@ export class OrdersService {
       where: { userId: user.id },
       include: { items: true, payments: true, refunds: true },
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  /** Customer requests a return on a delivered order. */
+  async requestReturn(user: AuthUser, orderId: string, reason: string) {
+    const order = await this.prisma.order.findFirst({ where: { id: orderId, userId: user.id } });
+    if (!order) throw new NotFoundException('Order not found');
+    if (order.status !== OrderStatus.DELIVERED) {
+      throw new BadRequestException('Returns can only be requested for delivered orders');
+    }
+    if (order.returnRequested) throw new BadRequestException('A return has already been requested for this order');
+    return this.prisma.order.update({
+      where: { id: orderId },
+      data: { returnRequested: true, returnReason: reason, returnRequestedAt: new Date() },
     });
   }
 
