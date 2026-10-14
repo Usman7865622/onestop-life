@@ -24,6 +24,7 @@ export default async function FacilitiesPage() {
 
   return (
     <main className={styles.page}>
+      <Breadcrumbs items={[{ name: "Facilities", path: "/facilities" }]} />
       <div className={styles.shell}>
         <header className={styles.hero}>
           <div className={styles.heroCopy}>
@@ -77,3 +78,13 @@ export default async function FacilitiesPage() {
     </main>
   );
 }
+
+import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo";
+import Breadcrumbs from "../../components/layout/Breadcrumbs";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Hospitals, clinics and labs near you",
+  description: "Find trusted hospitals, clinics, diagnostic labs and blood banks across Lahore, Karachi and Islamabad on OneStop Life.",
+  path: "/facilities",
+});

@@ -19,6 +19,7 @@ import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { AvailabilityModule } from './modules/availability/availability.module';
 import { LabsModule } from './modules/labs/labs.module';
 import { BloodModule } from './modules/blood/blood.module';
+import { ContactModule } from './modules/contact/contact.module';
 import { PharmacyModule } from './modules/pharmacy/pharmacy.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 
@@ -42,6 +43,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     AvailabilityModule,
     LabsModule,
     BloodModule,
+    ContactModule,
     PharmacyModule,
     HealthModule,
     ReviewsModule,

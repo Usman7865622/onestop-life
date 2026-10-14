@@ -98,6 +98,7 @@ export default async function PharmacyPage({
 
   return (
     <main className={styles.page}>
+      <Breadcrumbs items={[{ name: "Pharmacy", path: "/pharmacy" }]} />
       <div className={styles.shell}>
         <Suspense fallback={<PharmacyFallback />}>
           <PharmacyContent initialSearch={params.q} />
@@ -106,3 +107,13 @@ export default async function PharmacyPage({
     </main>
   );
 }
+
+import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo";
+import Breadcrumbs from "../../components/layout/Breadcrumbs";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Online pharmacy - order medicines",
+  description: "Order genuine medicines online with pharmacist-verified prescriptions. Upload your prescription and get medicines delivered to your door.",
+  path: "/pharmacy",
+});

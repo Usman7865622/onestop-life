@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import styles from './page.module.css';
@@ -23,10 +24,18 @@ type CartLine = Product & { quantity: number };
 
 /** Image with graceful fallback: a dead/broken URL renders the designed
  *  category tile instead of a broken-image icon. */
-function ProdImg({ src, category, iconClassName }: { src?: string | null; category?: string | null; iconClassName?: string }) {
+function ProdImg({ src, name, category, iconClassName }: { src?: string | null; name?: string; category?: string | null; iconClassName?: string }) {
   const [failed, setFailed] = useState(false);
   if (src && !failed) {
-    return <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} />;
+    return (
+      <Image
+        src={src}
+        alt={name ? `${name} - product photo` : 'Product photo'}
+        fill
+        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+        onError={() => setFailed(true)}
+      />
+    );
   }
   return <CategoryIcon category={category ?? ''} className={iconClassName} />;
 }
@@ -430,7 +439,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             {flashDeals.map((p) => (
               <article className={styles.dealCard} key={p.id}>
                 <button className={styles.dealMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
-                  {<ProdImg src={p.imageUrl} category={p.category} iconClassName={styles.dealIcon} />}
+                  {<ProdImg src={p.imageUrl} name={p.nameEn} category={p.category} iconClassName={styles.dealIcon} />}
                   <span className={styles.hotBadge}>HOT</span>
                 </button>
                 <div className={styles.dealBody}>
@@ -494,7 +503,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 <article className={styles.card} key={p.id}>
                   <button className={styles.cardMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
                     <span className={styles.cardMediaFrame}>
-                      {<ProdImg src={p.imageUrl} category={category} iconClassName={styles.cardIcon} />}
+                      {<ProdImg src={p.imageUrl} name={p.nameEn} category={category} iconClassName={styles.cardIcon} />}
                     </span>
                     <span className={styles.wishWrap}>
                       <span role="button" tabIndex={0} aria-label={`${wishlist.includes(p.id) ? 'Remove' : 'Save'} ${p.nameEn}`}
@@ -556,7 +565,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           <section className={styles.qv} role="dialog" aria-modal="true" aria-label={quickView.nameEn}>
             <button className={styles.qvClose} onClick={() => setQuickView(null)} aria-label="Close">×</button>
             <div className={styles.qvMedia}>
-              {<ProdImg src={quickView.imageUrl} category={quickView.category} iconClassName={styles.qvIcon} />}
+              {<ProdImg src={quickView.imageUrl} name={quickView.nameEn} category={quickView.category} iconClassName={styles.qvIcon} />}
               {quickView.requiresRx ? <span className={styles.rxBadge}>Prescription required</span> : null}
             </div>
             <div className={styles.qvBody}>

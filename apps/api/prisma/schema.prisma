@@ -599,3 +599,16 @@ model BloodRequest {
   @@index([status, bloodGroup, city])
   @@map("blood_requests")
 }
+
+model ContactMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  email     String
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead, createdAt])
+  @@map("contact_messages")
+}

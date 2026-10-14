@@ -32,6 +32,7 @@ export default async function BloodPage({
 
   return (
     <main className={styles.page}>
+      <Breadcrumbs items={[{ name: "Blood banks", path: "/blood" }]} />
       <div className={styles.shell}>
         <header className={styles.hero}>
           <div className={styles.heroCopy}>
@@ -63,3 +64,13 @@ export default async function BloodPage({
     </main>
   );
 }
+
+import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo";
+import Breadcrumbs from "../../components/layout/Breadcrumbs";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Blood banks and urgent blood requests",
+  description: "Find blood banks near you or post an urgent blood request. Donors across Pakistan get alerted by city and blood group.",
+  path: "/blood",
+});
