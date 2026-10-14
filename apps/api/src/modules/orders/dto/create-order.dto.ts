@@ -30,8 +30,28 @@ export class CreateOrderDto {
   discountCode?: string;
 
   @IsString()
-  @IsIn(['COD', 'CARD'])
-  paymentMethod!: 'COD' | 'CARD';
+  @IsIn(['COD', 'CARD', 'JAZZCASH', 'EASYPAISA'])
+  paymentMethod!: 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA';
+
+  @IsOptional()
+  @IsString()
+  shippingCity?: string;
+
+  @IsOptional()
+  @IsString()
+  shippingPostalCode?: string;
+
+  @IsOptional()
+  @IsIn(['Home', 'Office', 'Other'])
+  addressLabel?: string;
+
+  @IsOptional()
+  @IsString()
+  deliveryNotes?: string;
+
+  @IsOptional()
+  @IsIn(['STANDARD', 'EXPRESS'])
+  deliverySpeed?: 'STANDARD' | 'EXPRESS';
 
   /** Document key/reference for the customer's prescription (file storage comes later). Required when any item is an Rx medicine. */
   @IsOptional()

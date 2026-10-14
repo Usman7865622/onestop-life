@@ -6,6 +6,7 @@ import { PaymentsService } from '../payments/payments.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 const SHIPPING_MINOR = 15000;
+const EXPRESS_SHIPPING_MINOR = 25000;
 const FREE_SHIPPING_THRESHOLD = 300000;
 
 @Injectable()
@@ -47,7 +48,8 @@ export class OrdersService {
     }));
     const subtotalMinor = items.reduce((total, item) => total + item.product.priceMinor * item.quantity, 0);
     const discount = await this.getDiscount(dto.discountCode, subtotalMinor);
-    const shippingMinor = subtotalMinor >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_MINOR;
+    const express = dto.deliverySpeed === 'EXPRESS';
+    const shippingMinor = express ? EXPRESS_SHIPPING_MINOR : subtotalMinor >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_MINOR;
     const totalMinor = subtotalMinor - discount.amountMinor + shippingMinor;
 
     const order = await this.prisma.order.create({
@@ -68,6 +70,11 @@ export class OrdersService {
         shippingName: dto.shippingName.trim(),
         shippingPhone: dto.shippingPhone.trim(),
         shippingAddress: dto.shippingAddress.trim(),
+        shippingCity: dto.shippingCity?.trim() || undefined,
+        shippingPostalCode: dto.shippingPostalCode?.trim() || undefined,
+        addressLabel: dto.addressLabel,
+        deliveryNotes: dto.deliveryNotes?.trim() || undefined,
+        deliverySpeed: dto.deliverySpeed ?? 'STANDARD',
         items: {
           create: items.map(({ product, quantity }) => ({
             productId: product.id,

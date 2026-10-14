@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import styles from './page.module.css';
-import StripePaymentPanel, { validateCardFields } from '../../components/checkout/StripePaymentPanel';
+import StripePaymentPanel, { validateCardFields, validateWalletFields, PaymentMethodId } from '../../components/checkout/StripePaymentPanel';
 
 
 type Product = {
@@ -158,6 +158,8 @@ const heroSlides = [
   },
 ];
 
+const PAKISTAN_CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar', 'Quetta', 'Hyderabad', 'Sialkot', 'Gujranwala', 'Bahawalpur', 'Sargodha', 'Abbottabad', 'Other'];
+
 export default function CatalogClient({ products }: CatalogClientProps) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartLoaded, setCartLoaded] = useState(false);
@@ -167,12 +169,19 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const [shippingName, setShippingName] = useState('');
   const [shippingPhone, setShippingPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'CARD'>('COD');
+  const [shippingCity, setShippingCity] = useState('');
+  const [shippingPostalCode, setShippingPostalCode] = useState('');
+  const [addressLabel, setAddressLabel] = useState('Home');
+  const [deliveryNotes, setDeliveryNotes] = useState('');
+  const [deliverySpeed, setDeliverySpeed] = useState<'STANDARD' | 'EXPRESS'>('STANDARD');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('COD');
   const [cardEmail, setCardEmail] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvc, setCardCvc] = useState('');
   const [cardName, setCardName] = useState('');
+  const [walletNumber, setWalletNumber] = useState('');
+  const [walletName, setWalletName] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -248,7 +257,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   }, [categories, searchTerm, selectedCategory, sortOrder]);
 
   const subtotal = cart.reduce((t, i) => t + i.priceMinor * i.quantity, 0);
-  const shipping = subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
+  const shipping = deliverySpeed === 'EXPRESS' ? 25000 : subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
   const total = subtotal + shipping;
   const cartCount = cart.reduce((t, i) => t + i.quantity, 0);
 
@@ -273,7 +282,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const precheck = () => {
     const token = window.localStorage.getItem('onestop-access-token');
     if (!token) return 'Sign in from the login page before placing an order.';
-    if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) return 'Complete your delivery details before placing the order.';
+    if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim() || !shippingCity.trim()) return 'Complete your delivery details (name, phone, address and city) before placing the order.';
     return null;
   };
 
@@ -287,6 +296,8 @@ export default function CatalogClient({ products }: CatalogClientProps) {
         body: JSON.stringify({
           items: cart.map((i) => ({ productId: i.id, quantity: i.quantity })),
           shippingName, shippingPhone, shippingAddress,
+          shippingCity, shippingPostalCode: shippingPostalCode || undefined,
+          addressLabel, deliveryNotes: deliveryNotes || undefined, deliverySpeed,
           discountCode: discountCode || undefined, paymentMethod,
         }),
       });
@@ -307,6 +318,20 @@ export default function CatalogClient({ products }: CatalogClientProps) {
 
   /** Test-mode card payment: validates the card form, simulates gateway
    *  processing, then places the order. No real charge is ever made. */
+  const isWallet = paymentMethod === 'JAZZCASH' || paymentMethod === 'EASYPAISA';
+
+  /** Test-mode wallet payment: validates the mobile-wallet form, simulates
+   *  the in-app approval, then places the order. No real money moves. */
+  const payWithWallet = async () => {
+    const blocked = precheck();
+    if (blocked) { setError(blocked); return; }
+    const walletError = validateWalletFields({ number: walletNumber, name: walletName }, paymentMethod === 'JAZZCASH' ? 'JazzCash' : 'Easypaisa');
+    if (walletError) { setError(walletError); return; }
+    setBusy(true); setError('');
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+    await submitCheckout();
+  };
+
   const payWithCard = async () => {
     const blocked = precheck();
     if (blocked) { setError(blocked); return; }
@@ -629,16 +654,28 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             <div className={styles.coSteps}><span className={styles.stepOn}><b>1</b> Details</span><i /><span><b>2</b> Payment</span><i /><span><b>3</b> Done</span></div>{error ? <p className={styles.storeError} role="alert" style={{ margin: '12px 28px 0' }}>{error}</p> : null}
             <div className={styles.coGrid}>
               <div className={styles.coForm}>
-                <label><span>Full name</span><input value={shippingName} onChange={(e) => setShippingName(e.target.value)} autoComplete="name" /></label>
-                <label><span>Phone</span><input value={shippingPhone} onChange={(e) => setShippingPhone(e.target.value)} autoComplete="tel" /></label>
-                <label><span>Delivery address</span><textarea value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} rows={3} autoComplete="street-address" /></label>
+                <div className={styles.coRow}>
+                  <label><span>Full name</span><input value={shippingName} onChange={(e) => setShippingName(e.target.value)} autoComplete="name" /></label>
+                  <label><span>Phone</span><input value={shippingPhone} onChange={(e) => setShippingPhone(e.target.value)} autoComplete="tel" /></label>
+                </div>
+                <label><span>Delivery address</span><textarea value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} rows={3} autoComplete="street-address" placeholder="House, street, area" /></label>
+                <div className={styles.coRow}>
+                  <label><span>City</span><select value={shippingCity} onChange={(e) => setShippingCity(e.target.value)}><option value="">Select city</option>{PAKISTAN_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}</select></label>
+                  <label><span>Postal code <i>(optional)</i></span><input value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))} inputMode="numeric" placeholder="75000" /></label>
+                </div>
+                <div className={styles.chipRow} role="group" aria-label="Address type">{['Home', 'Office', 'Other'].map((label) => <button key={label} type="button" className={addressLabel === label ? styles.chipActive : styles.chip} onClick={() => setAddressLabel(label)}>{label}</button>)}</div>
+                <label><span>Delivery notes <i>(optional)</i></span><textarea value={deliveryNotes} onChange={(e) => setDeliveryNotes(e.target.value)} rows={2} placeholder="Gate code, landmark, rider instructions…" /></label>
+                <div className={styles.speedRow} role="radiogroup" aria-label="Delivery speed">
+                  <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('STANDARD')}><span aria-hidden="true">🚚</span><span><b>Standard</b><small>2–4 working days</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
+                  <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('EXPRESS')}><span aria-hidden="true">⚡</span><span><b>Express</b><small>Within 24 hours</small></span><b>{money(25000)}</b></button>
+                </div>
                 <label><span>Discount code</span><input value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} placeholder="WELCOME10" /></label>
-                <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} money={money} />
+                <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} />
               </div>
               <aside className={styles.coSummary}>
                 <p>Order summary</p>
                 <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
-                <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : checkout} disabled={busy}>{busy ? 'Placing…' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : `Place order · ${money(total)}`}</button>
+                <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : isWallet ? payWithWallet : checkout} disabled={busy}>{busy ? 'Placing…' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(total)}` : paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(total)}` : `Place order · ${money(total)}`}</button>
                 <small>🔒 Protected checkout · tracked delivery</small>
               </aside>
             </div>

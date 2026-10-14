@@ -26,6 +26,18 @@ export function cardBrandFor(number: string) {
   return '';
 }
 
+export function formatWalletNumber(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 4) return digits;
+  return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+}
+
+export function validateWalletFields(fields: { number: string; name: string }, label: string) {
+  if (!/^03\d{9}$/.test(fields.number.replace(/\D/g, ''))) return `Enter your ${label} mobile number as 03XX XXXXXXX.`;
+  if (!fields.name.trim()) return 'Enter the mobile account holder name.';
+  return null;
+}
+
 export function validateCardFields(fields: { email: string; number: string; expiry: string; cvc: string; name: string }) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fields.email.trim())) return 'Enter a valid email for the card receipt.';
   if (fields.number.replace(/\D/g, '').length !== 16) return 'Enter the 16-digit card number.';
@@ -37,15 +49,28 @@ export function validateCardFields(fields: { email: string; number: string; expi
   return null;
 }
 
-export type StripeItem = { id: string; nameEn: string; priceMinor: number; quantity: number };
+export type StripeItem = { id: string; nameEn: string; priceMinor: number; quantity: number; imageUrl?: string };
+
+export type PaymentMethodId = 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA';
+
+export const PAYMENT_TABS: Array<{ id: PaymentMethodId; label: string; dot: string }> = [
+  { id: 'CARD', label: 'Card', dot: '#166a91' },
+  { id: 'JAZZCASH', label: 'JazzCash', dot: '#d9261c' },
+  { id: 'EASYPAISA', label: 'Easypaisa', dot: '#3d9a3d' },
+  { id: 'COD', label: 'Cash on delivery', dot: '#8a6d1c' },
+];
 
 type Props = {
   items: StripeItem[];
   subtotal: number;
   shipping: number;
   total: number;
-  paymentMethod: 'COD' | 'CARD';
-  onPaymentMethodChange: (method: 'COD' | 'CARD') => void;
+  paymentMethod: PaymentMethodId;
+  onPaymentMethodChange: (method: PaymentMethodId) => void;
+  walletNumber: string;
+  setWalletNumber: (value: string) => void;
+  walletName: string;
+  setWalletName: (value: string) => void;
   cardEmail: string;
   setCardEmail: (value: string) => void;
   cardNumber: string;
@@ -63,8 +88,11 @@ export default function StripePaymentPanel(props: Props) {
   const {
     items, subtotal, shipping, total, paymentMethod, onPaymentMethodChange,
     cardEmail, setCardEmail, cardNumber, setCardNumber, cardExpiry, setCardExpiry,
-    cardCvc, setCardCvc, cardName, setCardName, money,
+    cardCvc, setCardCvc, cardName, setCardName,
+    walletNumber, setWalletNumber, walletName, setWalletName, money,
   } = props;
+  const walletLabel = paymentMethod === 'JAZZCASH' ? 'JazzCash' : 'Easypaisa';
+  const isWallet = paymentMethod === 'JAZZCASH' || paymentMethod === 'EASYPAISA';
   return (
     <div className={styles.stripeWrap}>
       <div className={styles.stripeCard}>
@@ -73,7 +101,10 @@ export default function StripePaymentPanel(props: Props) {
           <span className={styles.stripeTestBadge}>TEST MODE</span>
           <div className={styles.stripeLines}>
             {items.slice(0, 4).map((item) => (
-              <div key={item.id}><span>{item.nameEn} × {item.quantity}</span><b>{money(item.priceMinor * item.quantity)}</b></div>
+              <div key={item.id} className={styles.stripeLine}>
+                {item.imageUrl ? <span className={styles.stripeThumb} style={{ backgroundImage: `url(${item.imageUrl})` }} aria-hidden="true" /> : null}
+                <span>{item.nameEn} × {item.quantity}</span><b>{money(item.priceMinor * item.quantity)}</b>
+              </div>
             ))}
             {items.length > 4 ? <div><span>+ {items.length - 4} more items</span></div> : null}
           </div>
@@ -85,8 +116,19 @@ export default function StripePaymentPanel(props: Props) {
         </div>
         <div className={styles.stripeForm}>
           <div className={styles.stripeTabs} role="tablist">
-            <button type="button" role="tab" aria-selected={paymentMethod === 'CARD'} className={paymentMethod === 'CARD' ? styles.stripeTabActive : styles.stripeTab} onClick={() => onPaymentMethodChange('CARD')}>Card</button>
-            <button type="button" role="tab" aria-selected={paymentMethod === 'COD'} className={paymentMethod === 'COD' ? styles.stripeTabActive : styles.stripeTab} onClick={() => onPaymentMethodChange('COD')}>Cash on delivery</button>
+            {PAYMENT_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={paymentMethod === tab.id}
+                className={paymentMethod === tab.id ? styles.stripeTabActive : styles.stripeTab}
+                onClick={() => onPaymentMethodChange(tab.id)}
+              >
+                <span className={styles.stripeTabDot} style={{ background: tab.dot }} aria-hidden="true" />
+                {tab.label}
+              </button>
+            ))}
           </div>
           {paymentMethod === 'CARD' ? (
             <>
@@ -100,6 +142,13 @@ export default function StripePaymentPanel(props: Props) {
                 <label className={styles.stripeField}><span>Name on card</span><input value={cardName} onChange={(event) => setCardName(event.target.value)} autoComplete="cc-name" placeholder="Full name" /></label>
               </div>
               <p className={styles.stripeTestNote}>Test mode — no real charge is made. Use card 4242 4242 4242 4242, any future expiry and any CVC.</p>
+            </>
+          ) : isWallet ? (
+            <>
+              <label className={styles.stripeField}><span>{walletLabel} mobile number</span><input value={walletNumber} onChange={(event) => setWalletNumber(formatWalletNumber(event.target.value))} autoComplete="tel" inputMode="numeric" placeholder="03XX XXXXXXX" maxLength={12} /></label>
+              <label className={styles.stripeField}><span>Account title</span><input value={walletName} onChange={(event) => setWalletName(event.target.value)} autoComplete="name" placeholder="Name on the mobile account" /></label>
+              <div className={styles.stripeCod}><strong>Approve in your {walletLabel} app.</strong><p>We will send a {money(total)} payment request to your {walletLabel} number — approve it there to complete your order.</p></div>
+              <p className={styles.stripeTestNote}>Test mode — approval is simulated, no real money moves.</p>
             </>
           ) : (
             <div className={styles.stripeCod}><strong>Pay in cash when your order arrives.</strong><p>Our rider collects {money(total)} at your doorstep. Please keep the amount ready.</p></div>
