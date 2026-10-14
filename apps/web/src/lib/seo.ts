@@ -20,7 +20,7 @@ export function pageMetadata({ title, description, path, image, noIndex }: PageS
   const url = `${SITE_URL}${path}`;
   const ogImage = image ?? `${SITE_URL}/hero-home-health.jpg`;
   return {
-    title: `${title} | ${SITE_NAME}`,
+    title,
     description,
     alternates: { canonical: url },
     robots: noIndex ? { index: false, follow: true } : undefined,
