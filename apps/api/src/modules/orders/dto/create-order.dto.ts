@@ -53,6 +53,17 @@ export class CreateOrderDto {
   @IsIn(['STANDARD', 'EXPRESS'])
   deliverySpeed?: 'STANDARD' | 'EXPRESS';
 
+  @IsOptional()
+  @IsString()
+  deliverySlot?: string;
+
+  @IsOptional()
+  giftWrap?: boolean;
+
+  @IsOptional()
+  @IsString()
+  giftMessage?: string;
+
   /** Document key/reference for the customer's prescription (file storage comes later). Required when any item is an Rx medicine. */
   @IsOptional()
   @IsString()

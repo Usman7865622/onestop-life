@@ -7,6 +7,7 @@ import { CreateOrderDto } from './dto/create-order.dto';
 
 const SHIPPING_MINOR = 15000;
 const EXPRESS_SHIPPING_MINOR = 25000;
+const GIFT_WRAP_MINOR = 10000;
 const FREE_SHIPPING_THRESHOLD = 300000;
 
 @Injectable()
@@ -50,7 +51,8 @@ export class OrdersService {
     const discount = await this.getDiscount(dto.discountCode, subtotalMinor);
     const express = dto.deliverySpeed === 'EXPRESS';
     const shippingMinor = express ? EXPRESS_SHIPPING_MINOR : subtotalMinor >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_MINOR;
-    const totalMinor = subtotalMinor - discount.amountMinor + shippingMinor;
+    const giftWrapMinor = dto.giftWrap ? GIFT_WRAP_MINOR : 0;
+    const totalMinor = subtotalMinor - discount.amountMinor + shippingMinor + giftWrapMinor;
 
     const order = await this.prisma.order.create({
       data: {
@@ -75,6 +77,9 @@ export class OrdersService {
         addressLabel: dto.addressLabel,
         deliveryNotes: dto.deliveryNotes?.trim() || undefined,
         deliverySpeed: dto.deliverySpeed ?? 'STANDARD',
+        deliverySlot: dto.deliverySlot?.trim() || undefined,
+        giftWrap: Boolean(dto.giftWrap),
+        giftMessage: dto.giftMessage?.trim() || undefined,
         items: {
           create: items.map(({ product, quantity }) => ({
             productId: product.id,
@@ -194,6 +199,12 @@ export class OrdersService {
     await this.prisma.paymentRecord.update({ where: { id: order.payments[0].id }, data: { status: 'REFUNDED' } });
     await this.prisma.order.update({ where: { id: orderId }, data: { status: 'REFUNDED' } });
     return refund;
+  }
+
+  /** Public discount preview for the checkout "Apply" button. */
+  async validateDiscount(rawCode: string | undefined, subtotalMinor: number) {
+    const result = await this.getDiscount(rawCode, subtotalMinor);
+    return { code: result.code, amountMinor: result.amountMinor };
   }
 
   private async getDiscount(rawCode: string | undefined, subtotalMinor: number) {
