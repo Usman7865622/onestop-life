@@ -315,4 +315,17 @@
   cursor: pointer; transition: all 0.15s;
 }
 .viewAllBtn:hover { border-color: var(--brand); background: #eaf7f5; transform: translateY(-1px); box-shadow: 0 8px 18px rgba(13, 122, 111, 0.15); }
-
+/* Enriched quick-checkout fields */
+.coRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.coRow label { display: grid; gap: 6px; }
+.coForm select { width: 100%; border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 13px; font-size: 15px; font-family: inherit; background: #fff; color: inherit; }
+.coForm label i { font-style: normal; font-weight: 400; color: var(--muted); }
+.chipRow { display: flex; gap: 8px; margin: 2px 0 12px; }
+.chip, .chipActive { border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; font-family: inherit; }
+.chipActive { border-color: var(--brand); color: var(--brand); background: #f0faf8; }
+.speedRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 2px 0 14px; }
+.speed, .speedActive { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 12px; cursor: pointer; text-align: left; font-family: inherit; }
+.speed > span:nth-child(2), .speedActive > span:nth-child(2) { flex: 1; display: grid; gap: 2px; }
+.speed b, .speedActive b { font-size: 14px; }
+.speed small, .speedActive small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.speedActive { border-color: var(--brand); background: #f0faf8; box-shadow: 0 0 0 3px rgba(13, 122, 111, 0.12); }
