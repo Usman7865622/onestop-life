@@ -347,3 +347,4 @@
 .discountOk { color: #147a3d; font-size: 13px; font-weight: 700; margin: 8px 0 0; }
 .discountErr { color: #b91c1c; font-size: 13px; font-weight: 600; margin: 8px 0 0; }
 .discountLine span, .discountLine b { color: #147a3d; }
+.addressBook { margin: 12px 0; }

@@ -1,4 +1,4 @@
-export const PAYMENT_METHODS = ['COD', 'JAZZCASH', 'EASYPAISA', 'CARD', 'RAAST'] as const;
+export const PAYMENT_METHODS = ['COD', 'JAZZCASH', 'EASYPAISA', 'CARD', 'RAAST', 'WALLET'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export type PaymentStatus = 'PENDING' | 'REQUIRES_ACTION' | 'PAID' | 'FAILED' | 'CANCELLED';
@@ -10,6 +10,7 @@ export interface CreatePaymentInput {
   currency: 'PKR';
   customerPhone: string;
   customerEmail?: string;
+  customerId?: string;
   returnUrl?: string;
   /** Sent to the gateway so a retried request cannot create a second charge. */
   idempotencyKey: string;

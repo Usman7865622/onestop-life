@@ -59,3 +59,11 @@
   .stripeSummary { flex: none; }
   .stripeTotals { margin-top: 12px; }
 }
+.stripeEmi { margin-top: 14px; }
+.stripeEmiRow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+.stripeEmi, button.stripeEmi { background: #fff; border: 1px solid #e3e8ee; border-radius: 10px; padding: 10px 6px; cursor: pointer; text-align: center; }
+button.stripeEmi b { display: block; font-size: 13px; }
+button.stripeEmi small { font-size: 11px; color: #68768d; }
+button.stripeEmiActive { border-color: #635bff; background: #f3f4ff; box-shadow: 0 0 0 1px #635bff; }
+button.stripeEmiActive b { color: #635bff; }
+@media (max-width: 720px) { .stripeEmiRow { grid-template-columns: repeat(2, 1fr); } }

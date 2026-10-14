@@ -22,6 +22,8 @@ import { BloodModule } from './modules/blood/blood.module';
 import { ContactModule } from './modules/contact/contact.module';
 import { PharmacyModule } from './modules/pharmacy/pharmacy.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { AddressesModule } from './modules/addresses/addresses.module';
+import { WalletModule } from './modules/wallet/wallet.module';
 
 @Module({
   imports: [
@@ -47,6 +49,8 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     PharmacyModule,
     HealthModule,
     ReviewsModule,
+    AddressesModule,
+    WalletModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -174,7 +174,7 @@ function deliveryWindow(speed: 'STANDARD' | 'EXPRESS') {
   return `${fmt.format(new Date(now + 2 * day))} – ${fmt.format(new Date(now + 4 * day))}`;
 }
 
-const PAYMENT_LABELS: Record<string, string> = { CARD: 'Card', JAZZCASH: 'JazzCash', EASYPAISA: 'Easypaisa', COD: 'Cash on delivery' };
+const PAYMENT_LABELS: Record<string, string> = { CARD: 'Card', JAZZCASH: 'JazzCash', EASYPAISA: 'Easypaisa', WALLET: 'OneStop Wallet', COD: 'Cash on delivery' };
 
 const SLOT_TIMES = ['Morning (9 AM – 12 PM)', 'Afternoon (12 – 5 PM)', 'Evening (5 – 9 PM)'];
 
@@ -222,6 +222,10 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const [discountError, setDiscountError] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [storeWalletBalance, setStoreWalletBalance] = useState<number | null>(null);
+  const [emiPlan, setEmiPlan] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState<Array<{ id: string; label: string; name: string; phone: string; address: string; city: string; postalCode?: string | null }>>([]);
+  const [saveToAddressBook, setSaveToAddressBook] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All products');
   const [sortOrder, setSortOrder] = useState('featured');
@@ -236,6 +240,17 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const dealsRail = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const token = window.localStorage.getItem('onestop-access-token');
+    if (token) {
+      fetch('/api/wallet', { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => { if (d && typeof d.balanceMinor === 'number') setStoreWalletBalance(d.balanceMinor); })
+        .catch(() => {});
+      fetch('/api/addresses', { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.ok ? r.json() : [])
+        .then((d) => { if (Array.isArray(d)) setSavedAddresses(d); })
+        .catch(() => {});
+    }
     const stored = window.localStorage.getItem('onestop-cart');
     if (stored) { try { setCart(JSON.parse(stored) as CartLine[]); } catch { /* ignore */ } }
     setCartLoaded(true);
@@ -336,6 +351,10 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     if (!token) return 'Sign in from the login page before placing an order.';
     if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim() || !shippingCity.trim()) return 'Complete your delivery details (name, phone, address and city) before placing the order.';
     if (!/^03\d{9}$/.test(shippingPhone.replace(/\D/g, ''))) return 'Enter a valid mobile number (03XX XXXXXXX).';
+    if (paymentMethod === 'WALLET') {
+      if (storeWalletBalance === null) return 'Sign in to use your OneStop wallet.';
+      if (storeWalletBalance < total) return 'Insufficient wallet balance — top up from your dashboard or choose another payment method.';
+    }
     return null;
   };
 
@@ -355,6 +374,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           giftWrap: giftWrap || undefined,
           giftMessage: giftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
           discountCode: discountCode || undefined, paymentMethod,
+          emiPlan: paymentMethod === 'CARD' && emiPlan ? emiPlan : undefined,
         }),
       });
       const payload = (await res.json()) as { message?: string; order?: { id: string; totalMinor: number } };
@@ -363,6 +383,15 @@ export default function CatalogClient({ products }: CatalogClientProps) {
         window.localStorage.setItem('onestop-delivery', JSON.stringify({ name: shippingName, phone: shippingPhone, address: shippingAddress, city: shippingCity, postal: shippingPostalCode, label: addressLabel, notes: deliveryNotes }));
       } else {
         window.localStorage.removeItem('onestop-delivery');
+      }
+      if (saveToAddressBook) {
+        const bookToken = window.localStorage.getItem('onestop-access-token');
+        fetch('/api/addresses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${bookToken}` },
+          body: JSON.stringify({ label: addressLabel, name: shippingName, phone: shippingPhone, address: shippingAddress, city: shippingCity, postalCode: shippingPostalCode || undefined }),
+        }).catch(() => {});
+        setSaveToAddressBook(false);
       }
       setCart([]); setCheckoutOpen(false); setCartOpen(false); setDiscountCode('');
       setMessage(`Order ${payload.order?.id.slice(0, 8)} confirmed for ${money(payload.order?.totalMinor ?? total)}.`);
@@ -747,7 +776,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 </div>
                 <div className={styles.chipRow} role="group" aria-label="Address type">{['Home', 'Office', 'Other'].map((label) => <button key={label} type="button" className={addressLabel === label ? styles.chipActive : styles.chip} onClick={() => setAddressLabel(label)}>{label}</button>)}</div>
                 <label><span>Delivery notes <i>(optional)</i></span><textarea value={deliveryNotes} onChange={(e) => setDeliveryNotes(e.target.value)} rows={2} placeholder="Gate code, landmark, rider instructions…" /></label>
-                <label className={styles.rememberRow}><input type="checkbox" checked={saveDetails} onChange={(e) => setSaveDetails(e.target.checked)} /><span>Save my delivery details for next time</span></label>
+                <label className={styles.rememberRow}><input type="checkbox" checked={saveDetails} onChange={(e) => setSaveDetails(e.target.checked)} /><span>Save my delivery details for next time</span></label>{savedAddresses.length ? <div className={styles.addressBook}><span className={styles.slotLabel}>Saved addresses</span><div className={styles.chipRow} role="group" aria-label="Saved addresses">{savedAddresses.map((a) => <button key={a.id} type="button" className={styles.chip} onClick={() => { setShippingName(a.name); setShippingPhone(a.phone); setShippingAddress(a.address); setShippingCity(a.city); setShippingPostalCode(a.postalCode ?? ''); setAddressLabel(a.label); }}>{a.label} · {a.city}</button>)}</div></div> : null}<label className={styles.rememberRow}><input type="checkbox" checked={saveToAddressBook} onChange={(e) => setSaveToAddressBook(e.target.checked)} /><span>Save this address to my address book</span></label>
                 <div className={styles.speedRow} role="radiogroup" aria-label="Delivery speed">
                   <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('STANDARD'); setSlotDay(0); }}><span aria-hidden="true">🚚</span><span><b>Standard</b><small>{deliveryWindow('STANDARD')}</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
                   <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('EXPRESS'); setSlotDay(0); }}><span aria-hidden="true">⚡</span><span><b>Express</b><small>{deliveryWindow('EXPRESS')}</small></span><b>{money(25000)}</b></button>
@@ -755,7 +784,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 <div className={styles.slotSection}><span className={styles.slotLabel}>Choose your delivery slot</span><div className={styles.chipRow} role="group" aria-label="Delivery day">{days.map((d, i) => <button key={d} type="button" className={Math.min(slotDay, days.length - 1) === i ? styles.chipActive : styles.chip} onClick={() => setSlotDay(i)}>{d}</button>)}</div><div className={styles.chipRow} role="group" aria-label="Delivery time">{SLOT_TIMES.map((t, i) => <button key={t} type="button" className={slotTime === i ? styles.chipActive : styles.chip} onClick={() => setSlotTime(i)}>{t}</button>)}</div></div>
                 <div className={styles.discountRow}><label><span>Discount code</span><input value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountApplied(null); setDiscountError(''); }} placeholder="WELCOME10" /></label><button type="button" className={styles.applyBtn} onClick={applyDiscount} disabled={discountBusy}>{discountBusy ? 'Checking…' : 'Apply'}</button></div>{discountApplied ? <p className={styles.discountOk} role="status">✓ {discountApplied.code} applied · you save {money(discountApplied.amountMinor)}</p> : null}{discountError ? <p className={styles.discountErr} role="alert">{discountError}</p> : null}
                 <label className={styles.rememberRow}><input type="checkbox" checked={giftWrap} onChange={(e) => setGiftWrap(e.target.checked)} /><span>🎁 Add gift wrap · {money(GIFT_WRAP_MINOR)}</span></label>{giftWrap ? <label><span>Gift message <i>(optional)</i></span><textarea value={giftMessage} onChange={(e) => setGiftMessage(e.target.value)} rows={2} maxLength={200} placeholder="Write your message for the recipient…" /></label> : null}
-                <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} />
+                <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} storeWalletBalance={storeWalletBalance} emiPlan={emiPlan} setEmiPlan={setEmiPlan} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} />
               </div>
               <aside className={styles.coSummary}>
                 <p>Order summary</p>

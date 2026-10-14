@@ -8,6 +8,8 @@ import { clearAccessToken, hasRole, isBusinessUser, readAccessToken, readLoginIn
 import type { PublicUser } from '../../lib/auth/types';
 import { money, type Appointment } from '../../lib/doctors/types';
 import { SectionIcon, type SectionIconName } from '../../components/home/SectionIcons';
+import OrderTracking from '../../components/orders/OrderTracking';
+import WalletPanel from '../../components/wallet/WalletPanel';
 
 function PanelTitle({ icon, title, sub, id }: { icon: SectionIconName; title: string; sub: string; id?: string }) {
   return (<div className={styles.cardHeader}><span className={styles.panelIcon}><SectionIcon name={icon} size={21} /></span><div><h2 id={id}>{title}</h2><p>{sub}</p></div></div>);
@@ -36,6 +38,7 @@ type MyOrder = {
   requiresRx?: boolean;
   prescriptionStatus?: string | null;
   prescriptionNotes?: string | null;
+  returnRequested?: boolean;
   items: Array<{ id: string; productName: string; quantity: number }>;
 };
 
@@ -236,6 +239,14 @@ export default function DashboardPage() {
     finally { setBusy(false); }
   };
 
+  const requestReturn = async (orderId: string, reason: string) => {
+    const token = readAccessToken();
+    if (!token) throw new Error('Sign in to request a return.');
+    await apiFetch(`/orders/${orderId}/return`, { method: 'POST', body: JSON.stringify({ reason }) }, token);
+    const fresh = readAccessToken();
+    if (fresh) void apiFetch<MyOrder[]>('/orders/mine', { method: 'GET' }, fresh).then(setMyOrders).catch(() => {});
+  };
+
   if (loading) {
     return <main className={styles.page}><div className={styles.shell}><p className={styles.loading}>Loading your dashboard…</p></div></main>;
   }
@@ -323,10 +334,13 @@ export default function DashboardPage() {
                     <span>{order.items.map((item) => `${item.productName} ×${item.quantity}`).join(', ')} · {money(order.totalMinor)} · {order.status.replaceAll('_', ' ')}</span>
                     {pill ? <span className={styles[pill.className]}>{pill.label}</span> : <span>{new Date(order.createdAt).toLocaleDateString('en-PK')}</span>}
                     {order.requiresRx && order.prescriptionStatus === 'REJECTED' && order.prescriptionNotes ? <span>Pharmacist note: {order.prescriptionNotes}</span> : null}
+                    {order.returnRequested ? <span>Return requested</span> : null}
+                    <OrderTracking orderId={order.id} status={order.status} onReturn={requestReturn} />
                   </div>
                 );
               }) : <p className={styles.emptyStateInline}>No orders yet. Your shop and pharmacy orders will appear here.</p>}
             </div>
+            <WalletPanel token={readAccessToken()} />
           </section>
         ) : null}
 
