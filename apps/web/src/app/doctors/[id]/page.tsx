@@ -1,7 +1,10 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 import DoctorDetailClient from './DoctorDetailClient';
 import styles from './detail.module.css';
 import type { Doctor } from '../../../lib/doctors/types';
+import { pageMetadata } from '../../../lib/seo';
 
 const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api-production-7a91a.up.railway.app';
 
@@ -13,6 +16,21 @@ async function getDoctor(id: string): Promise<Doctor | null> {
   } catch {
     return null;
   }
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const doctor = await getDoctor(id);
+  if (!doctor) {
+    return pageMetadata({ title: 'Doctor not found', description: 'This doctor profile is unavailable.', path: '/doctors', noIndex: true });
+  }
+  const name = doctor.user?.name ?? 'Doctor';
+  const speciality = doctor.speciality ?? 'Specialist';
+  return pageMetadata({
+    title: `${name} - ${speciality}`,
+    description: `Book an appointment with ${name}, ${speciality} on OneStop Life. Verified profile with upfront consultation fees.`,
+    path: `/doctors/${id}`,
+  });
 }
 
 export default async function DoctorDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +48,7 @@ export default async function DoctorDetailPage({ params }: { params: Promise<{ i
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
+        <Breadcrumbs items={[{ name: 'Doctors', path: '/doctors' }, { name: doctor.user?.name ?? 'Doctor', path: `/doctors/${id}` }]} />
         <Link className={styles.backLink} href="/doctors">← Back to all doctors</Link>
         <DoctorDetailClient doctor={doctor} />
       </div>

@@ -17,3 +17,13 @@ export default function AppointmentsPage() {
     </main>
   );
 }
+
+import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo";
+
+export const metadata: Metadata = pageMetadata({
+  title: "My appointments",
+  description: "View, reschedule or cancel your doctor appointments on OneStop Life.",
+  path: "/appointments",
+  noIndex: true,
+});

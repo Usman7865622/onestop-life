@@ -94,6 +94,7 @@ export default async function DoctorsPage({
 
   return (
     <main className={styles.page}>
+      <Breadcrumbs items={[{ name: "Doctors", path: "/doctors" }]} />
       <div className={styles.shell}>
         <Suspense fallback={<DoctorsFallback />}>
           <DoctorsContent initialSpeciality={params.speciality} initialCity={params.city} />
@@ -102,3 +103,13 @@ export default async function DoctorsPage({
     </main>
   );
 }
+
+import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo";
+import Breadcrumbs from "../../components/layout/Breadcrumbs";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Find and book verified doctors",
+  description: "Browse PMDC-verified doctors across Pakistan by speciality, city and fee. Book in-person or video appointments with upfront pricing.",
+  path: "/doctors",
+});
