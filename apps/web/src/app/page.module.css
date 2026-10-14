@@ -31,7 +31,7 @@
 .heroTile { display: flex; flex-direction: column; justify-content: end; padding: 18px; border: 1px solid rgba(255,255,255,.25); border-radius: 20px; background-color: #2a4058; background-position: center; background-size: cover; box-shadow: 0 12px 24px rgba(0,0,0,.16); }
 .heroTile:nth-child(1) { background-image: linear-gradient(0deg, rgba(23,35,55,.92), rgba(23,35,55,.10)), url('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=900&q=80'); }
 .heroTile:nth-child(2) { background-image: linear-gradient(0deg, rgba(23,35,55,.92), rgba(23,35,55,.10)), url('https://images.unsplash.com/photo-1550831107-1553da8c8464?auto=format&fit=crop&w=900&q=80'); }
-.heroTile:nth-child(3) { background-image: linear-gradient(0deg, rgba(23,35,55,.92), rgba(23,35,55,.10)), url('/hero-wellness.jpg'); }
+.heroTile:nth-child(3) { background-image: linear-gradient(0deg, rgba(23,35,55,.92), rgba(23,35,55,.10)), url('https://images.unsplash.com/photo-1706795033849-7ca391f007c5?auto=format&fit=crop&w=900&q=80'); }
 .heroTileTall { grid-row: 1 / span 2; }
 .heroTile span { color: var(--highlight); font-size: .68rem; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
 .heroTile strong { margin-top: 6px; color: #fff; line-height: 1.3; }
