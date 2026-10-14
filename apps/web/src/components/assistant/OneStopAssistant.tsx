@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { type FormEvent, useEffect, useId, useRef, useState } from 'react';
+import Image from "next/image";
 import DoctorAvatar from '../doctors/DoctorAvatar';
 import MedicineVisual from '../pharmacy/MedicineVisual';
 import { readAccessToken } from '../../lib/auth/session';
@@ -158,7 +159,7 @@ function CardVisual({ card }: { card: AssistantCard }) {
   }
 
   if (card.type === 'product' && card.imageUrl) {
-    return <img className={styles.cardImage} src={card.imageUrl} alt="" loading="lazy" />;
+    return <Image className={styles.cardImage} src={card.imageUrl} alt={`${card.title} - product photo`} width={54} height={54} />;
   }
 
   const symbol = card.type === 'lab'

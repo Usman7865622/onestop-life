@@ -59,6 +59,10 @@ export default function SiteFooter() {
       <div className={styles.footerBottom}>
         <div className={styles.container}>
           <span>&copy; {new Date().getFullYear()} OneStop Life. All rights reserved. &middot; Carefully chosen. Clearly delivered.</span>
+          <span>
+            <Link href="/privacy" style={{ color: 'inherit', marginRight: 16 }}>Privacy Policy</Link>
+            <Link href="/contact" style={{ color: 'inherit' }}>Contact Us</Link>
+          </span>
         </div>
       </div>
     </footer>

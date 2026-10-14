@@ -33,6 +33,7 @@ async function ProductsContent() {
   if (!products.length) {
     return (
       <main style={{ padding: '80px 20px', textAlign: 'center' }}>
+        <Breadcrumbs items={[{ name: "Store", path: "/products" }]} />
         <h2>No products yet</h2>
         <p>Products will appear here after the catalogue import is completed.</p>
         <Link href="/">Back to home</Link>
@@ -49,3 +50,13 @@ export default function ProductsPage() {
     </Suspense>
   );
 }
+
+import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo";
+import Breadcrumbs from "../../components/layout/Breadcrumbs";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Health and wellness store",
+  description: "Shop trending health essentials, medical devices, nutrition, baby care, pet care and wellness products with delivery across Pakistan.",
+  path: "/products",
+});
