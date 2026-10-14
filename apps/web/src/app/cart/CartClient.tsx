@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import styles from './cart.module.css';
-import StripePaymentPanel, { validateCardFields } from '../../components/checkout/StripePaymentPanel';
+import StripePaymentPanel, { validateCardFields, validateWalletFields, PaymentMethodId } from '../../components/checkout/StripePaymentPanel';
 
 type CartLine = {
   id: string;
@@ -31,6 +31,8 @@ function BagIcon({ className }: { className?: string }) {
 }
 
 
+const PAKISTAN_CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar', 'Quetta', 'Hyderabad', 'Sialkot', 'Gujranwala', 'Bahawalpur', 'Sargodha', 'Abbottabad', 'Other'];
+
 export default function CartClient() {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartLoaded, setCartLoaded] = useState(false);
@@ -39,12 +41,19 @@ export default function CartClient() {
   const [shippingName, setShippingName] = useState('');
   const [shippingPhone, setShippingPhone] = useState('');
   const [shippingAddress, setShippingAddress] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'COD' | 'CARD'>('COD');
+  const [shippingCity, setShippingCity] = useState('');
+  const [shippingPostalCode, setShippingPostalCode] = useState('');
+  const [addressLabel, setAddressLabel] = useState('Home');
+  const [deliveryNotes, setDeliveryNotes] = useState('');
+  const [deliverySpeed, setDeliverySpeed] = useState<'STANDARD' | 'EXPRESS'>('STANDARD');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('COD');
   const [cardEmail, setCardEmail] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvc, setCardCvc] = useState('');
   const [cardName, setCardName] = useState('');
+  const [walletNumber, setWalletNumber] = useState('');
+  const [walletName, setWalletName] = useState('');
   const [prescriptionFileKey, setPrescriptionFileKey] = useState('');
   const [prescriptionRef, setPrescriptionRef] = useState('');
   const [busy, setBusy] = useState(false);
@@ -92,7 +101,7 @@ export default function CartClient() {
   const prescriptionReady = prescriptionKey.trim().length >= 3;
 
   const subtotal = useMemo(() => cart.reduce((total, item) => total + item.priceMinor * item.quantity, 0), [cart]);
-  const shipping = subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
+  const shipping = deliverySpeed === 'EXPRESS' ? 25000 : subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
   const total = subtotal + shipping;
 
   const updateQuantity = (productId: string, quantity: number) => {
@@ -102,7 +111,7 @@ export default function CartClient() {
   const precheck = () => {
     const token = window.localStorage.getItem('onestop-access-token');
     if (!token) return 'Sign in from the login page before placing an order.';
-    if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim()) return 'Complete your delivery details before placing the order.';
+    if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim() || !shippingCity.trim()) return 'Complete your delivery details (name, phone, address and city) before placing the order.';
     if (hasRx && !prescriptionReady) return 'This order contains prescription medicines. Please add your prescription file or your doctor / prescription reference so our pharmacist can verify it before dispatch.';
     return null;
   };
@@ -122,6 +131,11 @@ export default function CartClient() {
           shippingName,
           shippingPhone,
           shippingAddress,
+          shippingCity,
+          shippingPostalCode: shippingPostalCode || undefined,
+          addressLabel,
+          deliveryNotes: deliveryNotes || undefined,
+          deliverySpeed,
           discountCode: discountCode || undefined,
           paymentMethod,
           prescriptionKey: hasRx ? prescriptionKey : undefined,
@@ -153,6 +167,21 @@ export default function CartClient() {
   /** Test-mode card payment: validates the card form, simulates gateway
    *  processing, then places the order through the normal flow. No real
    *  charge is ever made. */
+  const isWallet = paymentMethod === 'JAZZCASH' || paymentMethod === 'EASYPAISA';
+
+  /** Test-mode wallet payment: validates the mobile-wallet form, simulates
+   *  the in-app approval, then places the order. No real money moves. */
+  const payWithWallet = async () => {
+    const blocked = precheck();
+    if (blocked) { setError(blocked); return; }
+    const walletError = validateWalletFields({ number: walletNumber, name: walletName }, paymentMethod === 'JAZZCASH' ? 'JazzCash' : 'Easypaisa');
+    if (walletError) { setError(walletError); return; }
+    setBusy(true);
+    setError('');
+    await new Promise((resolve) => setTimeout(resolve, 1400));
+    await submitOrder();
+  };
+
   const payWithCard = async () => {
     const blocked = precheck();
     if (blocked) { setError(blocked); return; }
@@ -193,7 +222,7 @@ export default function CartClient() {
         {checkoutOpen ? <div className={styles.overlay} role="presentation"><section className={styles.checkoutPanel} aria-label="Checkout">
           <div className={styles.panelHeader}><div><p className={styles.categoryEyebrow}>Secure checkout</p><h2>Complete your order</h2></div><button className={styles.closeButton} onClick={() => setCheckoutOpen(false)} aria-label="Close checkout">×</button></div>
           <div className={styles.checkoutSteps}><span className={styles.stepActive}><b>1</b> Delivery</span><i /> <span><b>2</b> Payment</span><i /> <span><b>3</b> Confirm</span></div>{error ? <p className={styles.checkoutError} role="alert">{error}</p> : null}
-          <div className={styles.checkoutLayout}><div className={styles.checkoutForm}><div className={styles.formSectionHeading}><span className={styles.formStep}>01</span><div><h3>Delivery details</h3><p>Where should we send your order?</p></div></div><div className={styles.checkoutGrid}><label className={styles.field}><span>Full name</span><input value={shippingName} onChange={(event) => setShippingName(event.target.value)} autoComplete="name" /></label><label className={styles.field}><span>Phone</span><input value={shippingPhone} onChange={(event) => setShippingPhone(event.target.value)} autoComplete="tel" /></label></div><label className={styles.field}><span>Delivery address</span><textarea value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} rows={3} autoComplete="street-address" /></label><div className={styles.deliveryNote}><span className={styles.deliveryIcon} aria-hidden="true">✦</span><div><strong>Tracked doorstep delivery</strong><p>We will keep your order moving from our store to your door.</p></div></div><div className={styles.formSectionHeading}><span className={styles.formStep}>02</span><div><h3>Payment</h3><p>Choose how you want to pay.</p></div></div><StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} money={money} /><label className={styles.field}><span>Discount code</span><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value.toUpperCase())} placeholder="WELCOME10" /></label><p className={styles.secureNote}>🔒 Your checkout is protected. Discounts are checked securely on the server.</p>{hasRx ? <div className={styles.rxGate} role="note"><div className={styles.formSectionHeading}><span className={styles.formStep}>03</span><div><h3>Prescription required</h3><p>Our pharmacist will verify it before dispatch.</p></div></div><p className={styles.rxGateText}>This order includes prescription medicines ({rxItems.map((item) => item.nameEn).join(', ')}). DRAP requires medicines like antibiotics to be sold only against a registered doctor&apos;s prescription, so these items leave our pharmacy only after verification.</p><label className={styles.field}><span>Prescription file (photo or PDF)</span><input type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.target.files?.[0]; setPrescriptionFileKey(file ? `rx-${Date.now()}-${file.name}` : ''); }} /></label><label className={styles.field}><span>Or doctor name / prescription reference</span><input value={prescriptionRef} onChange={(event) => setPrescriptionRef(event.target.value)} placeholder="e.g. Dr. Ahmed Khan — prescription dated 5 Oct" /></label><p className={styles.rxGateText}>Uploads are registered by file name for now — our pharmacy team will ask you to share the prescription file with them to complete verification.</p>{prescriptionReady ? <p className={styles.rxReady}>✓ Prescription added — ready to place your order.</p> : <p className={styles.rxMissing}>Add your prescription file or reference to enable Place order.</p>}</div> : null}</div><aside className={styles.checkoutSummary}><p>Order summary</p><div className={styles.summaryIconRow}><BagIcon className={styles.summaryBagIcon} /><strong>{cart.reduce((count, item) => count + item.quantity, 0)} items</strong></div><div><span>Subtotal</span><b>{money(subtotal)}</b></div><div><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b></div><div className={styles.checkoutTotal}><span>Total</span><b>{money(total)}</b></div><div className={styles.summaryTrust}><span aria-hidden="true">✓</span><p>Price locked in<br />No surprise charges</p></div><button className={styles.primaryAction} onClick={paymentMethod === 'CARD' ? payWithCard : placeOrder} disabled={busy || (hasRx && !prescriptionReady)}><span aria-hidden="true">{paymentMethod === 'CARD' ? '💳' : '✓'}</span> {busy ? 'Processing...' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : `Place order · ${money(total)}`}</button>{hasRx && !prescriptionReady ? <small>Add your prescription above to place this order.</small> : null}<small>Free delivery over Rs. 3,000</small></aside></div>
+          <div className={styles.checkoutLayout}><div className={styles.checkoutForm}><div className={styles.formSectionHeading}><span className={styles.formStep}>01</span><div><h3>Delivery details</h3><p>Where should we send your order?</p></div></div><div className={styles.checkoutGrid}><label className={styles.field}><span>Full name</span><input value={shippingName} onChange={(event) => setShippingName(event.target.value)} autoComplete="name" /></label><label className={styles.field}><span>Phone</span><input value={shippingPhone} onChange={(event) => setShippingPhone(event.target.value)} autoComplete="tel" /></label></div><label className={styles.field}><span>Delivery address</span><textarea value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} rows={3} autoComplete="street-address" placeholder="House, street, area" /></label><div className={styles.checkoutGrid}><label className={styles.field}><span>City</span><select value={shippingCity} onChange={(event) => setShippingCity(event.target.value)}><option value="">Select city</option>{PAKISTAN_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}</select></label><label className={styles.field}><span>Postal code <i>(optional)</i></span><input value={shippingPostalCode} onChange={(event) => setShippingPostalCode(event.target.value.replace(/\D/g, '').slice(0, 5))} inputMode="numeric" placeholder="75000" /></label></div><div className={styles.chipRow} role="group" aria-label="Address type">{['Home', 'Office', 'Other'].map((label) => <button key={label} type="button" className={addressLabel === label ? styles.chipActive : styles.chip} onClick={() => setAddressLabel(label)}>{label}</button>)}</div><label className={styles.field}><span>Delivery notes <i>(optional)</i></span><textarea value={deliveryNotes} onChange={(event) => setDeliveryNotes(event.target.value)} rows={2} placeholder="Gate code, landmark, rider instructions…" /></label><div className={styles.speedRow} role="radiogroup" aria-label="Delivery speed"><button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('STANDARD')}><span className={styles.speedIcon} aria-hidden="true">🚚</span><span><b>Standard</b><small>2–4 working days</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button><button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('EXPRESS')}><span className={styles.speedIcon} aria-hidden="true">⚡</span><span><b>Express</b><small>Within 24 hours</small></span><b>{money(25000)}</b></button></div><div className={styles.deliveryNote}><span className={styles.deliveryIcon} aria-hidden="true">✦</span><div><strong>Tracked doorstep delivery</strong><p>We will keep your order moving from our store to your door.</p></div></div><div className={styles.formSectionHeading}><span className={styles.formStep}>02</span><div><h3>Payment</h3><p>Choose how you want to pay.</p></div></div><StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} /><label className={styles.field}><span>Discount code</span><input value={discountCode} onChange={(event) => setDiscountCode(event.target.value.toUpperCase())} placeholder="WELCOME10" /></label><p className={styles.secureNote}>🔒 Your checkout is protected. Discounts are checked securely on the server.</p>{hasRx ? <div className={styles.rxGate} role="note"><div className={styles.formSectionHeading}><span className={styles.formStep}>03</span><div><h3>Prescription required</h3><p>Our pharmacist will verify it before dispatch.</p></div></div><p className={styles.rxGateText}>This order includes prescription medicines ({rxItems.map((item) => item.nameEn).join(', ')}). DRAP requires medicines like antibiotics to be sold only against a registered doctor&apos;s prescription, so these items leave our pharmacy only after verification.</p><label className={styles.field}><span>Prescription file (photo or PDF)</span><input type="file" accept="image/*,.pdf" onChange={(event) => { const file = event.target.files?.[0]; setPrescriptionFileKey(file ? `rx-${Date.now()}-${file.name}` : ''); }} /></label><label className={styles.field}><span>Or doctor name / prescription reference</span><input value={prescriptionRef} onChange={(event) => setPrescriptionRef(event.target.value)} placeholder="e.g. Dr. Ahmed Khan — prescription dated 5 Oct" /></label><p className={styles.rxGateText}>Uploads are registered by file name for now — our pharmacy team will ask you to share the prescription file with them to complete verification.</p>{prescriptionReady ? <p className={styles.rxReady}>✓ Prescription added — ready to place your order.</p> : <p className={styles.rxMissing}>Add your prescription file or reference to enable Place order.</p>}</div> : null}</div><aside className={styles.checkoutSummary}><p>Order summary</p><div className={styles.summaryIconRow}><BagIcon className={styles.summaryBagIcon} /><strong>{cart.reduce((count, item) => count + item.quantity, 0)} items</strong></div><div className={styles.summaryThumbs} aria-hidden="true">{cart.slice(0, 6).map((item) => item.imageUrl ? <span key={item.id} style={{ backgroundImage: `url(${item.imageUrl})` }} /> : null)}</div><div><span>Subtotal</span><b>{money(subtotal)}</b></div><div><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b></div><div className={styles.checkoutTotal}><span>Total</span><b>{money(total)}</b></div><div className={styles.summaryTrust}><span aria-hidden="true">✓</span><p>Price locked in<br />No surprise charges</p></div><button className={styles.primaryAction} onClick={paymentMethod === 'CARD' ? payWithCard : isWallet ? payWithWallet : placeOrder} disabled={busy || (hasRx && !prescriptionReady)}><span aria-hidden="true">{paymentMethod === 'CARD' ? '💳' : isWallet ? '📱' : '✓'}</span> {busy ? 'Processing...' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(total)}` : paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(total)}` : `Place order · ${money(total)}`}</button>{hasRx && !prescriptionReady ? <small>Add your prescription above to place this order.</small> : null}<small>Free delivery over Rs. 3,000</small></aside></div>
         </section></div> : null}
       </div>
     </main>

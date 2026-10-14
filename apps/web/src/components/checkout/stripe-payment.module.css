@@ -15,7 +15,11 @@
 .stripeGrand b { font-size: 19px; font-weight: 800; }
 .stripeForm { flex: 1; background: #fff; padding: 24px; min-width: 0; }
 .stripeTabs { display: grid; grid-template-columns: 1fr 1fr; background: #f1f4f8; border-radius: 12px; padding: 4px; margin-bottom: 18px; }
-.stripeTab, .stripeTabActive { border: 0; border-radius: 9px; padding: 11px 6px; font-size: 13.5px; font-weight: 700; color: #6b7c93; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.15s, background 0.15s, box-shadow 0.15s; }
+.stripeTab, .stripeTabActive { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: 0; border-radius: 9px; padding: 11px 6px; font-size: 13.5px; font-weight: 700; color: #6b7c93; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.15s, background 0.15s, box-shadow 0.15s; }
+.stripeTabDot { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+.stripeLine { display: flex; align-items: center; gap: 9px; }
+.stripeLine > span:nth-child(2) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stripeThumb { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 8px; background-color: #eef2f6; background-size: cover; background-position: center; }
 .stripeTab { background: transparent; }
 .stripeTab:hover { color: #0a2540; }
 .stripeTabActive { background: #fff; font-weight: 800; color: #0a2540; box-shadow: 0 2px 8px rgba(10, 37, 64, 0.12); }
