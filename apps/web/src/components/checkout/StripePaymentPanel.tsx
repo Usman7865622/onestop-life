@@ -1,6 +1,7 @@
 'use client';
 
 import styles from './stripe-payment.module.css';
+import { CARDS_LOGO, EASYPAISA_LOGO, JAZZCASH_LOGO } from './payment-logos';
 
 /**
  * Stripe-Checkout-style payment panel shared by the cart page and the
@@ -32,15 +33,19 @@ export function formatWalletNumber(value: string) {
   return `${digits.slice(0, 4)} ${digits.slice(4)}`;
 }
 
-/** Brand icons for each payment method — inline SVG, no external assets. */
+/** Brand icons for each payment method — official logos for JazzCash, Easypaisa
+ *  and cards; inline SVG for our own Wallet and COD. */
 function MethodIcon({ id, className }: { id: PaymentMethodId; className?: string }) {
-  const common = { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
+  if (id === 'JAZZCASH') {
+    return <img src={JAZZCASH_LOGO} alt="JazzCash" className={className} />;
+  }
+  if (id === 'EASYPAISA') {
+    return <img src={EASYPAISA_LOGO} alt="Easypaisa" className={className} />;
+  }
   if (id === 'CARD') {
-    return (<svg {...common}><rect x="2.5" y="5.5" width="19" height="13" rx="2.5" /><path d="M2.5 10h19" /><path d="M6 14.5h4" /></svg>);
+    return <img src={CARDS_LOGO} alt="Visa and Mastercard" className={className} />;
   }
-  if (id === 'JAZZCASH' || id === 'EASYPAISA') {
-    return (<svg {...common}><rect x="7" y="2.5" width="10" height="19" rx="2.5" /><path d="M10.5 5h3" /><circle cx="12" cy="18.5" r="0.8" fill="currentColor" /></svg>);
-  }
+  const common = { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
   if (id === 'WALLET') {
     return (<svg {...common}><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h11A2.5 2.5 0 0 1 19 7.5V9" /><rect x="3" y="7.5" width="18" height="11" rx="2.5" /><circle cx="16.5" cy="13" r="1.1" fill="currentColor" stroke="none" /></svg>);
   }
