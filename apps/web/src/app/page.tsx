@@ -396,3 +396,12 @@ export default async function HomePage() {
     </main>
   );
 }
+
+import type { Metadata } from "next";
+import { pageMetadata } from "../lib/seo";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Everyday care made easier",
+  description: "Book PMDC-verified doctors, order lab tests with home sample collection, find blood banks and hospitals, and shop medicines and health essentials across Pakistan.",
+  path: "/",
+});

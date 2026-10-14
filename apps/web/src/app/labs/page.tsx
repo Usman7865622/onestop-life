@@ -80,6 +80,7 @@ export default async function LabsPage({
 
   return (
     <main className={styles.page}>
+      <Breadcrumbs items={[{ name: "Lab tests", path: "/labs" }]} />
       <div className={styles.shell}>
         <Suspense fallback={<LabsFallback />}>
           <LabsContent initialSearch={params.q} />
@@ -88,3 +89,13 @@ export default async function LabsPage({
     </main>
   );
 }
+
+import type { Metadata } from "next";
+import { pageMetadata } from "../../lib/seo";
+import Breadcrumbs from "../../components/layout/Breadcrumbs";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Lab tests with home sample collection",
+  description: "Book lab tests online and get samples collected at home. CBC, HbA1c, thyroid, vitamin D and more with reports in the app.",
+  path: "/labs",
+});
