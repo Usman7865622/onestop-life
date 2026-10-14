@@ -14,12 +14,15 @@
 .stripeGrand { font-size: 15px; margin-top: 4px; }
 .stripeGrand b { font-size: 19px; font-weight: 800; }
 .stripeForm { flex: 1; background: #fff; padding: 24px; min-width: 0; }
-.stripeTabs { display: grid; grid-template-columns: 1fr 1fr; background: #f1f4f8; border-radius: 10px; padding: 4px; margin-bottom: 18px; }
-.stripeTab { border: 0; background: transparent; border-radius: 8px; padding: 10px; font-size: 14px; font-weight: 700; color: #6b7c93; cursor: pointer; }
-.stripeTabActive { border: 0; background: #fff; border-radius: 8px; padding: 10px; font-size: 14px; font-weight: 800; color: #0a2540; cursor: pointer; box-shadow: 0 2px 8px rgba(10, 37, 64, 0.1); }
+.stripeTabs { display: grid; grid-template-columns: 1fr 1fr; background: #f1f4f8; border-radius: 12px; padding: 4px; margin-bottom: 18px; }
+.stripeTab, .stripeTabActive { border: 0; border-radius: 9px; padding: 11px 6px; font-size: 13.5px; font-weight: 700; color: #6b7c93; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color 0.15s, background 0.15s, box-shadow 0.15s; }
+.stripeTab { background: transparent; }
+.stripeTab:hover { color: #0a2540; }
+.stripeTabActive { background: #fff; font-weight: 800; color: #0a2540; box-shadow: 0 2px 8px rgba(10, 37, 64, 0.12); }
+.stripeTab:focus-visible, .stripeTabActive:focus-visible { outline: 2px solid #635bff; outline-offset: 2px; }
 .stripeField { display: block; margin-bottom: 14px; }
 .stripeField > span { display: block; font-size: 12px; font-weight: 700; color: #3c4b64; margin-bottom: 6px; }
-.stripeField > input { width: 100%; border: 1.5px solid #d7dde5; border-radius: 8px; padding: 11px 12px; font-size: 15px; }
+.stripeField > input { width: 100%; border: 1.5px solid #d7dde5; border-radius: 8px; padding: 11px 12px; font-size: 15px; font-family: inherit; background: #fff; }
 .stripeField > input:focus { outline: none; border-color: #635bff; box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.14); }
 .stripeCardBox { border: 1.5px solid #d7dde5; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
 .stripeCardBox:focus-within { border-color: #635bff; box-shadow: 0 0 0 3px rgba(99, 91, 255, 0.14); }
@@ -30,12 +33,9 @@
 .stripeRow { display: grid; grid-template-columns: 1fr 1fr; }
 .stripeRow .stripeField + .stripeField { border-left: 1px solid #edf0f4; }
 .stripeCardInputWrap { position: relative; display: block; }
-.stripeCardInputWrap input { width: 100%; border: 0; padding: 3px 64px 0 0; font-size: 15px; }
+.stripeCardInputWrap input { width: 100%; border: 0; padding: 3px 64px 0 0; font-size: 15px; font-family: inherit; }
 .stripeCardInputWrap input:focus { outline: none; }
 .stripeBrand { position: absolute; right: 0; top: 2px; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; color: #635bff; background: #eef0ff; border-radius: 4px; padding: 3px 7px; }
-.stripePay { width: 100%; border: 0; border-radius: 8px; padding: 13px; font-size: 16px; font-weight: 800; color: #fff; background: #635bff; cursor: pointer; transition: background 0.15s, transform 0.12s; }
-.stripePay:hover:not(:disabled) { background: #4f46e8; transform: translateY(-1px); }
-.stripePay:disabled { opacity: 0.6; cursor: wait; }
 .stripeTestNote { font-size: 12px; color: #8a6d1b; background: #fff8e1; border: 1px solid #f5e3a8; border-radius: 8px; padding: 9px 12px; margin: 12px 0 0; }
 .stripeSecure { font-size: 12px; color: #8a94a6; text-align: center; margin: 12px 0 0; }
 .stripeCod { background: #f6f9fc; border: 1px solid #e3e8ee; border-radius: 10px; padding: 18px; }

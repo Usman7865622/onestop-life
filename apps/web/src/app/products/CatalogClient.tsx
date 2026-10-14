@@ -626,19 +626,19 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               <div><p className={styles.cardCat}>Secure checkout</p><h2>Delivery & payment</h2></div>
               <button className={styles.qvClose} onClick={() => setCheckoutOpen(false)} aria-label="Close checkout">×</button>
             </div>
-            <div className={styles.coSteps}><span className={styles.stepOn}><b>1</b> Details</span><i /><span><b>2</b> Payment</span><i /><span><b>3</b> Done</span></div>
+            <div className={styles.coSteps}><span className={styles.stepOn}><b>1</b> Details</span><i /><span><b>2</b> Payment</span><i /><span><b>3</b> Done</span></div>{error ? <p className={styles.storeError} role="alert" style={{ margin: '12px 28px 0' }}>{error}</p> : null}
             <div className={styles.coGrid}>
               <div className={styles.coForm}>
                 <label><span>Full name</span><input value={shippingName} onChange={(e) => setShippingName(e.target.value)} autoComplete="name" /></label>
                 <label><span>Phone</span><input value={shippingPhone} onChange={(e) => setShippingPhone(e.target.value)} autoComplete="tel" /></label>
                 <label><span>Delivery address</span><textarea value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} rows={3} autoComplete="street-address" /></label>
                 <label><span>Discount code</span><input value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} placeholder="WELCOME10" /></label>
-                <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} busy={busy} onPayWithCard={payWithCard} money={money} />
+                <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} money={money} />
               </div>
               <aside className={styles.coSummary}>
                 <p>Order summary</p>
                 <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
-                <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : checkout} disabled={busy}>{busy ? 'Placing…' : `Place order · ${money(total)}`}</button>
+                <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : checkout} disabled={busy}>{busy ? 'Placing…' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : `Place order · ${money(total)}`}</button>
                 <small>🔒 Protected checkout · tracked delivery</small>
               </aside>
             </div>

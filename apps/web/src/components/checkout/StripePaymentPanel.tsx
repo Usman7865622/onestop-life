@@ -56,8 +56,6 @@ type Props = {
   setCardCvc: (value: string) => void;
   cardName: string;
   setCardName: (value: string) => void;
-  busy: boolean;
-  onPayWithCard: () => void;
   money: (minor: number) => string;
 };
 
@@ -65,7 +63,7 @@ export default function StripePaymentPanel(props: Props) {
   const {
     items, subtotal, shipping, total, paymentMethod, onPaymentMethodChange,
     cardEmail, setCardEmail, cardNumber, setCardNumber, cardExpiry, setCardExpiry,
-    cardCvc, setCardCvc, cardName, setCardName, busy, onPayWithCard, money,
+    cardCvc, setCardCvc, cardName, setCardName, money,
   } = props;
   return (
     <div className={styles.stripeWrap}>
@@ -77,7 +75,7 @@ export default function StripePaymentPanel(props: Props) {
             {items.slice(0, 4).map((item) => (
               <div key={item.id}><span>{item.nameEn} × {item.quantity}</span><b>{money(item.priceMinor * item.quantity)}</b></div>
             ))}
-            {items.length > 4 ? <div><span>+ {items.length - 4} more items</span><b> </b></div> : null}
+            {items.length > 4 ? <div><span>+ {items.length - 4} more items</span></div> : null}
           </div>
           <div className={styles.stripeTotals}>
             <div><span>Subtotal</span><b>{money(subtotal)}</b></div>
@@ -87,8 +85,8 @@ export default function StripePaymentPanel(props: Props) {
         </div>
         <div className={styles.stripeForm}>
           <div className={styles.stripeTabs} role="tablist">
-            <button type="button" role="tab" aria-selected={paymentMethod === 'CARD'} className={paymentMethod === 'CARD' ? 'stripeTabActive' : 'stripeTab'} onClick={() => onPaymentMethodChange('CARD')}>Card</button>
-            <button type="button" role="tab" aria-selected={paymentMethod === 'COD'} className={paymentMethod === 'COD' ? 'stripeTabActive' : 'stripeTab'} onClick={() => onPaymentMethodChange('COD')}>Cash on delivery</button>
+            <button type="button" role="tab" aria-selected={paymentMethod === 'CARD'} className={paymentMethod === 'CARD' ? styles.stripeTabActive : styles.stripeTab} onClick={() => onPaymentMethodChange('CARD')}>Card</button>
+            <button type="button" role="tab" aria-selected={paymentMethod === 'COD'} className={paymentMethod === 'COD' ? styles.stripeTabActive : styles.stripeTab} onClick={() => onPaymentMethodChange('COD')}>Cash on delivery</button>
           </div>
           {paymentMethod === 'CARD' ? (
             <>
@@ -101,7 +99,6 @@ export default function StripePaymentPanel(props: Props) {
                 </div>
                 <label className={styles.stripeField}><span>Name on card</span><input value={cardName} onChange={(event) => setCardName(event.target.value)} autoComplete="cc-name" placeholder="Full name" /></label>
               </div>
-              <button className={styles.stripePay} onClick={onPayWithCard} disabled={busy}>{busy ? 'Processing…' : `Pay ${money(total)}`}</button>
               <p className={styles.stripeTestNote}>Test mode — no real charge is made. Use card 4242 4242 4242 4242, any future expiry and any CVC.</p>
             </>
           ) : (
