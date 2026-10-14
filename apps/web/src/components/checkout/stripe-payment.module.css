@@ -1,5 +1,5 @@
 /* Stripe-Checkout-style payment panel (test mode). Shared by cart + products quick checkout. */
-.stripeWrap { margin: 4px 0 6px; }
+.stripeWrap { margin: 4px 0 6px; container-type: inline-size; }
 .stripeCard { display: flex; border-radius: 14px; overflow: hidden; border: 1px solid #e3e8ee; box-shadow: 0 12px 36px rgba(10, 37, 64, 0.14); }
 .stripeSummary { flex: 0 0 250px; background: #0a2540; color: #fff; padding: 24px 22px; display: flex; flex-direction: column; gap: 6px; }
 .stripeBiz { margin: 0; font-size: 17px; font-weight: 800; letter-spacing: -0.2px; }
@@ -43,6 +43,14 @@
 .stripeCod p { margin: 0; font-size: 14px; color: #3c4b64; }
 
 @media (max-width: 720px) {
+  .stripeCard { flex-direction: column; }
+  .stripeSummary { flex: none; }
+  .stripeTotals { margin-top: 12px; }
+}
+
+/* Stack when the panel itself is narrow regardless of viewport (quick-checkout column),
+   so the payment tabs always get full width and never truncate. */
+@container (max-width: 600px) {
   .stripeCard { flex-direction: column; }
   .stripeSummary { flex: none; }
   .stripeTotals { margin-top: 12px; }
