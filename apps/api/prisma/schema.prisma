@@ -330,6 +330,11 @@ model Order {
   shippingName    String
   shippingPhone   String
   shippingAddress String
+  shippingCity       String?
+  shippingPostalCode String?
+  addressLabel       String?
+  deliveryNotes      String?
+  deliverySpeed      String   @default("STANDARD")
   requiresRx            Boolean             @default(false)
   prescriptionKey       String?
   prescriptionStatus    PrescriptionStatus?
