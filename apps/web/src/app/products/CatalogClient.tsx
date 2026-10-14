@@ -176,6 +176,19 @@ function deliveryWindow(speed: 'STANDARD' | 'EXPRESS') {
 
 const PAYMENT_LABELS: Record<string, string> = { CARD: 'Card', JAZZCASH: 'JazzCash', EASYPAISA: 'Easypaisa', COD: 'Cash on delivery' };
 
+const SLOT_TIMES = ['Morning (9 AM – 12 PM)', 'Afternoon (12 – 5 PM)', 'Evening (5 – 9 PM)'];
+
+function slotDays(speed: 'STANDARD' | 'EXPRESS') {
+  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', weekday: 'short', day: 'numeric', month: 'short' });
+  const day = 86400000;
+  const now = Date.now();
+  const start = speed === 'EXPRESS' ? 1 : 2;
+  const count = speed === 'EXPRESS' ? 1 : 6;
+  return Array.from({ length: count }, (_, i) => fmt.format(new Date(now + (start + i) * day)));
+}
+
+const GIFT_WRAP_MINOR = 10000;
+
 export default function CatalogClient({ products }: CatalogClientProps) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartLoaded, setCartLoaded] = useState(false);
@@ -200,6 +213,13 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const [walletName, setWalletName] = useState('');
   const [busy, setBusy] = useState(false);
   const [saveDetails, setSaveDetails] = useState(false);
+  const [slotDay, setSlotDay] = useState(0);
+  const [slotTime, setSlotTime] = useState(0);
+  const [giftWrap, setGiftWrap] = useState(false);
+  const [giftMessage, setGiftMessage] = useState('');
+  const [discountApplied, setDiscountApplied] = useState<{ code: string; amountMinor: number } | null>(null);
+  const [discountBusy, setDiscountBusy] = useState(false);
+  const [discountError, setDiscountError] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -288,7 +308,9 @@ export default function CatalogClient({ products }: CatalogClientProps) {
 
   const subtotal = cart.reduce((t, i) => t + i.priceMinor * i.quantity, 0);
   const shipping = deliverySpeed === 'EXPRESS' ? 25000 : subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
-  const total = subtotal + shipping;
+  const discountMinor = discountApplied?.amountMinor ?? 0;
+  const giftMinor = giftWrap ? GIFT_WRAP_MINOR : 0;
+  const total = subtotal - discountMinor + shipping + giftMinor;
   const cartCount = cart.reduce((t, i) => t + i.quantity, 0);
 
   const addToCart = (product: Product) => {
@@ -329,6 +351,9 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           shippingName, shippingPhone, shippingAddress,
           shippingCity, shippingPostalCode: shippingPostalCode || undefined,
           addressLabel, deliveryNotes: deliveryNotes || undefined, deliverySpeed,
+          deliverySlot,
+          giftWrap: giftWrap || undefined,
+          giftMessage: giftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
           discountCode: discountCode || undefined, paymentMethod,
         }),
       });
@@ -355,9 +380,30 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   /** Test-mode card payment: validates the card form, simulates gateway
    *  processing, then places the order. No real charge is ever made. */
   const isWallet = paymentMethod === 'JAZZCASH' || paymentMethod === 'EASYPAISA';
+  const days = slotDays(deliverySpeed);
+  const deliverySlot = `${days[Math.min(slotDay, days.length - 1)]} · ${SLOT_TIMES[slotTime]}`;
 
   /** Test-mode wallet payment: validates the mobile-wallet form, simulates
    *  the in-app approval, then places the order. No real money moves. */
+  const applyDiscount = async () => {
+    const code = discountCode.trim();
+    if (!code) { setDiscountError('Enter a discount code first.'); return; }
+    setDiscountBusy(true); setDiscountError('');
+    try {
+      const res = await fetch('/api/orders/validate-discount', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, subtotalMinor: subtotal }),
+      });
+      const payload = await res.json() as { code?: string; amountMinor?: number; message?: string | string[] };
+      if (!res.ok) throw new Error(Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? 'Invalid code');
+      setDiscountApplied({ code: payload.code ?? code.toUpperCase(), amountMinor: payload.amountMinor ?? 0 });
+      setDiscountCode(payload.code ?? code.toUpperCase());
+    } catch (e) {
+      setDiscountError(e instanceof Error ? e.message : 'Invalid code');
+      setDiscountApplied(null);
+    } finally { setDiscountBusy(false); }
+  };
+
   const payWithWallet = async () => {
     const blocked = precheck();
     if (blocked) { setError(blocked); return; }
@@ -703,15 +749,17 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 <label><span>Delivery notes <i>(optional)</i></span><textarea value={deliveryNotes} onChange={(e) => setDeliveryNotes(e.target.value)} rows={2} placeholder="Gate code, landmark, rider instructions…" /></label>
                 <label className={styles.rememberRow}><input type="checkbox" checked={saveDetails} onChange={(e) => setSaveDetails(e.target.checked)} /><span>Save my delivery details for next time</span></label>
                 <div className={styles.speedRow} role="radiogroup" aria-label="Delivery speed">
-                  <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('STANDARD')}><span aria-hidden="true">🚚</span><span><b>Standard</b><small>{deliveryWindow('STANDARD')}</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
-                  <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => setDeliverySpeed('EXPRESS')}><span aria-hidden="true">⚡</span><span><b>Express</b><small>{deliveryWindow('EXPRESS')}</small></span><b>{money(25000)}</b></button>
+                  <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('STANDARD'); setSlotDay(0); }}><span aria-hidden="true">🚚</span><span><b>Standard</b><small>{deliveryWindow('STANDARD')}</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
+                  <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('EXPRESS'); setSlotDay(0); }}><span aria-hidden="true">⚡</span><span><b>Express</b><small>{deliveryWindow('EXPRESS')}</small></span><b>{money(25000)}</b></button>
                 </div>
-                <label><span>Discount code</span><input value={discountCode} onChange={(e) => setDiscountCode(e.target.value.toUpperCase())} placeholder="WELCOME10" /></label>
+                <div className={styles.slotSection}><span className={styles.slotLabel}>Choose your delivery slot</span><div className={styles.chipRow} role="group" aria-label="Delivery day">{days.map((d, i) => <button key={d} type="button" className={Math.min(slotDay, days.length - 1) === i ? styles.chipActive : styles.chip} onClick={() => setSlotDay(i)}>{d}</button>)}</div><div className={styles.chipRow} role="group" aria-label="Delivery time">{SLOT_TIMES.map((t, i) => <button key={t} type="button" className={slotTime === i ? styles.chipActive : styles.chip} onClick={() => setSlotTime(i)}>{t}</button>)}</div></div>
+                <div className={styles.discountRow}><label><span>Discount code</span><input value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountApplied(null); setDiscountError(''); }} placeholder="WELCOME10" /></label><button type="button" className={styles.applyBtn} onClick={applyDiscount} disabled={discountBusy}>{discountBusy ? 'Checking…' : 'Apply'}</button></div>{discountApplied ? <p className={styles.discountOk} role="status">✓ {discountApplied.code} applied · you save {money(discountApplied.amountMinor)}</p> : null}{discountError ? <p className={styles.discountErr} role="alert">{discountError}</p> : null}
+                <label className={styles.rememberRow}><input type="checkbox" checked={giftWrap} onChange={(e) => setGiftWrap(e.target.checked)} /><span>🎁 Add gift wrap · {money(GIFT_WRAP_MINOR)}</span></label>{giftWrap ? <label><span>Gift message <i>(optional)</i></span><textarea value={giftMessage} onChange={(e) => setGiftMessage(e.target.value)} rows={2} maxLength={200} placeholder="Write your message for the recipient…" /></label> : null}
                 <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} />
               </div>
               <aside className={styles.coSummary}>
                 <p>Order summary</p>
-                <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
+                <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b>{discountMinor > 0 ? <><span>Discount ({discountApplied?.code})</span><b>−{money(discountMinor)}</b></> : null}<span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b>{giftWrap ? <><span>Gift wrap</span><b>{money(giftMinor)}</b></> : null}<span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
                 <div className={styles.reviewBlock} aria-label="Order review"><div><span aria-hidden="true">📍</span><p>{[shippingAddress.trim(), shippingCity.trim()].filter(Boolean).join(', ') || 'Add your address'} <i>({addressLabel})</i></p></div><div><span aria-hidden="true">{deliverySpeed === 'EXPRESS' ? '⚡' : '🚚'}</span><p>{deliverySpeed === 'EXPRESS' ? 'Express' : 'Standard'} · {deliveryWindow(deliverySpeed)}</p></div><div><span aria-hidden="true">💳</span><p>{PAYMENT_LABELS[paymentMethod]}</p></div></div>
                 <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : isWallet ? payWithWallet : checkout} disabled={busy}>{busy ? 'Placing…' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(total)}` : paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(total)}` : `Place order · ${money(total)}`}</button>
                 <small>🔒 Protected checkout · tracked delivery</small>

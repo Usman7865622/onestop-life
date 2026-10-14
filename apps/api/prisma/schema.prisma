@@ -335,6 +335,9 @@ model Order {
   addressLabel       String?
   deliveryNotes      String?
   deliverySpeed      String   @default("STANDARD")
+  deliverySlot       String?
+  giftWrap           Boolean  @default(false)
+  giftMessage        String?
   requiresRx            Boolean             @default(false)
   prescriptionKey       String?
   prescriptionStatus    PrescriptionStatus?

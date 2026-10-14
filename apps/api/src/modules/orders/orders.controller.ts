@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { RoleKey } from '@prisma/client';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthUser } from '../../common/types/auth-user';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -10,6 +11,12 @@ import { OrdersService } from './orders.service';
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly orders: OrdersService) {}
+
+  @Public()
+  @Post('validate-discount')
+  validateDiscount(@Body() body: { code?: string; subtotalMinor?: number }) {
+    return this.orders.validateDiscount(body.code, Number(body.subtotalMinor) || 0);
+  }
 
   @Post()
   create(@CurrentUser() user: AuthUser, @Body() dto: CreateOrderDto) {
