@@ -28,7 +28,8 @@
 .stepDone { color: #fff; }
 .stepDone b { background: #0d7a6f; border-color: #0d7a6f; color: #fff; }
 .heroCard { background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 18px; padding: 20px; backdrop-filter: blur(8px); display: grid; align-content: center; gap: 14px; }
-.count { display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; padding: 8px 16px; font-weight: 700; font-size: 14px; color: #fff; justify-self: start; }
+.count { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 999px; padding: 8px 16px; font-weight: 800; font-size: 14px; color: #10233c; justify-self: start; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15); }
+.count svg { color: #0d7a6f; }
 .shipBar p { margin: 0 0 8px; font-size: 13px; color: #d7e7f2; }
 .shipBar strong { color: #fff; }
 .shipTrack { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.15); overflow: hidden; }
