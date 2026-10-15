@@ -56,7 +56,7 @@ async function PharmacyContent({ initialSearch }: { initialSearch?: string }) {
             <span>COD available</span>
           </div>
         </div>
-        <HeroPhoto src="/heroes/pharmacy.jpg" alt="Pharmacy shelves stocked with medicines" label="Pharmacy summary">
+        <HeroPhoto src={PHARMACY_HERO} alt="Pharmacy shelves stocked with medicines" label="Pharmacy summary">
           <div><strong>{total || 200}+</strong><span>Medicines listed</span></div>
           <div><strong>{classes.length || 13}</strong><span>Care categories</span></div>
           <div><strong>{otcCount}</strong><span>No prescription needed</span></div>
@@ -112,6 +112,7 @@ import type { Metadata } from "next";
 import { pageMetadata } from "../../lib/seo";
 import Breadcrumbs from "../../components/layout/Breadcrumbs";
 import HeroPhoto from "../../components/hero/HeroPhoto";
+import { PHARMACY_HERO } from "../../components/hero/hero-pharmacy";
 
 export const metadata: Metadata = pageMetadata({
   title: "Online pharmacy - order medicines",

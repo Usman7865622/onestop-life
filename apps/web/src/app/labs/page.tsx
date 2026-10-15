@@ -36,7 +36,7 @@ async function LabsContent({ initialSearch }: { initialSearch?: string }) {
             <span>Transparent prices</span>
           </div>
         </div>
-        <HeroPhoto src="/heroes/labs.jpg" alt="Lab technician examining a sample under a microscope" label="Lab service summary">
+        <HeroPhoto src={LABS_HERO} alt="Lab technician examining a sample under a microscope" label="Lab service summary">
           <div><strong>{tests.length || 11}+</strong><span>Tests available</span></div>
           <div><strong>{facilities.size || 1}</strong><span>Partner labs</span></div>
           <div><strong>{fastest} hrs</strong><span>Fastest report</span></div>
@@ -94,6 +94,7 @@ import type { Metadata } from "next";
 import { pageMetadata } from "../../lib/seo";
 import Breadcrumbs from "../../components/layout/Breadcrumbs";
 import HeroPhoto from "../../components/hero/HeroPhoto";
+import { LABS_HERO } from "../../components/hero/hero-labs";
 
 export const metadata: Metadata = pageMetadata({
   title: "Lab tests with home sample collection",

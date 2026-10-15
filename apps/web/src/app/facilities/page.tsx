@@ -38,7 +38,7 @@ export default async function FacilitiesPage() {
               <span>Call or book online</span>
             </div>
           </div>
-          <HeroPhoto src="/heroes/facilities.jpg" alt="Modern hospital building at dusk" label="Facility network summary">
+          <HeroPhoto src={FACILITIES_HERO} alt="Modern hospital building at dusk" label="Facility network summary">
             <div><strong>{facilities.length || 7}</strong><span>Facilities listed</span></div>
             <div><strong>{cities.size || 3}</strong><span>Cities covered</span></div>
             <div><strong>{emergency || 4}</strong><span>Open 24/7</span></div>
@@ -83,6 +83,7 @@ import type { Metadata } from "next";
 import { pageMetadata } from "../../lib/seo";
 import Breadcrumbs from "../../components/layout/Breadcrumbs";
 import HeroPhoto from "../../components/hero/HeroPhoto";
+import { FACILITIES_HERO } from "../../components/hero/hero-facilities";
 
 export const metadata: Metadata = pageMetadata({
   title: "Hospitals, clinics and labs near you",
