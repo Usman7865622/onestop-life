@@ -309,10 +309,29 @@ export default function CartClient() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <Link className={styles.backLink} href="/products">Back to products</Link>
-        <header className={styles.header}>
-          <div><p className={styles.kicker}>Your order</p><h1>Shopping cart</h1><p className={styles.subtitle}>Review your essentials, then choose delivery and payment.</p></div>
-          <span className={styles.count}><BagIcon className={styles.countIcon} />{cart.reduce((count, item) => count + item.quantity, 0)} {cart.reduce((count, item) => count + item.quantity, 0) === 1 ? 'item' : 'items'}</span>
+        <Link className={styles.backLink} href="/products">← Back to products</Link>
+        <header className={styles.hero}>
+          <div className={styles.heroCopy}>
+            <p className={styles.kicker}>Your order</p>
+            <h1>Shopping cart</h1>
+            <p className={styles.subtitle}>Review your essentials, then choose delivery and payment.</p>
+            <div className={styles.heroSteps} aria-label="Checkout progress">
+              <span className={styles.stepDone}><b>✓</b> Cart</span><i />
+              <span><b>2</b> Delivery</span><i />
+              <span><b>3</b> Payment</span>
+            </div>
+          </div>
+          <div className={styles.heroCard}>
+            <span className={styles.count}><BagIcon className={styles.countIcon} />{cart.reduce((count, item) => count + item.quantity, 0)} {cart.reduce((count, item) => count + item.quantity, 0) === 1 ? 'item' : 'items'}</span>
+            {subtotal < 300000 && subtotal > 0 ? (
+              <div className={styles.shipBar}>
+                <p>Add <strong>{money(300000 - subtotal)}</strong> more for <strong>free delivery</strong></p>
+                <div className={styles.shipTrack}><div className={styles.shipFill} style={{ width: `${Math.min(100, Math.round((subtotal / 300000) * 100))}%` }} /></div>
+              </div>
+            ) : subtotal >= 300000 ? (
+              <p className={styles.shipFree}>🎉 You&apos;ve unlocked <strong>free delivery</strong></p>
+            ) : null}
+          </div>
         </header>
 
         {message ? <p className={styles.storeMessage} role="status">{message}</p> : null}
@@ -321,16 +340,30 @@ export default function CartClient() {
         {cart.length ? <section className={styles.cartPageLayout} aria-label="Shopping cart">
           <div className={styles.cartPageLines}>
             {cart.map((item) => <article className={styles.cartPageLine} key={item.id}>
-              <div className={styles.cartProductVisual} role="img" aria-label={`${item.nameEn} product image`} style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}>{!item.imageUrl ? item.nameEn.slice(0, 1) : null}</div><div><h2>{item.nameEn}</h2><p>{money(item.priceMinor)} · {item.unit ?? 'item'}{item.requiresRx ? <> · <span className={styles.rxTag}>Rx required</span></> : null}</p></div>
+              <div className={styles.cartProductVisual} role="img" aria-label={`${item.nameEn} product image`} style={item.imageUrl ? { backgroundImage: `url(${item.imageUrl})` } : undefined}>{!item.imageUrl ? item.nameEn.slice(0, 1) : null}</div>
+              <div className={styles.lineInfo}>
+                <div className={styles.lineTags}>{item.category ? <span className={styles.catTag}>{item.category}</span> : null}{item.requiresRx ? <span className={styles.rxTag}>Rx required</span> : null}</div>
+                <h2>{item.nameEn}</h2>
+                <p>{money(item.priceMinor)} · {item.unit ?? 'item'}</p>
+                <button className={styles.removeBtn} onClick={() => updateQuantity(item.id, 0)} aria-label={`Remove ${item.nameEn}`}>Remove</button>
+              </div>
               <div className={styles.quantityControls}><button onClick={() => updateQuantity(item.id, item.quantity - 1)} aria-label={`Decrease ${item.nameEn}`}>−</button><span>{item.quantity}</span><button onClick={() => updateQuantity(item.id, item.quantity + 1)} aria-label={`Increase ${item.nameEn}`}>+</button></div>
               <strong>{money(item.priceMinor * item.quantity)}</strong>
             </article>)}
           </div>
           <aside className={styles.cartPageSummary} aria-label="Order summary">
-            <h2>Order summary</h2><div><span>Subtotal</span><strong>{money(subtotal)}</strong></div><div><span>Delivery</span><strong>{shipping ? money(shipping) : 'Free'}</strong></div><div className={styles.totalRow}><span>Total</span><strong>{money(total)}</strong></div>
+            <h2>Order summary</h2>
+            <div><span>Subtotal</span><strong>{money(subtotal)}</strong></div>
+            <div><span>Delivery</span><strong className={shipping ? undefined : styles.freeTag}>{shipping ? money(shipping) : 'Free'}</strong></div>
+            <div className={styles.totalRow}><span>Total</span><strong>{money(total)}</strong></div>
             <button className={styles.primaryAction} onClick={() => setCheckoutOpen(true)}><span aria-hidden="true">→</span> Continue to checkout</button>
+            <div className={styles.trustList}>
+              <span>🔒 Secure checkout</span>
+              <span>🚚 {deliveryWindow('STANDARD')}</span>
+              <span>💵 Cash on delivery available</span>
+            </div>
           </aside>
-        </section> : <section className={styles.emptyState}><div className={styles.emptyIcon}><BagIcon /></div><h2>Your cart is empty</h2><p>Browse the catalogue and add something useful.</p><Link className={styles.homeLink} href="/products">Browse products</Link></section>}
+        </section> : <section className={styles.emptyState}><div className={styles.emptyIcon}><BagIcon /></div><h2>Your cart is empty</h2><p>Browse medicines, baby care, wellness and more — delivered to your doorstep.</p><div className={styles.emptyActions}><Link className={styles.homeLink} href="/products">Browse products</Link><Link className={styles.ghostLink} href="/pharmacy">Visit pharmacy</Link></div></section>}
 
         {checkoutOpen ? <div className={styles.overlay} role="presentation"><section className={styles.checkoutPanel} aria-label="Checkout">
           <div className={styles.panelHeader}><div><p className={styles.categoryEyebrow}>Secure checkout</p><h2>Complete your order</h2></div><button className={styles.closeButton} onClick={() => setCheckoutOpen(false)} aria-label="Close checkout">×</button></div>
