@@ -43,11 +43,11 @@ async function DoctorsContent({
             <span>Urdu & English support</span>
           </div>
         </div>
-        <div className={styles.heroStats} aria-label="Doctor network summary">
+        <HeroPhoto src="/heroes/doctors.jpg" alt="Doctor consulting a patient in clinic" label="Doctor network summary">
           <div><strong>{doctors.length || 12}+</strong><span>Verified doctors</span></div>
           <div><strong>{specialities.size || 12}</strong><span>Specialities</span></div>
           <div><strong>{cities.size || 3}</strong><span>Cities covered</span></div>
-        </div>
+        </HeroPhoto>
       </header>
 
       <section className={styles.trustStrip} aria-label="Why patients trust OneStop Life">
@@ -107,6 +107,7 @@ export default async function DoctorsPage({
 import type { Metadata } from "next";
 import { pageMetadata } from "../../lib/seo";
 import Breadcrumbs from "../../components/layout/Breadcrumbs";
+import HeroPhoto from "../../components/hero/HeroPhoto";
 
 export const metadata: Metadata = pageMetadata({
   title: "Find and book verified doctors",
