@@ -45,11 +45,11 @@ export default async function BloodPage({
               <span>24/7 emergency banks</span>
             </div>
           </div>
-          <div className={styles.heroStats} aria-label="Blood service summary">
+          <HeroPhoto src={BLOOD_HERO} alt="Smiling blood donor during donation" label="Blood service summary">
             <div><strong>{banks.length || 2}</strong><span>Blood banks</span></div>
             <div><strong>{cities.size || 2}</strong><span>Cities covered</span></div>
             <div><strong>{unitsNeeded}</strong><span>Units needed now</span></div>
-          </div>
+          </HeroPhoto>
         </header>
 
         <section className={styles.trustStrip} aria-label="How blood requests work">
@@ -68,6 +68,8 @@ export default async function BloodPage({
 import type { Metadata } from "next";
 import { pageMetadata } from "../../lib/seo";
 import Breadcrumbs from "../../components/layout/Breadcrumbs";
+import HeroPhoto from "../../components/hero/HeroPhoto";
+import { BLOOD_HERO } from "../../components/hero/hero-blood";
 
 export const metadata: Metadata = pageMetadata({
   title: "Blood banks and urgent blood requests",

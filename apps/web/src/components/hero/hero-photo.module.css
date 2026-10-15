@@ -1,0 +1,7 @@
+.heroPhoto { position: relative; margin: 0; border-radius: 18px; overflow: hidden; min-height: 300px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25); }
+.photo { object-fit: cover; }
+.photoStats { position: absolute; inset: auto 0 0 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; background: linear-gradient(transparent, rgba(8, 20, 34, 0.82)); }
+.photoStats > div { padding: 10px 8px; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 12px; background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px); text-align: center; }
+.photoStats strong { display: block; font-size: 1.25rem; line-height: 1; color: #fff; }
+.photoStats span { color: #d7e7f2; font-size: 0.72rem; font-weight: 700; }
+@media (max-width: 900px) { .heroPhoto { min-height: 220px; } }
