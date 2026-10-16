@@ -7,6 +7,8 @@ import HomeAccountBar from '../components/home/HomeAccountBar';
 import Reveal from '../components/home/Reveal';
 import CountUp from '../components/home/CountUp';
 import Ticker from '../components/home/Ticker';
+import HeroParallax from '../components/home/HeroParallax';
+import ActivityToast from '../components/home/ActivityToast';
 import styles from './page.module.css';
 import DoctorAvatar from '../components/doctors/DoctorAvatar';
 import type { Doctor, Facility } from '../lib/doctors/types';
@@ -139,6 +141,7 @@ export default async function HomePage() {
       <div className={styles.shell}>
         <HomeAccountBar />
 
+        <HeroParallax>
         <section className={styles.hero} aria-labelledby="home-hero-heading">
           <div className={styles.heroCopy}>
             <span className={styles.badge}>Healthcare + everyday store · Pakistan</span>
@@ -161,6 +164,7 @@ export default async function HomePage() {
             <div className={styles.heroTile}><span>Wellness</span><strong>Small rituals. Better days.</strong></div>
           </div>
         </section>
+        </HeroParallax>
 
         <Ticker />
 
@@ -422,6 +426,7 @@ export default async function HomePage() {
                 </section>
                 </Reveal>
       </div>
+      <ActivityToast />
     </main>
   );
 }

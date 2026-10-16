@@ -1,0 +1,7 @@
+.parallax {
+  --px: 0;
+  --py: 0;
+}
+
+/* Layers inside the hero shift with the cursor via these vars.
+   Applied in page.module.css to .heroPanel and .hero::before. */
