@@ -23,6 +23,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 18px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.trustBar > div > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .trustBar > div > span:first-child { display: none; }
+  .trustBar > div { justify-content: center; }
 }
 
 .trustBar > div > div {
