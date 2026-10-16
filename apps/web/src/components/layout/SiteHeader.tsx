@@ -60,12 +60,7 @@ export default function SiteHeader() {
             ) : (
               <Link className={styles.accountLink} href="/login">Login</Link>
             )}
-            <Link className={styles.cartLink} href="/cart" aria-label="Open shopping cart">
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
-                <path d="M3.5 4.5h2l2.1 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4l1.4-6.1H6.4M9.2 20h.1m7.3 0h.1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span>Cart</span>
-            </Link>
+
           </div>
         </div>
       </div>
