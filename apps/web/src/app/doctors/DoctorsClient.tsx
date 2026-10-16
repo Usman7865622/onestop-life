@@ -53,10 +53,6 @@ export default function DoctorsClient({
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Try cardiologist, skin, migraine, tooth pain…" />
         </label>
         <label className={styles.filterField}>
-          <span>Speciality</span>
-          <select value={speciality} onChange={(event) => setSpeciality(event.target.value)}>{specialities.map((item) => <option key={item}>{item}</option>)}</select>
-        </label>
-        <label className={styles.filterField}>
           <span>City</span>
           <select value={city} onChange={(event) => setCity(event.target.value)}>{cities.map((item) => <option key={item}>{item}</option>)}</select>
         </label>
