@@ -81,10 +81,10 @@ export default function DoctorsClient({
 
       {visible.length ? (
         <div className={styles.grid}>
-          {visible.map((doctor) => {
+          {visible.map((doctor, idx) => {
             const facility = doctor.facilities[0]?.facility;
             return (
-              <article className={styles.card} key={doctor.id}>
+              <article className={styles.card} key={doctor.id} style={{ '--doc-index': idx } as React.CSSProperties}>
                 <div className={styles.cardTop}>
                   <DoctorAvatar name={doctor.user.name} size={64} className={styles.avatar} />
                   <div className={styles.cardTitle}>
