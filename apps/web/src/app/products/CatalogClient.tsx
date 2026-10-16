@@ -635,8 +635,8 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               <span className={styles.countPill}>{items.length}</span>
             </div>
             <div className={styles.grid}>
-              {shown.map((p) => (
-                <article className={styles.card} key={p.id}>
+              {shown.map((p, idx) => (
+                <article className={styles.card} key={p.id} style={{ '--card-index': idx } as React.CSSProperties}>
                   <button className={styles.cardMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
                     <span className={styles.cardMediaFrame}>
                       {<ProdImg src={p.imageUrl} name={p.nameEn} category={category} iconClassName={styles.cardIcon} />}
