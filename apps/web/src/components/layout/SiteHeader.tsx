@@ -58,7 +58,10 @@ export default function SiteHeader() {
             {checked && user ? (
               <Link className={styles.accountLink} href="/dashboard">Dashboard{user.name ? ` · ${user.name.split(' ')[0]}` : ''}</Link>
             ) : (
-              <Link className={styles.accountLink} href="/login">Login</Link>
+              <>
+                <Link className={styles.loginButton} href="/login">Login</Link>
+                <Link className={styles.signupButton} href="/login?mode=signup">Sign up</Link>
+              </>
             )}
 
           </div>
