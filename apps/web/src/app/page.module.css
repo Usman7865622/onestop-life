@@ -71,7 +71,7 @@
 .textLink:hover { color: var(--ink); text-decoration: underline; }
 .categoryGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .categoryTile { --cat-from: #166a91; --cat-to: #38a3c8; --cat-soft: #eef6f9; position: relative; display: grid; gap: 7px; padding: 20px 18px 17px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--cat-to) 24%, #e3ebf0); border-radius: 20px; background: linear-gradient(155deg, var(--cat-soft) 0%, #fff 62%); box-shadow: 0 1px 2px rgba(23,35,55,.04); transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
-.categoryTile:hover { transform: translateY(-4px); border-color: color-mix(in srgb, var(--cat-to) 48%, #dbe7ee); box-shadow: 0 16px 32px -14px color-mix(in srgb, var(--cat-to) 42%, transparent); }
+.categoryTile:hover { transform: translateY(-6px) scale(1.015); border-color: color-mix(in srgb, var(--cat-to) 55%, #dbe7ee); box-shadow: 0 22px 40px -14px color-mix(in srgb, var(--cat-to) 50%, transparent); }
 .categoryAccent { position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--cat-from), var(--cat-to)); }
 .categoryIconWrap { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,.75); border-radius: 18px; background: linear-gradient(145deg, #fff, color-mix(in srgb, var(--cat-soft) 68%, #fff)); color: var(--cat-to); box-shadow: 0 10px 20px -10px color-mix(in srgb, var(--cat-to) 55%, transparent), inset 0 1px 0 #fff; transition: transform .2s ease; }
 .categoryTile:hover .categoryIconWrap { transform: scale(1.06) rotate(-2deg); }
@@ -82,7 +82,7 @@
 .categoryTile:hover .categoryArrow { transform: translateX(4px); }
 .productGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 .productCard { overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: #fff; box-shadow: var(--shadow-sm); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
-.productCard:hover { transform: translateY(-5px); border-color: #c3dcea; box-shadow: 0 22px 38px -18px rgba(23,35,55,.28); }
+.productCard:hover { transform: translateY(-7px); border-color: #9cc8e0; box-shadow: 0 28px 48px -18px rgba(22,106,145,.35); }
 .productImage { position: relative; display: grid; place-items: center; aspect-ratio: 1.18; overflow: hidden; background: radial-gradient(circle at 50% 30%, #f8fcfd, #e8f1f5); background-position: center; background-size: cover; transition: transform .45s ease, background-size .45s ease; }
 .productCard:hover .productImage { background-size: 112% auto; }
 .productBadge, .dealBadge { position: absolute; top: 12px; left: 12px; z-index: 2; padding: 6px 9px; border-radius: 999px; font-size: .7rem; font-weight: 950; letter-spacing: .04em; text-transform: uppercase; box-shadow: 0 6px 14px rgba(23,35,55,.18); }
@@ -108,8 +108,10 @@
 .doctorsCopy p:not(.kickerLight) { color: #d7e7f2; line-height: 1.65; }
 .doctorsCopy .primaryButton { width: fit-content; }
 .doctorMiniGrid { display: grid; gap: 10px; }
-.doctorMiniCard { display: grid; grid-template-columns: 52px 1fr; gap: 13px; align-items: center; padding: 14px; border: 1px solid rgba(255,255,255,.22); border-radius: 18px; background: rgba(255,255,255,.1); backdrop-filter: blur(8px); transition: transform .18s ease, background .18s ease; }
-.doctorMiniCard:hover { transform: translateY(-1px); background: rgba(255,255,255,.16); }
+.doctorMiniCard { position: relative; overflow: hidden; display: grid; grid-template-columns: 52px 1fr; gap: 13px; align-items: center; padding: 14px; border: 1px solid rgba(255,255,255,.22); border-radius: 18px; background: rgba(255,255,255,.1); backdrop-filter: blur(8px); transition: transform .25s cubic-bezier(.22,1,.36,1), background .25s ease, border-color .25s ease, box-shadow .25s ease; }
+.doctorMiniCard::after { content: ''; position: absolute; top: 0; left: -80%; width: 55%; height: 100%; background: linear-gradient(105deg, transparent, rgba(255,255,255,.22), transparent); transform: skewX(-18deg); transition: left .6s ease; pointer-events: none; }
+.doctorMiniCard:hover { transform: translateY(-3px) scale(1.01); background: rgba(255,255,255,.17); border-color: rgba(255,255,255,.4); box-shadow: 0 14px 28px rgba(0,0,0,.22); }
+.doctorMiniCard:hover::after { left: 130%; }
 .doctorAvatar { width: 52px; height: 52px; border-radius: 16px; box-shadow: 0 8px 18px rgba(0,0,0,.22); }
 .doctorMiniBody { display: grid; gap: 2px; min-width: 0; }
 .doctorMiniBody strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -6,6 +6,7 @@ import HeroSearch from '../components/home/HeroSearch';
 import HomeAccountBar from '../components/home/HomeAccountBar';
 import Reveal from '../components/home/Reveal';
 import CountUp from '../components/home/CountUp';
+import Ticker from '../components/home/Ticker';
 import styles from './page.module.css';
 import DoctorAvatar from '../components/doctors/DoctorAvatar';
 import type { Doctor, Facility } from '../lib/doctors/types';
@@ -160,6 +161,8 @@ export default async function HomePage() {
             <div className={styles.heroTile}><span>Wellness</span><strong>Small rituals. Better days.</strong></div>
           </div>
         </section>
+
+        <Ticker />
 
         {liveStats.length ? (
           <section className={styles.liveStrip} aria-label="Live on OneStop Life">
