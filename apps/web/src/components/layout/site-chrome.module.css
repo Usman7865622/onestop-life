@@ -19,13 +19,12 @@
 
 .trustBar > div {
   display: flex;
-  min-height: 34px;
+  min-height: 38px;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  flex-wrap: wrap;
-  padding-top: 6px;
-  padding-bottom: 6px;
+  justify-content: center;
+  gap: 28px;
+  padding-top: 7px;
+  padding-bottom: 7px;
 }
 .trustBar > div > span {
   white-space: nowrap;

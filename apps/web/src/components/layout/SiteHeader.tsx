@@ -29,7 +29,6 @@ export default function SiteHeader() {
     <header className={styles.header}>
       <div className={styles.trustBar}>
         <div className={styles.container}>
-          <span>Thoughtful essentials for everyday care</span>
           <div><span>Free delivery over <strong>Rs. 3,000</strong></span><i aria-hidden="true" /><span>Cash on delivery available</span></div>
         </div>
       </div>
