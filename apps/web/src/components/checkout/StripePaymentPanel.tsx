@@ -1,6 +1,7 @@
 'use client';
 
 import styles from './stripe-payment.module.css';
+import { SectionIcon } from '../home/SectionIcons';
 import { CARDS_LOGO, EASYPAISA_LOGO, JAZZCASH_LOGO } from './payment-logos';
 
 /**
@@ -164,7 +165,7 @@ export default function StripePaymentPanel(props: Props) {
                   <span className={styles.payIcon} style={{ color: tab.brand }}><MethodIcon id={tab.id} /></span>
                   <span className={styles.payLabel}>{tab.label}</span>
                   <span className={styles.paySub}>{tab.sub}</span>
-                  {active ? <span className={styles.payCheck} style={{ background: tab.brand }} aria-hidden="true">✓</span> : null}
+                  {active ? <span className={styles.payCheck} style={{ background: tab.brand }} aria-hidden="true"><SectionIcon name="check" size={14} /></span> : null}
                 </button>
               );
             })}
@@ -225,7 +226,7 @@ export default function StripePaymentPanel(props: Props) {
           ) : (
             <div className={styles.stripeCod}><strong>Pay in cash when your order arrives.</strong><p>Our rider collects {money(total)} at your doorstep. Please keep the amount ready.</p></div>
           )}
-          <p className={styles.stripeSecure}>🔒 Secured checkout · Test mode — no real payment is processed.</p>
+          <p className={styles.stripeSecure}><SectionIcon name="shield" size={14} /> Secured checkout · Test mode — no real payment is processed.</p>
         </div>
       </div>
     </div>
