@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import styles from './detail.module.css';
-import { SectionIcon } from '../../../components/home/SectionIcons';
 import { apiFetch } from '../../../lib/auth/api';
 import { readAccessToken } from '../../../lib/auth/session';
 import DoctorAvatar from '../../../components/doctors/DoctorAvatar';
@@ -107,7 +106,7 @@ export default function DoctorDetailClient({ doctor }: { doctor: Doctor }) {
   if (success) {
     return (
       <section className={styles.successCard}>
-        <span className={styles.successIcon}><SectionIcon name="check" size={20} /></span>
+        <span className={styles.successIcon}>✓</span>
         <p className={styles.successKicker}>Booking request received</p>
         <h2>Appointment requested</h2>
         <p>Your appointment with <strong>{doctor.user.name}</strong> is <strong>{success.status}</strong> for {new Date(success.startsAt).toLocaleString('en-PK', { timeZone: 'Asia/Karachi' })} (Asia/Karachi).</p>
