@@ -118,6 +118,13 @@ body {
   min-width: 0;
 }
 
+/* Mobile bottom tab bar clearance */
+@media (max-width: 1023px) {
+  .siteContent {
+    padding-bottom: 76px;
+  }
+}
+
 /* Coarse pointers (touch): no accidental double-tap zoom delays,
    and interactive elements get roomier where modules allow it. */
 @media (pointer: coarse) {

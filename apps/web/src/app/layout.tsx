@@ -4,6 +4,7 @@ import OneStopAssistant from "../components/assistant/OneStopAssistant";
 import Analytics from "../components/layout/Analytics";
 import SiteFooter from "../components/layout/SiteFooter";
 import SiteHeader from "../components/layout/SiteHeader";
+import MobileTabBar from "../components/layout/MobileTabBar";
 import { SITE_URL, googleVerification, organizationJsonLd } from "../lib/seo";
 import "./globals.css";
 
@@ -62,6 +63,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <div className="siteContent">{children}</div>
         <SiteFooter />
+        <MobileTabBar />
         <OneStopAssistant />
       </body>
     </html>
