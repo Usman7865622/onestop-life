@@ -78,7 +78,7 @@ export default function AccountMenu() {
         <div className={styles.menu} role="menu">
           <div className={styles.menuHead}>
             <strong>{user.name ?? 'Account'}</strong>
-            <small>{user.role ?? 'Patient'}</small>
+            <small>{user.roles?.[0] ?? 'Patient'}</small>
           </div>
           <Link href="/dashboard" role="menuitem" onClick={() => setOpen(false)}>
             <SectionIcon name="grid" size={16} /> Dashboard
