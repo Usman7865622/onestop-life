@@ -2,7 +2,12 @@
 .shell { max-width: 1180px; margin: 0 auto; display: grid; gap: 18px; }
 .loading { padding: 48px 0; color: var(--muted); text-align: center; }
 .welcomeCard, .card, .emptyState { border: 1px solid var(--line); border-radius: 24px; background: #fff; box-shadow: var(--shadow-md); }
-.welcomeCard { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 26px 28px; background: radial-gradient(circle at 88% 0%, rgba(247,185,40,.22), transparent 32%), linear-gradient(135deg, #10233c, #166a91); color: #fff; }
+.welcomeCard { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 26px 28px; background: radial-gradient(circle at 88% 0%, rgba(247,185,40,.22), transparent 32%), linear-gradient(135deg, #10233c, #166a91); color: #fff; animation: welcomeIn 0.6s cubic-bezier(.22,1,.36,1); }
+@keyframes welcomeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.card { animation: cardIn 0.5s cubic-bezier(.22,1,.36,1) both; }
+.card:nth-child(2) { animation-delay: 0.08s; }
+.card:nth-child(3) { animation-delay: 0.16s; }
+@keyframes cardIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 .welcomeCard h1 { margin-top: 10px; font-size: clamp(1.9rem, 3vw, 2.6rem); letter-spacing: -.035em; }
 .welcomeCard p { margin-top: 6px; color: #d7e7f2; }
 .badge { display: inline-flex; padding: 7px 11px; border: 1px solid rgba(255,255,255,.24); border-radius: 999px; background: rgba(255,255,255,.1); font-size: .7rem; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
@@ -32,8 +37,9 @@
 .summaryList span { color: var(--muted); font-size: .74rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .summaryList strong { font-size: 1rem; }
 .linkGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.linkCard { display: grid; gap: 6px; padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: #fbfdff; transition: transform .18s ease, border-color .18s ease; }
-.linkCard:hover { transform: translateY(-2px); border-color: #9ec7d8; }
+.linkCard { display: grid; gap: 6px; padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: #fbfdff; transition: transform .2s cubic-bezier(.22,1,.36,1), border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+.linkCard:hover { transform: translateY(-3px); border-color: var(--accent); background: #fff; box-shadow: var(--shadow-md); }
+.linkCard:active { transform: translateY(-1px) scale(.98); }
 .linkCard strong { font-size: 1rem; }
 .linkCard span { color: var(--muted); font-size: .88rem; line-height: 1.5; }
 .listBlock { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); }
