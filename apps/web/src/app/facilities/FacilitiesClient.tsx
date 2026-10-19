@@ -126,7 +126,7 @@ export default function FacilitiesClient({ facilities }: { facilities: FacilityW
                     <p className={styles.doctorHeading}>{doctors.length} {doctors.length === 1 ? 'doctor' : 'doctors'} here</p>
                     {doctors.slice(0, 3).map((link) => (
                       <Link key={link.doctorProfile.id} className={styles.doctorLink} href={`/doctors/${link.doctorProfile.id}`}>
-                        <span>{link.doctorProfile.user.name ?? 'Doctor'}</span><span className={styles.doctorSpec}>{link.doctorProfile.speciality} →</span>
+                        <span>{link.doctorProfile.user.name ?? 'Doctor'}</span><span className={styles.doctorSpec}>{link.doctorProfile.speciality} <SectionIcon name="arrowRight" size={12} /></span>
                       </Link>
                     ))}
                     {doctors.length > 3 ? <p className={styles.moreDoctors}>+{doctors.length - 3} more — see all doctors</p> : null}

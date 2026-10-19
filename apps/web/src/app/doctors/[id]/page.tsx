@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 import DoctorDetailClient from './DoctorDetailClient';
 import styles from './detail.module.css';
+import { SectionIcon } from '../../../components/home/SectionIcons';
 import type { Doctor } from '../../../lib/doctors/types';
 import { pageMetadata } from '../../../lib/seo';
 
@@ -49,7 +50,7 @@ export default async function DoctorDetailPage({ params }: { params: Promise<{ i
     <main className={styles.page}>
       <div className={styles.shell}>
         <Breadcrumbs items={[{ name: 'Doctors', path: '/doctors' }, { name: doctor.user?.name ?? 'Doctor', path: `/doctors/${id}` }]} />
-        <Link className={styles.backLink} href="/doctors">← Back to all doctors</Link>
+        <Link className={styles.backLink} href="/doctors"><SectionIcon name="arrowLeft" size={14} /> Back to all doctors</Link>
         <DoctorDetailClient doctor={doctor} />
       </div>
     </main>
