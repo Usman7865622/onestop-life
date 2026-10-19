@@ -23,9 +23,12 @@
 @media (prefers-reduced-motion: reduce) { .heroCopy h1, .heroCopy > p, .heroCopy .heroActions { animation: none; } }
 .heroCopy > p { max-width: 620px; color: #d7e7f2; font-size: 1.04rem; line-height: 1.65; }
 .badge { display: inline-flex; width: fit-content; padding: 8px 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 999px; background: rgba(255,255,255,.1); font-size: .72rem; font-weight: 950; letter-spacing: .09em; text-transform: uppercase; }
-.heroSearch { display: grid; grid-template-columns: 1fr auto; gap: 8px; max-width: 620px; padding: 7px; border-radius: 16px; background: #fff; box-shadow: 0 18px 36px rgba(0,0,0,.18); }
-.heroSearch input { min-width: 0; border: 0; padding: 10px 12px; color: var(--ink); font-size: .96rem; outline: none; }
-.heroSearch button { border: 0; border-radius: 11px; padding: 11px 16px; background: var(--highlight); color: var(--ink); font-weight: 950; }
+.heroSearch { display: grid; grid-template-columns: 1fr auto; gap: 8px; max-width: 620px; padding: 7px; border-radius: 16px; background: #fff; box-shadow: 0 18px 36px rgba(0,0,0,.18); transition: box-shadow 0.2s ease, transform 0.2s ease; }
+.heroSearch:focus-within { box-shadow: 0 22px 44px rgba(0,0,0,.22), 0 0 0 3px rgba(247,185,40,.35); transform: translateY(-1px); }
+.heroSearch input { min-width: 0; border: 0; padding: 10px 12px; color: var(--ink); font-size: .96rem; outline: none; background: transparent; }
+.heroSearch button { border: 0; border-radius: 11px; padding: 11px 20px; background: var(--highlight); color: var(--ink); font-weight: 800; font-size: 0.92rem; cursor: pointer; transition: filter 0.15s ease, transform 0.12s ease; }
+.heroSearch button:hover { filter: brightness(1.06); }
+.heroSearch button:active { transform: scale(0.97); }
 .heroSearch select { min-width: 0; border: 0; padding: 10px 8px; color: var(--ink); font-size: .96rem; outline: none; background: transparent; max-width: 100%; }
 .heroTabs { max-width: 620px; display: grid; gap: 8px; }
 .heroTabBar { display: inline-flex; gap: 6px; flex-wrap: wrap; }
