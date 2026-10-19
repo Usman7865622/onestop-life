@@ -8,6 +8,7 @@ import { clearAccessToken, hasRole, isBusinessUser, readAccessToken, readLoginIn
 import type { PublicUser } from '../../lib/auth/types';
 import { money, type Appointment } from '../../lib/doctors/types';
 import { SectionIcon, type SectionIconName } from '../../components/home/SectionIcons';
+import Breadcrumbs from '../../components/layout/Breadcrumbs';
 import OrderTracking from '../../components/orders/OrderTracking';
 import WalletPanel from '../../components/wallet/WalletPanel';
 
@@ -277,6 +278,7 @@ export default function DashboardPage() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
+        <Breadcrumbs items={[{ name: 'Dashboard', path: '/dashboard' }]} />
         <section className={styles.welcomeCard}>
           <div>
             <span className={styles.badge}>My OneStop dashboard</span>

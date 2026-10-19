@@ -1,10 +1,12 @@
 import MyAppointmentsClient from './MyAppointmentsClient';
+import Breadcrumbs from '../../components/layout/Breadcrumbs';
 import styles from './page.module.css';
 
 export default function AppointmentsPage() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
+        <Breadcrumbs items={[{ name: 'My appointments', path: '/appointments' }]} />
         <header className={styles.header}>
           <div>
             <p className={styles.kicker}>Your healthcare</p>
