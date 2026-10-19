@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import styles from './site-chrome.module.css';
+import Logo from './Logo';
+import { SectionIcon } from '../home/SectionIcons';
 
 export default function SiteFooter() {
   return (
@@ -7,11 +9,11 @@ export default function SiteFooter() {
       <div className={`${styles.container} ${styles.footerMain}`}>
         <div className={styles.footerBrand}>
           <Link className={styles.footerLogo} href="/" aria-label="OneStop Life home">
-            <span className={styles.brandMark} aria-hidden="true">O<span /></span>
+            <Logo size={40} />
             <span className={styles.brandWords}><strong>OneStop <b>Life</b></strong><small>EVERYDAY CARE, MADE EASIER</small></span>
           </Link>
           <p>Useful essentials for your health, home, family, and companions, all in one considered store.</p>
-          <Link className={styles.footerShopCta} href="/products">Explore the store <span aria-hidden="true">→</span></Link>
+          <Link className={styles.footerShopCta} href="/products">Explore the store <SectionIcon name="arrowRight" size={16} /></Link>
         </div>
 
         <nav className={styles.footerColumn} aria-label="Explore OneStop">

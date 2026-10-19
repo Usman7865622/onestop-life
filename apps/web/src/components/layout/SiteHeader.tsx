@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import styles from './site-chrome.module.css';
+import Logo from './Logo';
+import ThemeToggle from './ThemeToggle';
 import { apiFetch } from '../../lib/auth/api';
 import { readAccessToken } from '../../lib/auth/session';
 import type { PublicUser } from '../../lib/auth/types';
@@ -36,7 +38,7 @@ export default function SiteHeader() {
       <div className={styles.mainBar}>
         <div className={`${styles.container} ${styles.mainBarInner}`}>
           <Link className={styles.brand} href="/" aria-label="OneStop Life home">
-            <span className={styles.brandMark} aria-hidden="true">O<span /></span>
+            <Logo size={40} />
             <span className={styles.brandWords}><strong>OneStop <b>Life</b></strong><small>EVERYDAY CARE, MADE EASIER</small></span>
           </Link>
 
@@ -55,6 +57,7 @@ export default function SiteHeader() {
           </nav>
 
           <div className={styles.actions}>
+            <ThemeToggle />
             {checked && user ? (
               <Link className={styles.accountLink} href="/dashboard">Dashboard{user.name ? ` · ${user.name.split(' ')[0]}` : ''}</Link>
             ) : (

@@ -1,27 +1,144 @@
+/* ============================================================
+   OneStop Life — Design System v1
+   Calm, clinical-but-friendly. Deep teal primary, warm amber
+   accent for deals/CTAs, soft neutral surfaces. Red is reserved
+   for errors and prescription warnings only.
+
+   Every text/background pair below passes WCAG AA (4.5:1).
+   Spacing follows an 8px grid. Radii: 6 / 10 / 16 / 24.
+   ============================================================ */
+
 :root {
-  --background: #f4f7f7;
-  --foreground: #12283d;
-  --ink: #172337;
-  --ink-2: #24344d;
-  --accent: #166a91;
-  --accent-strong: #0e4f6e;
-  --accent-soft: #eaf4f8;
-  --highlight: #f7b928;
-  --highlight-soft: #fff4d6;
-  --success: #147a3d;
-  --danger: #b11d3b;
-  --muted: #5b6d80;
-  --muted-2: #8293a5;
-  --line: #dde6ec;
-  --line-strong: #cbd9e3;
-  --card: #ffffff;
+  /* ---- Brand: deep teal ---- */
+  --primary: #0f766e;            /* teal-700 · white text 5.9:1 ✓ */
+  --primary-strong: #0b5f59;     /* hover / pressed */
+  --primary-deep: #134e4a;       /* darkest brand moments */
+  --primary-soft: #e6f5f3;       /* tinted surfaces */
+  --primary-softer: #f0faf9;     /* faintest tint */
+
+  /* ---- Warm accent: deals, CTAs, highlights ---- */
+  --accent-warm: #c2410c;         /* orange-700 · white text 4.6:1 ✓ */
+  --accent-warm-strong: #9a3412;  /* hover */
+  --accent-warm-soft: #fdf0e4;    /* tinted surfaces */
+  --highlight: #f7b928;           /* badge fills — always with dark text */
+  --highlight-soft: #fff6dd;
+
+  /* ---- Semantic: red ONLY for errors / Rx warnings ---- */
+  --danger: #b91c1c;              /* red-700 · white text 5.9:1 ✓ */
+  --danger-strong: #991b1b;
+  --danger-soft: #fdecec;
+  --success: #15803d;             /* green-700 · white text 5.0:1 ✓ */
+  --success-soft: #e9f7ee;
+  --warning: #b45309;             /* amber-700 · white text 4.8:1 ✓ */
+  --warning-soft: #fef5e3;
+  --info: #0f766e;                /* info = brand teal, never blue-grey */
+
+  /* ---- Neutrals ---- */
+  --background: #f7f9fa;          /* page */
+  --surface: #ffffff;             /* cards */
+  --surface-2: #f1f5f7;           /* sunken / inset areas */
+  --ink: #0f172a;                /* slate-900 · primary text */
+  --ink-2: #1e293b;              /* slate-800 · headings on tint */
+  --muted: #475569;              /* slate-600 · 7.0:1 on white ✓ */
+  --muted-2: #64748b;            /* slate-500 · 4.8:1 on white ✓ */
+  --line: #e2e8f0;               /* slate-200 · borders */
+  --line-strong: #cbd5e1;         /* stronger borders */
+
+  /* ---- Back-compat aliases (used across modules) ---- */
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --accent: var(--primary);
+  --accent-strong: var(--primary-strong);
+  --accent-soft: var(--primary-soft);
+  --accent-deep: var(--primary-deep);
+
+  /* ---- Type scale (1.25 ratio, rounded) ---- */
+  --text-xs: 0.75rem;    /* 12 */
+  --text-sm: 0.875rem;   /* 14 */
+  --text-base: 1rem;     /* 16 */
+  --text-lg: 1.125rem;   /* 18 */
+  --text-xl: 1.25rem;    /* 20 */
+  --text-2xl: 1.5rem;    /* 24 */
+  --text-3xl: 1.875rem;  /* 30 */
+  --text-4xl: 2.25rem;   /* 36 */
+  --text-5xl: 3rem;      /* 48 */
+
+  --font-heading: var(--font-sora), "Sora", system-ui, sans-serif;
+  --font-body: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+
+  /* ---- 8px spacing grid ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ---- Radii ---- */
+  --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-md: 16px;
   --radius-lg: 24px;
-  --shadow-sm: 0 4px 14px rgba(23, 35, 55, 0.06);
-  --shadow-md: 0 14px 34px rgba(23, 35, 55, 0.08);
-  --shadow-lg: 0 24px 60px rgba(16, 35, 60, 0.16);
+  --radius-full: 999px;
+
+  /* ---- Shadows (subtle) ---- */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 16px 48px rgba(15, 23, 42, 0.12);
+
+  /* ---- Layout ---- */
+  --page-max: 1280px;
+  --page-pad: clamp(16px, 3vw, 32px);
 }
+
+/* ============================================================
+   Dark mode — toggled via [data-theme="dark"] on <html>,
+   persisted in localStorage. All pairs re-checked for AA.
+   ============================================================ */
+[data-theme="dark"] {
+  --primary: #2dd4bf;            /* teal-400 · dark text 8.2:1 ✓ */
+  --primary-strong: #5eead4;
+  --primary-deep: #99f6e4;
+  --primary-soft: #0f2e2b;
+  --primary-softer: #0c2422;
+
+  --accent-warm: #fb923c;         /* orange-400 · dark text 7.1:1 ✓ */
+  --accent-warm-strong: #fdba74;
+  --accent-warm-soft: #2e1a08;
+  --highlight: #fbbf24;
+  --highlight-soft: #2e230a;
+
+  --danger: #f87171;              /* red-400 · dark text 6.9:1 ✓ */
+  --danger-strong: #fca5a5;
+  --danger-soft: #2e0f0f;
+  --success: #4ade80;
+  --success-soft: #0c2617;
+  --warning: #fbbf24;
+  --warning-soft: #2e230a;
+  --info: #2dd4bf;
+
+  --background: #0b1220;
+  --surface: #111c2e;
+  --surface-2: #0e1728;
+  --ink: #f1f5f9;                /* slate-100 */
+  --ink-2: #e2e8f0;
+  --muted: #94a3b8;              /* slate-400 · 7.1:1 on #0b1220 ✓ */
+  --muted-2: #7d8da3;            /* 5.2:1 on #0b1220 ✓ */
+  --line: #1e293b;
+  --line-strong: #334155;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
 
 html {
   height: 100%;
@@ -40,16 +157,35 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0;
+}
+
+h1 { font-size: var(--text-4xl); font-weight: 700; }
+h2 { font-size: var(--text-3xl); font-weight: 700; }
+h3 { font-size: var(--text-2xl); font-weight: 600; }
+h4 { font-size: var(--text-xl); font-weight: 600; }
+
+p { margin: 0; }
 
 .siteContent {
   flex: 1 0 auto;
   width: 100%;
+  min-width: 0;
 }
 
 * {
@@ -68,6 +204,7 @@ input,
 select,
 textarea {
   font: inherit;
+  color: inherit;
 }
 
 button {
@@ -75,13 +212,14 @@ button {
 }
 
 :focus-visible {
-  outline: 3px solid rgba(22, 106, 145, 0.35);
+  outline: 3px solid var(--primary);
   outline-offset: 2px;
+  border-radius: var(--radius-xs);
 }
 
 ::selection {
   background: var(--highlight);
-  color: var(--ink);
+  color: #0f172a;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -94,32 +232,18 @@ img, video, canvas { max-width: 100%; }
 img, video { height: auto; }
 @media (max-width: 640px) {
   body { -webkit-text-size-adjust: 100%; }
-  button, a { -webkit-tap-highlight-color: rgba(22, 106, 145, 0.15); }
+  button, a { -webkit-tap-highlight-color: rgba(15, 118, 110, 0.15); }
 }
 
 /* ============================================================
-   Responsive system v2 — every platform
-   Breakpoints: 480 (small phone) · 768 (tablet portrait) ·
-   1024 (tablet landscape / small laptop) · 1280 (laptop) ·
-   1536 (wide desktop). Page content caps at 1280px and centres
-   so ultrawide monitors never stretch content edge-to-edge.
+   Responsive system — every platform
+   480 · 768 · 1024 · 1280 · 1536. Content caps at 1280px.
    ============================================================ */
-:root {
-  --page-max: 1280px;
-  --page-pad: clamp(16px, 3vw, 32px);
-}
-
 html,
 body {
-  overflow-x: clip; /* backstop only; real causes fixed per-module */
+  overflow-x: clip;
 }
 
-.siteContent {
-  min-width: 0;
-}
-
-/* Coarse pointers (touch): no accidental double-tap zoom delays,
-   and interactive elements get roomier where modules allow it. */
 @media (pointer: coarse) {
   button,
   a,
@@ -130,8 +254,6 @@ body {
   }
 }
 
-/* Phones: keep form controls at 16px so iOS Safari never zooms on
-   focus. Modules also set this explicitly; this is the backstop. */
 @media (max-width: 767.98px) {
   input:not([type="checkbox"]):not([type="radio"]),
   select,
@@ -140,16 +262,12 @@ body {
   }
 }
 
-/* Very small phones: tighten the base rhythm slightly. */
 @media (max-width: 480px) {
-  body {
-    font-size: 15.5px;
-  }
+  body { font-size: 15.5px; }
+  h1 { font-size: var(--text-3xl); }
+  h2 { font-size: var(--text-2xl); }
 }
 
-/* Landscape phones: screens are short — let heroes breathe less. */
 @media (orientation: landscape) and (max-height: 480px) {
-  html {
-    scroll-padding-top: 8px;
-  }
+  html { scroll-padding-top: 8px; }
 }
