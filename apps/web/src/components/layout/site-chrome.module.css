@@ -143,7 +143,8 @@
 .cartLink:hover { transform: translateY(-1px); background: #25364a; }
 .cartLink svg { width: 20px; height: 20px; }
 
-.footer { color: #e6edf3; background: #172337; }
+.footer { color: #e6edf3; background: linear-gradient(180deg, #1a2942 0%, #172337 30%, #111c2e 100%); position: relative; }
+.footer::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(247,185,40,.4), transparent); }
 
 .footerMain {
   display: grid;
@@ -191,10 +192,10 @@
 .footerShopCta span { font-size: 1.05rem; }
 
 .footerColumn { display: grid; align-content: start; justify-items: start; gap: 12px; }
-.footerColumn h2 { margin-bottom: 5px; color: #fff; font-size: 0.92rem; font-weight: 900; }
+.footerColumn h2 { margin-bottom: 5px; color: #fff; font-size: 0.92rem; font-weight: 900; letter-spacing: .02em; }
 .footerColumn a,
-.footerColumn > span { color: #b7c4d0; font-size: 0.8rem; transition: color 150ms ease; }
-.footerColumn a:hover { color: #ffd166; }
+.footerColumn > span { color: #b7c4d0; font-size: 0.8rem; transition: color 180ms ease, transform 180ms ease; display: inline-block; }
+.footerColumn a:hover { color: #ffd166; transform: translateX(3px); }
 .footerColumn > span { margin-top: 2px; color: #91a2b2; font-size: 0.73rem; }
 .footerColumn > p { margin: 0 0 2px; font-size: 0.79rem; }
 
