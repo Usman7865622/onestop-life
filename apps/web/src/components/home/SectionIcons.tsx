@@ -29,26 +29,6 @@ const P: Record<string, ReactNode> = {
   users: (<><circle cx="9" cy="8.5" r="3.4" /><path d="M3.5 20c.8-3.4 2.8-5 5.5-5s4.7 1.6 5.5 5" /><path d="M15.8 5.6a3.4 3.4 0 0 1 0 5.8M17.8 15.4c1.5.7 2.4 2.2 2.8 4.2" /></>),
   stethoscope: (<><path d="M5.5 4v5a4 4 0 0 0 8 0V4" /><path d="M5.5 4H4M9.5 4h4" /><path d="M9.5 13v2.5a4.5 4.5 0 0 0 9 0V14" /><circle cx="18.5" cy="11.5" r="2.3" /></>),
   mail: (<><rect x="3.5" y="5.5" width="17" height="13" rx="2.5" /><path d="m4.5 7.5 7.5 6 7.5-6" /></>),
-  /* ---- Layout chrome icons ---- */
-  arrowRight: (<><path d="M4 12h15" /><path d="m13.5 6.5 5.5 5.5-5.5 5.5" /></>),
-  arrowLeft: (<><path d="M20 12H5" /><path d="m10.5 6.5-5.5 5.5 5.5 5.5" /></>),
-  chevronRight: (<><path d="m9.5 6 6 6-6 6" /></>),
-  chevronLeft: (<><path d="m14.5 6-6 6 6 6" /></>),
-  x: (<><path d="M6 6l12 12M18 6 6 18" /></>),
-  plus: (<><path d="M12 5v14M5 12h14" /></>),
-  minus: (<><path d="M5 12h14" /></>),
-  menu: (<><path d="M4 7h16M4 12h16M4 17h16" /></>),
-  search: (<><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></>),
-  bolt: (<><path d="M13 3.5 5.5 13.5H11L10 20.5l7.5-10H12l1-7Z" /></>),
-  heartOutline: (<><path d="M12 20.5S4 15.6 4 9.9C4 6.9 6.2 5 8.6 5c1.4 0 2.7.7 3.4 1.8C12.7 5.7 14 5 15.4 5 17.8 5 20 6.9 20 9.9c0 5.7-8 10.6-8 10.6Z" /></>),
-  user: (<><circle cx="12" cy="8" r="3.8" /><path d="M5 20c.9-3.6 3.4-5.4 7-5.4s6.1 1.8 7 5.4" /></>),
-  logout: (<><path d="M14 4H6.5A1.5 1.5 0 0 0 5 5.5v13A1.5 1.5 0 0 0 6.5 20H14" /><path d="M10 12h10M17.5 8.5 21 12l-3.5 3.5" /></>),
-  package: (<><path d="m12 3.5 8 4v9l-8 4-8-4v-9l8-4Z" /><path d="M4.5 7.5 12 11.5l7.5-4" /><path d="M12 11.5V20" /></>),
-  pill: (<><rect x="3.5" y="9" width="17" height="7" rx="3.5" transform="rotate(-35 12 12.5)" /><path d="m9.8 15.6 4.4-4.4" /></>),
-  bell: (<><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 14 6 10" /><path d="M10 19.5a2.2 2.2 0 0 0 4 0" /></>),
-  info: (<><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5" /><path d="M12 8h.01" /></>),
-  card: (<><rect x="3.5" y="6" width="17" height="12.5" rx="2.5" /><path d="M3.5 10h17" /><path d="M7 14.5h4" /></>),
-  cash: (<><rect x="3" y="7" width="18" height="10.5" rx="2.5" /><circle cx="12" cy="12.2" r="2.6" /><path d="M6.5 10h.01M17.5 14.5h.01" /></>),
 };
 
 export type SectionIconName = keyof typeof P;
