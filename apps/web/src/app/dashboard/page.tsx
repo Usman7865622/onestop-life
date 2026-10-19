@@ -255,7 +255,7 @@ export default function DashboardPage() {
     return (
       <main className={styles.page}><div className={styles.shell}>
         <section className={styles.emptyState}>
-          <span className={styles.emptyIcon}>→</span>
+          <span className={styles.emptyIcon}><SectionIcon name="arrowRight" size={24} /></span>
           <h1>Sign in to open your dashboard</h1>
           <p>Your dashboard is different for patients, doctors, businesses and admins. Choose how you want to continue and we will take you to the right place.</p>
           <Link className={styles.primaryButton} href="/login">Continue to sign in</Link>
@@ -430,7 +430,7 @@ export default function DashboardPage() {
             <PanelTitle id="admin-heading" icon="shield" title="Admin control centre" sub="Review trust applications and keep the marketplace safe." />
             {isAdmin ? (
               <>
-                <div className={styles.adminStats}><div><strong>{queue.length}</strong><span>pending reviews</span></div><Link href="/products">Open catalogue →</Link></div>
+                <div className={styles.adminStats}><div><strong>{queue.length}</strong><span>pending reviews</span></div><Link href="/products">Open catalogue <SectionIcon name="arrowRight" size={14} /></Link></div>
                 {queue.length ? (
                   <div className={styles.queueList}>
                     {queue.map((request) => (
