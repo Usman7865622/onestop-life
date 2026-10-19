@@ -6,7 +6,6 @@ import Image from "next/image";
 import DoctorAvatar from '../doctors/DoctorAvatar';
 import MedicineVisual from '../pharmacy/MedicineVisual';
 import { readAccessToken } from '../../lib/auth/session';
-import { SectionIcon, type SectionIconName } from '../home/SectionIcons';
 import styles from './assistant.module.css';
 
 export type AssistantCard = {
@@ -163,15 +162,15 @@ function CardVisual({ card }: { card: AssistantCard }) {
     return <Image className={styles.cardImage} src={card.imageUrl} alt={`${card.title} - product photo`} width={54} height={54} />;
   }
 
-  const iconName: SectionIconName = card.type === 'lab'
-      ? 'lab'
+  const symbol = card.type === 'lab'
+      ? '◉'
       : card.type === 'facility'
-        ? 'plus'
-        : 'spark';
+        ? '+'
+        : '✦';
 
   return (
     <div className={`${styles.cardIcon} ${styles[`cardIcon_${card.type}`]}`} aria-hidden="true">
-      <SectionIcon name={iconName} size={24} />
+      {symbol}
     </div>
   );
 }
@@ -195,7 +194,7 @@ function AssistantCardView({ card }: { card: AssistantCard }) {
         <div className={styles.cardFooter}>
           {typeof card.priceMinor === 'number' ? <b>{money(card.priceMinor)}</b> : <span />}
           <Link href={card.href} className={styles.cardAction}>
-            {CARD_ACTIONS[card.type]} <SectionIcon name="arrowRight" size={14} />
+            {CARD_ACTIONS[card.type]} <span aria-hidden="true">→</span>
           </Link>
         </div>
       </div>
@@ -386,9 +385,9 @@ export default function OneStopAssistant() {
                   </p>
                 ) : null}
                 <div className={styles.capabilities} aria-label="What OneStop Assistant can do">
-                  <span><SectionIcon name="plus" size={14} /> Doctors & appointments</span>
-                  <span><SectionIcon name="rx" size={14} /> Pharmacy & Rx guidance</span>
-                  <span><SectionIcon name="lab" size={14} /> Labs, facilities & blood</span>
+                  <span><b>+</b> Doctors & appointments</span>
+                  <span><b>Rx</b> Pharmacy & Rx guidance</span>
+                  <span><b>◉</b> Labs, facilities & blood</span>
                 </div>
                 <div className={styles.chips} aria-label="Quick actions">
                   {QUICK_ACTIONS.map((action) => (

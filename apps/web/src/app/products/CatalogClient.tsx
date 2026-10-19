@@ -4,7 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import styles from './page.module.css';
-import { SectionIcon, type SectionIconName } from '../../components/home/SectionIcons';
 import StripePaymentPanel, { validateCardFields, validateWalletFields, PaymentMethodId } from '../../components/checkout/StripePaymentPanel';
 
 
@@ -108,11 +107,7 @@ function Stars({ value }: { value: string }) {
   const full = Math.round(parseFloat(value));
   return (
     <span className={styles.stars} aria-label={`Rated ${value} out of 5`}>
-      {[0, 1, 2, 3, 4].map((i) => (
-        <span key={i} style={i < full ? { color: 'var(--highlight)' } : { color: 'var(--line-strong)' }}>
-          <SectionIcon name="star" size={14} />
-        </span>
-      ))}
+      {'★'.repeat(full)}{'☆'.repeat(5 - full)}
       <b>{value}</b>
     </span>
   );
@@ -129,8 +124,8 @@ const heroSlides = [
     image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=900&q=70',
     alt: 'Medicine blister packs',
     chips: [
-      { icon: 'star', title: 'Top rated', sub: 'Genuine sealed packs' },
-      { icon: 'check', title: 'Free delivery', sub: 'On orders Rs. 3,000+' },
+      { icon: '★', title: 'Top rated', sub: 'Genuine sealed packs' },
+      { icon: '✓', title: 'Free delivery', sub: 'On orders Rs. 3,000+' },
     ],
   },
   {
@@ -143,8 +138,8 @@ const heroSlides = [
     image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=900&q=70',
     alt: 'Headphones, keyboard and mouse',
     chips: [
-      { icon: 'spark', title: 'New in store', sub: 'Latest gadgets' },
-      { icon: 'check', title: 'COD available', sub: 'Pay at your door' },
+      { icon: '✦', title: 'New in store', sub: 'Latest gadgets' },
+      { icon: '✓', title: 'COD available', sub: 'Pay at your door' },
     ],
   },
   {
@@ -157,8 +152,8 @@ const heroSlides = [
     image: 'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=70',
     alt: 'Two happy dogs running',
     chips: [
-      { icon: 'heart', title: 'Loved by pets', sub: 'Vet-approved picks' },
-      { icon: 'check', title: 'Ships in 24h', sub: 'Fast dispatch' },
+      { icon: '♥', title: 'Loved by pets', sub: 'Vet-approved picks' },
+      { icon: '✓', title: 'Ships in 24h', sub: 'Fast dispatch' },
     ],
   },
 ];
@@ -493,7 +488,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           {searchTerm ? <button type="button" onClick={() => setSearchTerm('')} aria-label="Clear search">×</button> : null}
         </form>
         <div className={styles.barActions}>
-          <Link href="/cart" className={styles.wishPill} aria-label="Wishlist"><SectionIcon name="heartOutline" size={16} /> <b>{wishlist.length}</b></Link>
+          <Link href="/cart" className={styles.wishPill} aria-label="Wishlist">♡ <b>{wishlist.length}</b></Link>
           <button className={styles.cartPill} onClick={() => setCartOpen(true)} aria-label={`Open cart, ${cartCount} items`}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 4.5h2l2.1 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4l1.4-6.1H6.4" /><circle cx="9.3" cy="20" r="1.2" /><circle cx="16.6" cy="20" r="1.2" /></svg>
             Cart {cartCount > 0 ? <b>{cartCount}</b> : null}
@@ -511,7 +506,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             <span className={styles.heroEyebrow}>{activeSlide.eyebrow}</span>
             <h1>{activeSlide.title}</h1>
             <p>{activeSlide.copy}</p>
-            <a href={activeSlide.href} className={styles.heroCta}>{activeSlide.cta} <SectionIcon name="arrowRight" size={14} /></a>
+            <a href={activeSlide.href} className={styles.heroCta}>{activeSlide.cta} →</a>
           </div>
           <div className={styles.heroArt} aria-hidden="true">
             <div className={styles.heroImgWrap}>
@@ -520,7 +515,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             </div>
             {activeSlide.chips.map((chip, i) => (
               <div key={chip.title} className={`${styles.heroChip} ${i === 0 ? styles.chipA : styles.chipB}`}>
-                <span className={styles.chipIcon}><SectionIcon name={chip.icon as SectionIconName} size={18} /></span>
+                <span className={styles.chipIcon}>{chip.icon}</span>
                 <span><b>{chip.title}</b><small>{chip.sub}</small></span>
               </div>
             ))}
@@ -565,7 +560,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
         <section className={styles.flash} aria-labelledby="flash-heading">
           <div className={styles.flashHead}>
             <div>
-              <p className={styles.flashEyebrow}><span className={styles.bolt} aria-hidden="true"><SectionIcon name="bolt" size={16} /></span> Flash deals</p>
+              <p className={styles.flashEyebrow}><span className={styles.bolt} aria-hidden="true">⚡</span> Flash deals</p>
               <h2 id="flash-heading">Today&apos;s hottest picks</h2>
             </div>
             <div className={styles.countdown} aria-label={`Deals refresh in ${hh} hours ${mm} minutes`}>
@@ -622,7 +617,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             <option value="name">Name A–Z</option>
           </select></label>
           {(selectedCategory !== 'All products' || searchTerm) ? (
-            <button className={styles.clearBtn} onClick={() => { setSelectedCategory('All products'); setSearchTerm(''); setLimits({}); }}><SectionIcon name="x" size={14} /> Clear</button>
+            <button className={styles.clearBtn} onClick={() => { setSelectedCategory('All products'); setSearchTerm(''); setLimits({}); }}>Clear ✕</button>
           ) : null}
         </div>
       </div>
@@ -651,7 +646,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                         className={wishlist.includes(p.id) ? styles.wishOn : styles.wish}
                         onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleWishlist(p.id); } }}>
-                        {wishlist.includes(p.id) ? <SectionIcon name="heart" size={18} /> : <SectionIcon name="heartOutline" size={18} />}
+                        {wishlist.includes(p.id) ? '♥' : '♡'}
                       </span>
                     </span>
                     {p.requiresRx ? <span className={styles.rxBadge}>Rx</span> : null}
@@ -663,7 +658,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                     <Stars value={ratingFor(p.id)} />
                     <div className={styles.priceRow}><strong>{money(p.priceMinor)}</strong><span>{p.unit ?? 'per item'}</span></div>
                     <button className={addedId === p.id ? styles.addedBtn : styles.addBtn} disabled={p.inStock === false} onClick={() => addToCart(p)}>
-                      {addedId === p.id ? <><SectionIcon name="check" size={14} /> Added</> : p.inStock === false ? 'Out of stock' : 'Add to cart'}
+                      {addedId === p.id ? '✓ Added' : p.inStock === false ? 'Out of stock' : 'Add to cart'}
                     </button>
                   </div>
                 </article>
@@ -671,7 +666,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
             </div>
             {items.length > shown.length ? (
               <button className={styles.viewAllBtn} onClick={() => setLimits((l) => ({ ...l, [category]: (l[category] ?? (selectedCategory === 'All products' ? 10 : 20)) + (selectedCategory === 'All products' ? items.length : 20) }))}>
-                {selectedCategory === 'All products' ? <>View all {items.length} {label.toLowerCase()} <SectionIcon name="arrowRight" size={14} /></> : <>Show more ({items.length - shown.length} remaining) <SectionIcon name="chevron" size={14} /></>}
+                {selectedCategory === 'All products' ? `View all ${items.length} ${label.toLowerCase()} →` : `Show more (${items.length - shown.length} remaining) ↓`}
               </button>
             ) : items.length > 10 && selectedCategory === 'All products' ? (
               <button className={styles.viewAllBtn} onClick={() => setLimits((l) => ({ ...l, [category]: 10 }))}>Show less ↑</button>
@@ -716,7 +711,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               <Stars value={ratingFor(quickView.id)} />
               <div className={styles.qvPrice}><strong>{money(quickView.priceMinor)}</strong><span>{quickView.unit ?? 'per item'}</span></div>
               <p className={styles.qvCopy}>Genuine product, quality-checked by OneStop. {quickView.requiresRx ? 'A valid prescription is required at checkout.' : 'Ready to ship with cash on delivery.'}</p>
-              <div className={styles.qvMeta}><span><SectionIcon name="check" size={14} /> In stock</span><span><SectionIcon name="check" size={14} /> Ships in 24h</span><span><SectionIcon name="check" size={14} /> COD available</span></div>
+              <div className={styles.qvMeta}><span>✓ In stock</span><span>✓ Ships in 24h</span><span>✓ COD available</span></div>
               <button className={styles.addBtn} disabled={quickView.inStock === false} onClick={() => { addToCart(quickView); setQuickView(null); }}>
                 {quickView.inStock === false ? 'Out of stock' : 'Add to cart'}
               </button>
@@ -751,7 +746,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 <div className={styles.cartFoot}>
                   <div className={styles.totals}><span>Subtotal</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
                   {shipping > 0 ? <p className={styles.freeShipNote}>Add {money(300000 - subtotal)} more for free delivery</p> : <p className={styles.freeShipNote}>🎉 You unlocked free delivery</p>}
-                  <button className={styles.checkoutBtn} onClick={() => { setCheckoutOpen(true); setCartOpen(false); }}>Checkout <SectionIcon name="arrowRight" size={14} /></button>
+                  <button className={styles.checkoutBtn} onClick={() => { setCheckoutOpen(true); setCartOpen(false); }}>Checkout →</button>
                 </div>
               </>
             ) : <p className={styles.emptyCart}>Your cart is empty — grab a deal above.</p>}
@@ -783,20 +778,20 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 <label><span>Delivery notes <i>(optional)</i></span><textarea value={deliveryNotes} onChange={(e) => setDeliveryNotes(e.target.value)} rows={2} placeholder="Gate code, landmark, rider instructions…" /></label>
                 <label className={styles.rememberRow}><input type="checkbox" checked={saveDetails} onChange={(e) => setSaveDetails(e.target.checked)} /><span>Save my delivery details for next time</span></label>{savedAddresses.length ? <div className={styles.addressBook}><span className={styles.slotLabel}>Saved addresses</span><div className={styles.chipRow} role="group" aria-label="Saved addresses">{savedAddresses.map((a) => <button key={a.id} type="button" className={styles.chip} onClick={() => { setShippingName(a.name); setShippingPhone(a.phone); setShippingAddress(a.address); setShippingCity(a.city); setShippingPostalCode(a.postalCode ?? ''); setAddressLabel(a.label); }}>{a.label} · {a.city}</button>)}</div></div> : null}<label className={styles.rememberRow}><input type="checkbox" checked={saveToAddressBook} onChange={(e) => setSaveToAddressBook(e.target.checked)} /><span>Save this address to my address book</span></label>
                 <div className={styles.speedRow} role="radiogroup" aria-label="Delivery speed">
-                  <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('STANDARD'); setSlotDay(0); }}><span aria-hidden="true"><SectionIcon name="truck" size={18} /></span><span><b>Standard</b><small>{deliveryWindow('STANDARD')}</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
-                  <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('EXPRESS'); setSlotDay(0); }}><span aria-hidden="true"><SectionIcon name="bolt" size={18} /></span><span><b>Express</b><small>{deliveryWindow('EXPRESS')}</small></span><b>{money(25000)}</b></button>
+                  <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('STANDARD'); setSlotDay(0); }}><span aria-hidden="true">🚚</span><span><b>Standard</b><small>{deliveryWindow('STANDARD')}</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
+                  <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('EXPRESS'); setSlotDay(0); }}><span aria-hidden="true">⚡</span><span><b>Express</b><small>{deliveryWindow('EXPRESS')}</small></span><b>{money(25000)}</b></button>
                 </div>
                 <div className={styles.slotSection}><span className={styles.slotLabel}>Choose your delivery slot</span><div className={styles.chipRow} role="group" aria-label="Delivery day">{days.map((d, i) => <button key={d} type="button" className={Math.min(slotDay, days.length - 1) === i ? styles.chipActive : styles.chip} onClick={() => setSlotDay(i)}>{d}</button>)}</div><div className={styles.chipRow} role="group" aria-label="Delivery time">{SLOT_TIMES.map((t, i) => <button key={t} type="button" className={slotTime === i ? styles.chipActive : styles.chip} onClick={() => setSlotTime(i)}>{t}</button>)}</div></div>
-                <div className={styles.discountRow}><label><span>Discount code</span><input value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountApplied(null); setDiscountError(''); }} placeholder="WELCOME10" /></label><button type="button" className={styles.applyBtn} onClick={applyDiscount} disabled={discountBusy}>{discountBusy ? 'Checking…' : 'Apply'}</button></div>{discountApplied ? <p className={styles.discountOk} role="status"><SectionIcon name="check" size={14} /> {discountApplied.code} applied · you save {money(discountApplied.amountMinor)}</p> : null}{discountError ? <p className={styles.discountErr} role="alert">{discountError}</p> : null}
-                <label className={styles.rememberRow}><input type="checkbox" checked={giftWrap} onChange={(e) => setGiftWrap(e.target.checked)} /><span><SectionIcon name="package" size={14} /> Add gift wrap · {money(GIFT_WRAP_MINOR)}</span></label>{giftWrap ? <label><span>Gift message <i>(optional)</i></span><textarea value={giftMessage} onChange={(e) => setGiftMessage(e.target.value)} rows={2} maxLength={200} placeholder="Write your message for the recipient…" /></label> : null}
+                <div className={styles.discountRow}><label><span>Discount code</span><input value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountApplied(null); setDiscountError(''); }} placeholder="WELCOME10" /></label><button type="button" className={styles.applyBtn} onClick={applyDiscount} disabled={discountBusy}>{discountBusy ? 'Checking…' : 'Apply'}</button></div>{discountApplied ? <p className={styles.discountOk} role="status">✓ {discountApplied.code} applied · you save {money(discountApplied.amountMinor)}</p> : null}{discountError ? <p className={styles.discountErr} role="alert">{discountError}</p> : null}
+                <label className={styles.rememberRow}><input type="checkbox" checked={giftWrap} onChange={(e) => setGiftWrap(e.target.checked)} /><span>🎁 Add gift wrap · {money(GIFT_WRAP_MINOR)}</span></label>{giftWrap ? <label><span>Gift message <i>(optional)</i></span><textarea value={giftMessage} onChange={(e) => setGiftMessage(e.target.value)} rows={2} maxLength={200} placeholder="Write your message for the recipient…" /></label> : null}
                 <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} storeWalletBalance={storeWalletBalance} emiPlan={emiPlan} setEmiPlan={setEmiPlan} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} />
               </div>
               <aside className={styles.coSummary}>
                 <p>Order summary</p>
                 <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b>{discountMinor > 0 ? <><span>Discount ({discountApplied?.code})</span><b>−{money(discountMinor)}</b></> : null}<span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b>{giftWrap ? <><span>Gift wrap</span><b>{money(giftMinor)}</b></> : null}<span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
-                <div className={styles.reviewBlock} aria-label="Order review"><div><span aria-hidden="true"><SectionIcon name="pin" size={16} /></span><p>{[shippingAddress.trim(), shippingCity.trim()].filter(Boolean).join(', ') || 'Add your address'} <i>({addressLabel})</i></p></div><div><span aria-hidden="true">{deliverySpeed === 'EXPRESS' ? <SectionIcon name="bolt" size={16} /> : <SectionIcon name="truck" size={16} />}</span><p>{deliverySpeed === 'EXPRESS' ? 'Express' : 'Standard'} · {deliveryWindow(deliverySpeed)}</p></div><div><span aria-hidden="true"><SectionIcon name="card" size={16} /></span><p>{PAYMENT_LABELS[paymentMethod]}</p></div></div>
+                <div className={styles.reviewBlock} aria-label="Order review"><div><span aria-hidden="true">📍</span><p>{[shippingAddress.trim(), shippingCity.trim()].filter(Boolean).join(', ') || 'Add your address'} <i>({addressLabel})</i></p></div><div><span aria-hidden="true">{deliverySpeed === 'EXPRESS' ? '⚡' : '🚚'}</span><p>{deliverySpeed === 'EXPRESS' ? 'Express' : 'Standard'} · {deliveryWindow(deliverySpeed)}</p></div><div><span aria-hidden="true">💳</span><p>{PAYMENT_LABELS[paymentMethod]}</p></div></div>
                 <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : isWallet ? payWithWallet : checkout} disabled={busy}>{busy ? 'Placing…' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(total)}` : paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(total)}` : `Place order · ${money(total)}`}</button>
-                <small><SectionIcon name="shield" size={14} /> Protected checkout · tracked delivery</small>
+                <small>🔒 Protected checkout · tracked delivery</small>
               </aside>
             </div>
           </section>
@@ -806,7 +801,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
       {/* Sticky mobile cart */}
       {cartCount > 0 && !cartOpen && !checkoutOpen ? (
         <button className={styles.stickyCart} onClick={() => setCartOpen(true)} aria-label={`Open cart, ${cartCount} items, ${money(total)}`}>
-          <span><SectionIcon name="cart" size={16} /> {cartCount} item{cartCount === 1 ? '' : 's'}</span><b>{money(total)} <SectionIcon name="arrowRight" size={14} /></b>
+          <span>🛒 {cartCount} item{cartCount === 1 ? '' : 's'}</span><b>{money(total)} →</b>
         </button>
       ) : null}
     </div>
