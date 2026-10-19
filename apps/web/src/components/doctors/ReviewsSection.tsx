@@ -6,7 +6,6 @@ import { apiFetch } from '../../lib/auth/api';
 import { readAccessToken } from '../../lib/auth/session';
 import { patientFirstName, type Review, type ReviewEligibility } from '../../lib/doctors/types';
 import styles from './reviews.module.css';
-import { SectionIcon } from '../home/SectionIcons';
 
 function formatDate(iso: string) {
   try {
@@ -131,7 +130,7 @@ export default function ReviewsSection({ doctorId, doctorName, avgRating, review
           <div className={styles.distribution}>
             {distribution.map((row) => (
               <div key={row.star} className={styles.distRow}>
-                <span>{row.star}<SectionIcon name="star" size={14} /></span>
+                <span>{row.star}★</span>
                 <div className={styles.distBar}><i style={{ width: reviews.length ? `${(row.count / reviews.length) * 100}%` : '0%' }} /></div>
                 <span>{row.count}</span>
               </div>
@@ -197,7 +196,7 @@ export default function ReviewsSection({ doctorId, doctorName, avgRating, review
           </ul>
         ) : (
           <div className={styles.empty}>
-            <span className={styles.emptyIcon} aria-hidden="true"><SectionIcon name="star" size={32} /></span>
+            <span className={styles.emptyIcon} aria-hidden="true">★</span>
             <h3>No reviews yet</h3>
             <p>Be the first to review {doctorName ?? 'this doctor'} after your visit. Your experience helps other patients choose with confidence.</p>
           </div>
