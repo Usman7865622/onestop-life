@@ -1,68 +1,113 @@
+'use client';
+
 import Link from 'next/link';
+import { useState } from 'react';
 import styles from './site-chrome.module.css';
+import { SectionIcon } from '../home/SectionIcons';
 
 export default function SiteFooter() {
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+
+  const subscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.includes('@')) return;
+    setSubscribed(true);
+    try { localStorage.setItem('osl-newsletter', email); } catch { /* ignore */ }
+  };
+
   return (
     <footer className={styles.footer} id="site-footer">
+      <div className={styles.newsletter}>
+        <div className={`${styles.container} ${styles.newsletterInner}`}>
+          <div>
+            <h2>Care updates, deals & refill reminders</h2>
+            <p>One email a week. No spam, unsubscribe anytime.</p>
+          </div>
+          {subscribed ? (
+            <p className={styles.newsOk}>You&apos;re on the list — welcome to OneStop Life.</p>
+          ) : (
+            <form className={styles.newsForm} onSubmit={subscribe}>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Your email address"
+                aria-label="Email for newsletter"
+              />
+              <button type="submit">Subscribe</button>
+            </form>
+          )}
+        </div>
+      </div>
+
       <div className={`${styles.container} ${styles.footerMain}`}>
         <div className={styles.footerBrand}>
           <Link className={styles.footerLogo} href="/" aria-label="OneStop Life home">
             <span className={styles.brandMark} aria-hidden="true">O<span /></span>
             <span className={styles.brandWords}><strong>OneStop <b>Life</b></strong><small>EVERYDAY CARE, MADE EASIER</small></span>
           </Link>
-          <p>Useful essentials for your health, home, family, and companions, all in one considered store.</p>
-          <Link className={styles.footerShopCta} href="/products">Explore the store <span aria-hidden="true">→</span></Link>
+          <p>Pakistan&apos;s healthcare super-app: verified doctors, genuine medicines, labs, blood banks and daily essentials — delivered.</p>
+          <div className={styles.payRow} aria-label="Accepted payment methods">
+            <span className={styles.payBadge}><SectionIcon name="cash" size={14} /> COD</span>
+            <span className={styles.payBadge}><SectionIcon name="card" size={14} /> Card</span>
+            <span className={styles.payBadge}><SectionIcon name="bolt" size={14} /> JazzCash</span>
+            <span className={styles.payBadge}><SectionIcon name="bolt" size={14} /> Easypaisa</span>
+          </div>
         </div>
 
-        <nav className={styles.footerColumn} aria-label="Explore OneStop">
-          <h2>Explore</h2>
-          <Link href="/">Home</Link>
-          <Link href="/products">Shop all products</Link>
-          <Link href="/pharmacy">Medicines & pharmacy</Link>
-          <Link href="/doctors">Book a doctor</Link>
-          <Link href="/facilities">Hospitals, clinics & labs</Link>
-          <Link href="/labs">Lab tests at home</Link>
-          <Link href="/blood">Blood banks & requests</Link>
-          <Link href="/login">Login / Sign up</Link>
-          <Link href="/dashboard">My dashboard</Link>
-          <Link href="/cart">Your shopping cart</Link>
-          <Link href="/#why-onestop">Why OneStop</Link>
-        </nav>
-
-        <nav className={styles.footerColumn} aria-label="Shop categories">
-          <h2>Shop by need</h2>
-          <Link href="/products#home-health">Home health</Link>
-          <Link href="/products#pet-care">Pet care</Link>
+        <nav className={styles.footerColumn} aria-label="Shop">
+          <h2>Shop</h2>
+          <Link href="/products">All products</Link>
+          <Link href="/products#trending-essentials">Trending essentials</Link>
           <Link href="/products#wellness">Wellness</Link>
-          <Link href="/pharmacy">Medicines</Link>
+          <Link href="/products#baby-care">Baby care</Link>
+          <Link href="/products#pet-care">Pet care</Link>
+          <Link href="/cart">Your cart</Link>
         </nav>
 
-        <div className={styles.footerColumn} id="footer-support">
-          <h2>We&rsquo;re here to help</h2>
-          <p>Questions about products, delivery, or an order?</p>
-          <a href="mailto:support@onestop.life">support@onestop.life</a>
-          <a href="tel:+923001234567">+92 300 1234567</a>
-          <span>Mon&ndash;Fri, 9:00&ndash;18:00 PKT</span>
-        </div>
-      </div>
+        <nav className={styles.footerColumn} aria-label="Health services">
+          <h2>Health services</h2>
+          <Link href="/doctors">Book a doctor</Link>
+          <Link href="/pharmacy">Pharmacy</Link>
+          <Link href="/labs">Lab tests</Link>
+          <Link href="/blood">Blood banks</Link>
+          <Link href="/facilities">Hospitals & clinics</Link>
+          <Link href="/appointments">My appointments</Link>
+        </nav>
 
-      <div className={styles.trustStrip}>
-        <div className={styles.container}>
-          <span>DRAP-licensed partner pharmacies</span>
-          <span>Provincial healthcare commission rules</span>
-          <span>PMDC-verified doctor credentials</span>
-          <span>Valid prescription needed for Rx medicines</span>
-          <span className={styles.trustEmergency}>Emergency? Call <a href="tel:15">15</a> or <a href="tel:1122">Rescue 1122</a></span>
+        <nav className={styles.footerColumn} aria-label="Company">
+          <h2>Company</h2>
+          <Link href="/#why-onestop">Why OneStop</Link>
+          <Link href="/#trending">Trending</Link>
+          <Link href="/dashboard">Dashboard</Link>
+          <Link href="/login">Login / Sign up</Link>
+        </nav>
+
+        <div className={styles.footerColumn}>
+          <h2>Support</h2>
+          <p>Questions about products, delivery or an order?</p>
+          <a className={styles.contactLink} href="mailto:support@onestop.life">support@onestop.life</a>
+          <a className={styles.contactLink} href="tel:+923001234567">+92 300 1234567</a>
+          <p>Mon–Fri, 9:00–18:00 PKT</p>
+          <div className={styles.trustBadges}>
+            <span className={styles.trustBadge}><SectionIcon name="shield" size={14} /> DRAP-licensed partners</span>
+            <span className={styles.trustBadge}><SectionIcon name="shield" size={14} /> PMDC-verified doctors</span>
+          </div>
+          <p className={styles.emergency}>
+            Emergency? Call <a href="tel:15">15</a> or <a href="tel:1122">Rescue 1122</a>
+          </p>
         </div>
       </div>
 
       <div className={styles.footerBottom}>
         <div className={styles.container}>
-          <span>&copy; {new Date().getFullYear()} OneStop Life. All rights reserved. &middot; Carefully chosen. Clearly delivered.</span>
-          <span>
-            <Link href="/privacy" style={{ color: 'inherit', marginRight: 16 }}>Privacy Policy</Link>
-            <Link href="/contact" style={{ color: 'inherit' }}>Contact Us</Link>
-          </span>
+          <span>&copy; {new Date().getFullYear()} OneStop Life. All rights reserved.</span>
+          <nav aria-label="Legal">
+            <Link href="/privacy">Privacy Policy</Link>
+            <Link href="/contact">Contact Us</Link>
+          </nav>
         </div>
       </div>
     </footer>

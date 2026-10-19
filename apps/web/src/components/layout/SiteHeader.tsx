@@ -3,33 +3,33 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import styles from './site-chrome.module.css';
-import { apiFetch } from '../../lib/auth/api';
-import { readAccessToken } from '../../lib/auth/session';
-import type { PublicUser } from '../../lib/auth/types';
+import HeaderSearch from './HeaderSearch';
+import CitySelector from './CitySelector';
+import AccountMenu from './AccountMenu';
+import { ShopMegaMenu, MoreMenu } from './ShopMegaMenu';
+import { SectionIcon } from '../home/SectionIcons';
+import { useCounts } from './useCounts';
 
 export default function SiteHeader() {
-  const [user, setUser] = useState<PublicUser | null>(null);
-  const [checked, setChecked] = useState(false);
+  const [slim, setSlim] = useState(false);
+  const { cartCount, wishCount } = useCounts();
 
   useEffect(() => {
-    const token = readAccessToken();
-    if (!token) {
-      setChecked(true);
-      return;
-    }
-    let cancelled = false;
-    void apiFetch<PublicUser>('/users/me', { method: 'GET' }, token)
-      .then((me) => { if (!cancelled) setUser(me); })
-      .catch(() => { if (!cancelled) setUser(null); })
-      .finally(() => { if (!cancelled) setChecked(true); });
-    return () => { cancelled = true; };
+    const onScroll = () => setSlim(window.scrollY > 40);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${slim ? styles.slim : ''}`}>
       <div className={styles.trustBar}>
         <div className={styles.container}>
-          <div><span>Free delivery over <strong>Rs. 3,000</strong></span><i aria-hidden="true" /><span>Cash on delivery available</span></div>
+          <span>Free delivery over <strong>Rs. 3,000</strong></span>
+          <i aria-hidden="true" />
+          <span>Cash on delivery available</span>
+          <i aria-hidden="true" />
+          <span className={styles.trustHideMobile}>PMDC-verified doctors</span>
         </div>
       </div>
 
@@ -37,36 +37,41 @@ export default function SiteHeader() {
         <div className={`${styles.container} ${styles.mainBarInner}`}>
           <Link className={styles.brand} href="/" aria-label="OneStop Life home">
             <span className={styles.brandMark} aria-hidden="true">O<span /></span>
-            <span className={styles.brandWords}><strong>OneStop <b>Life</b></strong><small>EVERYDAY CARE, MADE EASIER</small></span>
+            <span className={styles.brandWords}>
+              <strong>OneStop <b>Life</b></strong>
+              <small>EVERYDAY CARE, MADE EASIER</small>
+            </span>
           </Link>
 
-          <nav className={styles.navigation} aria-label="Main navigation">
-            <Link href="/">Home</Link>
-            <Link href="/products">Shop</Link>
-            <Link href="/pharmacy">Pharmacy</Link>
-            <Link href="/doctors">Doctors</Link>
-            <Link href="/facilities">Facilities</Link>
-            <Link href="/labs">Labs</Link>
-            <Link href="/blood">Blood</Link>
-            <Link href="/appointments">My Appointments</Link>
-            <Link href="/#trending">Trending</Link>
-            <Link href="/#why-onestop">Our promise</Link>
-            <Link href="/#contact">Support</Link>
-          </nav>
+          <div className={styles.searchSlot}>
+            <HeaderSearch />
+          </div>
 
-          <div className={styles.actions}>
-            {checked && user ? (
-              <Link className={styles.accountLink} href="/dashboard">Dashboard{user.name ? ` · ${user.name.split(' ')[0]}` : ''}</Link>
-            ) : (
-              <>
-                <Link className={styles.loginButton} href="/login">Login</Link>
-                <Link className={styles.signupButton} href="/login?mode=signup">Sign up</Link>
-              </>
-            )}
-
+          <div className={styles.headerTools}>
+            <CitySelector />
+            <Link href="/products" className={styles.iconBtn} aria-label={`Wishlist, ${wishCount} items`}>
+              <SectionIcon name="heartOutline" size={22} />
+              {wishCount > 0 && <span className={styles.badge}>{wishCount > 99 ? '99+' : wishCount}</span>}
+            </Link>
+            <Link href="/cart" className={styles.iconBtn} aria-label={`Cart, ${cartCount} items`}>
+              <SectionIcon name="cart" size={22} />
+              {cartCount > 0 && <span className={styles.badge}>{cartCount > 99 ? '99+' : cartCount}</span>}
+            </Link>
+            <AccountMenu />
           </div>
         </div>
       </div>
+
+      <nav className={styles.navRow} aria-label="Main navigation">
+        <div className={`${styles.container} ${styles.navInner}`}>
+          <ShopMegaMenu />
+          <Link href="/pharmacy" className={styles.navLink}>Pharmacy</Link>
+          <Link href="/doctors" className={styles.navLink}>Doctors</Link>
+          <Link href="/labs" className={styles.navLink}>Labs</Link>
+          <Link href="/blood" className={styles.navLink}>Blood</Link>
+          <MoreMenu />
+        </div>
+      </nav>
     </header>
   );
 }
