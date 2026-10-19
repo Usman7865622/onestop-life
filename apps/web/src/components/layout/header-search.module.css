@@ -1,0 +1,147 @@
+.wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 200px;
+  max-width: 560px;
+}
+
+.form {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-full);
+  padding: 8px 8px 8px 16px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  color: var(--muted);
+}
+
+.form:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+  color: var(--primary);
+}
+
+.form input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font-size: 0.92rem;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.form input::placeholder {
+  color: var(--muted-2);
+}
+
+.goBtn {
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 9px 20px;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.goBtn:hover {
+  background: var(--primary-strong);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 60;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line);
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+.item:hover,
+.item.active {
+  background: var(--primary-softer);
+}
+
+.itemIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.itemText {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.itemText strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemText small {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kind {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+  background: var(--surface-2);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .wrap {
+    max-width: none;
+  }
+  .goBtn {
+    display: none;
+  }
+}

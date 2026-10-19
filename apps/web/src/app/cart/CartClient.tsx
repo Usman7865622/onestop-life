@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import styles from './cart.module.css';
+import Breadcrumbs from '../../components/layout/Breadcrumbs';
 import StripePaymentPanel, { validateCardFields, validateWalletFields, PaymentMethodId } from '../../components/checkout/StripePaymentPanel';
 
 type CartLine = {
@@ -309,6 +310,7 @@ export default function CartClient() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
+        <Breadcrumbs items={[{ name: 'Cart', path: '/cart' }]} />
         <Link className={styles.backLink} href="/products">← Back to products</Link>
         <header className={styles.hero}>
           <div className={styles.heroCopy}>

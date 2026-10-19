@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styles from './login.module.css';
+import Breadcrumbs from '../../components/layout/Breadcrumbs';
 import { apiFetch } from '../../lib/auth/api';
 import { readAccessToken, readLoginIntent, saveAccessToken, saveLoginIntent, type LoginIntent } from '../../lib/auth/session';
 import type { AuthResponse, PublicUser } from '../../lib/auth/types';
@@ -140,6 +141,7 @@ export default function LoginPage() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
+        <Breadcrumbs items={[{ name: 'Login', path: '/login' }]} />
         <Link className={styles.backLink} href="/">← Back to home</Link>
 
         {alreadySignedIn && step === 'intent' ? (
