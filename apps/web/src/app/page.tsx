@@ -105,7 +105,7 @@ function ProductCard({ product, badge }: { product: Product; badge?: string }) {
           <span>{product.unit}</span>
         </div>
         <span className={product.inStock === false ? styles.outOfStock : styles.inStock}>{product.inStock === false ? 'Out of stock' : 'Ready to ship'}</span>
-        <Link className={styles.productLink} href="/products">Shop now →</Link>
+        <Link className={styles.productLink} href="/products">Shop now <SectionIcon name="arrowRight" size={14} /></Link>
       </div>
     </article>
   );
@@ -203,7 +203,7 @@ export default async function HomePage() {
                             <span className={styles.categoryIconWrap} aria-hidden="true"><CategoryIcon category={category} size={30} /></span>
                             <strong>{category}</strong>
                             <span className={styles.categoryCount}>{count} product{count === 1 ? '' : 's'}</span>
-                            <span className={styles.categoryCta}>Shop now <span className={styles.categoryArrow} aria-hidden="true">→</span></span>
+                            <span className={styles.categoryCta}>Shop now <SectionIcon name="arrowRight" size={14} /></span>
                           </Link>
                         );
                       })}
@@ -242,7 +242,7 @@ export default async function HomePage() {
                             <h3>{product.nameEn}</h3>
                             <div className={styles.dealPriceRow}><strong>{money(product.priceMinor)}</strong><s>{comparePrice(product.priceMinor)}</s></div>
                             <span className={styles.inStock}>Ready to ship · COD available</span>
-                            <Link className={styles.productLink} href="/products">Grab this deal →</Link>
+                            <Link className={styles.productLink} href="/products">Grab this deal <SectionIcon name="arrowRight" size={14} /></Link>
                           </div>
                         </article>
                       ))}
@@ -278,7 +278,7 @@ export default async function HomePage() {
                           </span>
                         </Link>
                       );
-                    }) : <p className={styles.doctorFallback}>Verified doctors will appear here soon. <Link href="/doctors">Browse doctors →</Link></p>}
+                    }) : <p className={styles.doctorFallback}>Verified doctors will appear here soon. <Link href="/doctors">Browse doctors <SectionIcon name="arrowRight" size={14} /></Link></p>}
                   </div>
                 </section>
                 </Reveal>
@@ -302,7 +302,7 @@ export default async function HomePage() {
                         <span className={styles.pharmacyMiniBody}>
                           <strong>{item.title}</strong>
                           <span>{item.sub}</span>
-                          <span className={styles.pharmacyMiniLink}>Browse in the pharmacy →</span>
+                          <span className={styles.pharmacyMiniLink}>Browse in the pharmacy <SectionIcon name="arrowRight" size={14} /></span>
                         </span>
                       </Link>
                     ))}

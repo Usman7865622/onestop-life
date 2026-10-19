@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styles from './login.module.css';
+import { SectionIcon, type SectionIconName } from '../../components/home/SectionIcons';
 import { apiFetch } from '../../lib/auth/api';
 import { readAccessToken, readLoginIntent, saveAccessToken, saveLoginIntent, type LoginIntent } from '../../lib/auth/session';
 import type { AuthResponse, PublicUser } from '../../lib/auth/types';
@@ -12,35 +13,35 @@ type Step = 'intent' | 'auth';
 
 const INTENT_CARDS: Array<{
   id: LoginIntent;
-  icon: string;
+  icon: SectionIconName;
   title: string;
   description: string;
   points: string[];
 }> = [
   {
     id: 'patient',
-    icon: '♥',
+    icon: 'heart',
     title: 'Patient & Customer',
     description: 'Book doctors, shop essentials and track your orders in one place.',
     points: ['Book clinic or video visits', 'Shop with COD & fast delivery', 'My Appointments & cart'],
   },
   {
     id: 'doctor',
-    icon: '✚',
+    icon: 'plus',
     title: 'Doctor',
     description: 'For verified medical professionals offering consultations.',
     points: ['Receive appointment requests', 'Manage your doctor profile', 'Clinic & video consultations'],
   },
   {
     id: 'business',
-    icon: '▦',
+    icon: 'grid',
     title: 'Pharmacy / Business',
     description: 'Sellers, pharmacies, vets and blood banks selling on OneStop.',
     points: ['List products & manage catalogue', 'Verification for trusted selling', 'Seller workspace tools'],
   },
   {
     id: 'admin',
-    icon: '⌘',
+    icon: 'spark',
     title: 'Admin',
     description: 'Platform team only. Reviews verifications and keeps the store safe.',
     points: ['Review doctor & seller requests', 'Approve or reject with notes', 'Requires ADMIN role'],
@@ -140,7 +141,7 @@ export default function LoginPage() {
   return (
     <main className={styles.page}>
       <div className={styles.shell}>
-        <Link className={styles.backLink} href="/">← Back to home</Link>
+        <Link className={styles.backLink} href="/"><SectionIcon name="arrowLeft" size={14} /> Back to home</Link>
 
         {alreadySignedIn && step === 'intent' ? (
           <section className={styles.signedInBanner} aria-label="Already signed in">
@@ -161,13 +162,13 @@ export default function LoginPage() {
             <div className={styles.intentGrid}>
               {INTENT_CARDS.map((card) => (
                 <button key={card.id} type="button" className={styles.intentCard} onClick={() => chooseIntent(card.id)}>
-                  <span className={styles.intentIcon} aria-hidden="true">{card.icon}</span>
+                  <span className={styles.intentIcon} aria-hidden="true"><SectionIcon name={card.icon} size={24} /></span>
                   <span className={styles.intentTitle}>{card.title}</span>
                   <span className={styles.intentDescription}>{card.description}</span>
                   <ul>
                     {card.points.map((point) => <li key={point}>{point}</li>)}
                   </ul>
-                  <span className={styles.intentCta}>Continue as {card.title.split(' ')[0]} →</span>
+                  <span className={styles.intentCta}>Continue as {card.title.split(' ')[0]} <SectionIcon name="arrowRight" size={14} /></span>
                 </button>
               ))}
             </div>
@@ -177,8 +178,8 @@ export default function LoginPage() {
         ) : (
           <section className={styles.authLayout} aria-labelledby="auth-heading">
             <div className={styles.authIntroPanel}>
-              <button type="button" className={styles.changeButton} onClick={() => setStep('intent')}>← Change how I continue</button>
-              <span className={styles.intentIconLarge} aria-hidden="true">{selectedCard?.icon}</span>
+              <button type="button" className={styles.changeButton} onClick={() => setStep('intent')}><SectionIcon name="arrowLeft" size={16} /> Change how I continue</button>
+              <span className={styles.intentIconLarge} aria-hidden="true">{selectedCard ? <SectionIcon name={selectedCard.icon} size={32} /> : null}</span>
               <p className={styles.eyebrow}>Continuing as</p>
               <h1 id="auth-heading">{selectedCard?.title}</h1>
               <p className={styles.lede}>{selectedCard?.description}</p>
