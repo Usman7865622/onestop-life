@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import styles from './order-tracking.module.css';
-import { SectionIcon } from '../home/SectionIcons';
 
 const STEPS = ['Placed', 'Paid', 'Packed', 'Shipped', 'Delivered'] as const;
 
@@ -48,7 +47,7 @@ export default function OrderTracking({ orderId, status, onReturn }: { orderId: 
             <ol className={styles.timeline}>
               {STEPS.map((label, i) => (
                 <li key={label} className={i <= idx ? styles.stepDone : styles.stepTodo}>
-                  <span className={styles.stepDot} aria-hidden="true">{i < idx ? <SectionIcon name="check" size={14} /> : i + 1}</span>
+                  <span className={styles.stepDot} aria-hidden="true">{i < idx ? '✓' : i + 1}</span>
                   <span>{label}</span>
                 </li>
               ))}
@@ -65,7 +64,7 @@ export default function OrderTracking({ orderId, status, onReturn }: { orderId: 
               {error ? <p className={styles.returnErr} role="alert">{error}</p> : null}
             </div>
           ) : null}
-          {done ? <p className={styles.returnOk} role="status"><SectionIcon name="check" size={14} /> Return requested — our team will contact you about the pickup.</p> : null}
+          {done ? <p className={styles.returnOk} role="status">✓ Return requested — our team will contact you about the pickup.</p> : null}
         </div>
       ) : null}
     </div>
