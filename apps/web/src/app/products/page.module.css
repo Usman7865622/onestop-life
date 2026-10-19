@@ -137,7 +137,7 @@
 .railNav button { width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid var(--line); background: #fff; font-size: 20px; cursor: pointer; color: var(--ink); transition: background 0.15s; }
 .railNav button:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
 .dealsRail { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: thin; }
-.dealCard { flex: 0 0 210px; scroll-snap-align: start; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
+.dealCard { flex: 0 0 210px; scroll-snap-align: start; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; transition: transform 0.15s, box-shadow 0.15s; }
 .dealCard:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(248, 86, 6, 0.14); }
 .dealMedia { position: relative; display: block; width: 100%; height: 150px; border: 0; background: linear-gradient(135deg, #fff1e6, #ffe4d1); cursor: pointer; padding: 0; }
 .dealMedia img { width: 100%; height: 100%; object-fit: cover; }
@@ -149,7 +149,7 @@
 /* Trust row */
 .trustRow { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 26px clamp(16px, 4vw, 48px) 0; }
 @media (min-width: 900px) { .trustRow { grid-template-columns: repeat(4, 1fr); } }
-.trustBadge { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+.trustBadge { display: flex; gap: 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 16px; }
 .trustBadge svg { width: 34px; height: 34px; stroke: var(--accent); fill: none; stroke-width: 1.8; flex-shrink: 0; }
 .trustBadge strong { display: block; font-size: 14px; }
 .trustBadge span { font-size: 12px; color: var(--muted); }
@@ -175,7 +175,7 @@
 @media (min-width: 1100px) { .grid { grid-template-columns: repeat(4, 1fr); } }
 @media (min-width: 1500px) { .grid { grid-template-columns: repeat(5, 1fr); } }
 
-.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, border-color 0.25s ease; animation: cardIn 0.55s cubic-bezier(.22,1,.36,1) both; animation-delay: calc(var(--card-index, 0) * 45ms); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, border-color 0.25s ease; animation: cardIn 0.55s cubic-bezier(.22,1,.36,1) both; animation-delay: calc(var(--card-index, 0) * 45ms); }
 .card:hover { transform: translateY(-7px); border-color: #9cc8e0; box-shadow: 0 24px 44px -14px rgba(22,106,145,.28); }
 @keyframes cardIn { from { opacity: 0; transform: translateY(22px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .card { animation: none; } }

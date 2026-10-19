@@ -44,7 +44,7 @@
 /* Cart lines */
 .cartPageLayout { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
 .cartPageLines { display: flex; flex-direction: column; gap: 12px; }
-.cartPageLine { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; grid-template-columns: 92px 1fr auto auto; gap: 18px; align-items: center; transition: box-shadow 0.2s, transform 0.15s; }
+.cartPageLine { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 18px; display: grid; grid-template-columns: 92px 1fr auto auto; gap: 18px; align-items: center; transition: box-shadow 0.2s, transform 0.15s; }
 .cartPageLine:hover { box-shadow: 0 8px 28px rgba(16, 35, 60, 0.1); transform: translateY(-1px); }
 .cartPageLine h2 { margin: 0 0 4px; font-size: 16px; letter-spacing: -0.2px; }
 .cartPageLine p { margin: 0; color: var(--muted); font-size: 14px; }
