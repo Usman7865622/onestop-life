@@ -47,6 +47,32 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { email }, include: { roles: true } });
   }
 
+  findByGoogleSub(googleSub: string) {
+    return this.prisma.user.findUnique({ where: { googleSub }, include: { roles: true } });
+  }
+
+  /** First Google sign-in for an existing email/password user: attach the Google identity. */
+  async linkGoogle(userId: string, googleSub: string) {
+    return this.prisma.user.update({ where: { id: userId }, data: { googleSub }, include: { roles: true } });
+  }
+
+  createGoogleUser(email: string, name: string | undefined, googleSub: string): Promise<UserWithRoles> {
+    return this.prisma.user.create({
+      data: {
+        email,
+        name: name?.trim() || undefined,
+        googleSub,
+        lastLoginAt: new Date(),
+        roles: { create: { role: RoleKey.CUSTOMER } },
+      },
+      include: { roles: true },
+    });
+  }
+
+  async markGoogleLogin(userId: string) {
+    await this.prisma.user.update({ where: { id: userId }, data: { lastLoginAt: new Date() } });
+  }
+
   createEmailUser(email: string, passwordHash: string, name?: string): Promise<UserWithRoles> {
     return this.prisma.user.create({
       data: { email, passwordHash, name: name?.trim() || undefined, roles: { create: { role: RoleKey.CUSTOMER } } },
