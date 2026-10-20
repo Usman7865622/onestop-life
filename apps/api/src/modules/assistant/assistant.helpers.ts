@@ -158,6 +158,36 @@ export function detectSpeciality(query: string) {
   return SPECIALITY_MAP.find(({ patterns }) => patterns.some((pattern) => pattern.test(lower)))?.speciality ?? null;
 }
 
+/**
+ * Symptom guide: everyday symptom *language* ("my knee hurts", "burning after
+ * meals", "can't sleep") mapped to the speciality that usually assesses it.
+ * This is routing guidance only — the assistant never diagnoses, and the
+ * reply always says so. Every target speciality exists in the live catalogue.
+ */
+const SYMPTOM_GUIDE_MAP: Array<{ speciality: string; label: string; patterns: RegExp[] }> = [
+  { speciality: 'Orthopedics', label: 'joint, bone or muscle pain', patterns: [/\b(knee|shoulder|elbow|ankle|wrist|hip|neck|heel|finger)s?\b[^.]{0,30}\b(hurt|hurts|hurting|ache|aches|aching|pain|pains|painful|stiff|stiffness|swollen|swelling|sprain|sprained)\b/, /\b(back|spine|joint|muscle)s?\b[^.]{0,20}\b(hurt|hurts|ache|aches|pain|pains|painful|stiff|stiffness)\b/, /\b(joint pain|muscle pain|neck pain|shoulder pain|ankle pain|heel pain|sprain|arthritis|frozen shoulder|sports injury)\b/, /\bpain in (my |the )?(knee|shoulder|elbow|ankle|wrist|hip|neck|back|joints?|bones?|heel)\b/] },
+  { speciality: 'Gastroenterology', label: 'stomach and digestion problems', patterns: [/\b(heartburn|acid reflux|bloating|indigestion)\b/, /\b(burning|burns|pain|ache|cramp|cramps|upset)\b[^.]{0,25}\b(stomach|abdomen|belly|chest after (eating|meals?))\b/, /\b(stomach|tummy|belly)\b[^.]{0,20}\b(burning|burns|hurt|hurts|ache|aches|pain|upset|gas)\b/, /\b(loose motions?|vomiting|nausea|feeling sick to (my|the) stomach)\b/, /\bgas (problem|trouble)\b/, /\bconstipated\b/] },
+  { speciality: 'Dermatology', label: 'skin, hair and nail problems', patterns: [/\b(itchy|itching|itch)\b[^.]{0,20}\b(skin|scalp|body|hands?|feet|foot)\b/, /\bskin\b[^.]{0,20}\b(itchy|itching|dry|peeling|spots?|patches|allergy)\b/, /\b(pimples|dandruff|hair ?fall|hair loss|thinning hair|fungal infection|ringworm|moles?|warts?|boils?)\b/, /\bnails?\b[^.]{0,15}\b(fungal|infection|breaking|yellow)\b/] },
+  { speciality: 'Neurology', label: 'headaches and nerve problems', patterns: [/\bheadaches?\b[^.]{0,30}\b(keep|keeps|coming back|recurring|every day|daily|frequent|again and again)\b/, /\b(head|migraine)\b[^.]{0,15}\b(keeps|recurring)\b/, /\b(numbness|tingling|pins and needles)\b/, /\b(dizzy|dizziness|vertigo|fainting|memory loss|forgetfulness|tremors?|shaking hands)\b/, /\bepilepsy\b/] },
+  { speciality: 'Psychiatry', label: 'stress, mood and sleep problems', patterns: [/\b(can'?t|cannot|trouble|difficulty) (sleep|sleeping|falling asleep)\b/, /\b(feel|feeling) (low|down|sad|hopeless|anxious|stressed|overwhelmed|burnt out|burned out)\b/, /\b(panic attacks?|overthinking|mind (racing|won'?t stop)|no motivation|lost interest)\b/, /\bsleep (problem|issues?|trouble)\b/, /\bmood swings?\b/] },
+  { speciality: 'ENT', label: 'ear, nose and throat problems', patterns: [/\b(ear|ears)\b[^.]{0,20}\b(hurt|hurts|ache|pain|blocked|ringing|wax|infection)\b/, /\b(sore throat|throat (pain|infection)|runny nose|blocked nose|nose ?bleeds?|sneezing a lot|loss of smell|hoarse|voice (loss|gone))\b/, /\b(earache|tinnitus|hearing (loss|problem))\b/] },
+  { speciality: 'Ophthalmology', label: 'eye and vision problems', patterns: [/\b(eyes?|vision)\b[^.]{0,20}\b(blurry|blurred|dry|watery|red|itching|hurt|hurts|pain|strain|weak|getting weak)\b/, /\b(blurry vision|blurred vision|double vision|eye strain|weak eyesight|need glasses|spectacles)\b/] },
+  { speciality: 'Dentistry', label: 'tooth and gum problems', patterns: [/\b(tooth|teeth|gum|gums)\b[^.]{0,20}\b(hurt|hurts|ache|pain|sensitive|sensitivity|bleeding|swollen|swelling)\b/, /\b(bad breath|mouth ulcers?|jaw (pain|ache)|wisdom tooth)\b/] },
+  { speciality: 'Gynecology', label: "women's health concerns", patterns: [/\b(irregular|missed|late|heavy|painful) periods?\b/, /\b(period pain|menstrual|pcos|pregnancy (test|care|check)|trying to conceive|fertility)\b/] },
+  { speciality: 'Pediatrics', label: "children's health concerns", patterns: [/\b(my|our) (child|kid|son|daughter|baby|toddler|infant)\b[^.]{0,40}\b(fever|sick|ill|cough|cold|vomit|vomiting|rash|not eating|diarrh|pain|weak|vaccin)/, /\b(baby|child|kid|toddler)\b[^.]{0,15}\b(has )?(a )?(fever|high temperature)\b/, /\bvaccination(s)? for (my )?(child|kid|baby)\b/] },
+  { speciality: 'Cardiology', label: 'heart and blood-pressure concerns', patterns: [/\bheart\b[^.]{0,20}\b(beat|beats|beating|racing|flutter|skips|fast|slow)\b/, /\b(bp|blood pressure)\b[^.]{0,20}\b(high|low|shoot|shoots|rising|uncontrolled)\b/, /\b(breathless|short of breath)\b[^.]{0,25}\b(walk|climb|stairs|exert)/] },
+  { speciality: 'General Physician', label: 'general illness and check-ups', patterns: [/\b(fever|temperature)\b[^.]{0,25}\b(since|for (the )?(last|past)|days?|won'?t go|keeps coming)\b/, /\b(burning|pain|hurts?)\b[^.]{0,25}\b(urinat\w*|urine|pass urine|pee)\b/, /\b(frequent urination|urine (infection|problem))\b/, /\b(body aches?|feeling weak|weakness|tired all the time|fatigue|weight (loss|gain)|no appetite|breathless|wheezing|asthma (check|flare))\b/, /\b(full body|general|routine) check[ -]?up\b/] },
+];
+
+export function detectSymptomGuide(query: string): { speciality: string; label: string } | null {
+  const lower = query.toLowerCase();
+  const match = SYMPTOM_GUIDE_MAP.find(({ patterns }) => patterns.some((pattern) => pattern.test(lower)));
+  return match ? { speciality: match.speciality, label: match.label } : null;
+}
+
+/** Phrases that mean "I want to describe a symptom" before the symptom itself is named. */
+export const SYMPTOM_INTRO_PATTERN = /\b(describe|tell you|share) (my |a )?symptoms?\b|\bwhich doctor (should|shall|to) (i|we) (see|visit|consult)\b|\bwhat (kind of |type of )?doctor (should|for)\b|\bi (have|am having|feel|am feeling|suffer from|am suffering)\b[^.]{0,60}\b(pain|ache|problem|issue|burning|itching|trouble)\b|\bnot feeling (well|good|right)\b/i;
+
 export function detectMedicineClass(query: string) {
   const lower = query.toLowerCase();
   return MEDICINE_CLASS_MAP.find(({ patterns }) => patterns.some((pattern) => pattern.test(lower)))?.name ?? null;
