@@ -7,6 +7,7 @@ import styles from './login.module.css';
 import { apiFetch } from '../../lib/auth/api';
 import { readAccessToken, readLoginIntent, saveAccessToken, saveLoginIntent, type LoginIntent } from '../../lib/auth/session';
 import type { AuthResponse, PublicUser } from '../../lib/auth/types';
+import GoogleSignInButton from '../../components/auth/GoogleSignInButton';
 
 type Step = 'intent' | 'auth';
 
@@ -194,6 +195,12 @@ export default function LoginPage() {
                 <button className={authMode === 'login' ? styles.authTabActive : styles.authTab} onClick={() => setAuthMode('login')} role="tab" aria-selected={authMode === 'login'}>Sign in</button>
                 <button className={authMode === 'signup' ? styles.authTabActive : styles.authTab} onClick={() => setAuthMode('signup')} role="tab" aria-selected={authMode === 'signup'}>Create account</button>
               </div>
+
+              <GoogleSignInButton onSuccess={finishSignIn} onError={setError} />
+
+              {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+                <div className={styles.orDivider}><span>or continue with email</span></div>
+              ) : null}
 
               {authMode === 'signup' ? (
                 <label className={styles.field}><span>Your name</span><input value={signupName} onChange={(e) => setSignupName(e.target.value)} placeholder="Ayesha Khan" autoComplete="name" /></label>

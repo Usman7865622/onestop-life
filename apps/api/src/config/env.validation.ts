@@ -25,6 +25,7 @@ export const envSchema = z.object({
   OTP_MAX_PER_HOUR: z.coerce.number().int().positive().default(5),
 
   ADMIN_PHONE: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(), // enables "Continue with Google" when set
   GEMINI_API_KEY: z.string().optional(),
   'Gemini API Key 2': z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-3.6-flash'),

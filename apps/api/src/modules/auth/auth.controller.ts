@@ -8,6 +8,7 @@ import { Env } from '../../config/env.validation';
 import { AuthService } from './auth.service';
 import { RequestOtpDto, VerifyOtpDto } from './dto/otp.dto';
 import { EmailLoginDto, EmailSignUpDto } from './dto/email-auth.dto';
+import { GoogleAuthDto } from './dto/oauth.dto';
 
 const REFRESH_COOKIE = 'refresh_token';
 const COOKIE_PATH = '/auth'; // the browser only sends the cookie to /auth/*
@@ -33,6 +34,15 @@ export class AuthController {
       path: COOKIE_PATH,
       maxAge: days * 24 * 60 * 60 * 1000,
     });
+  }
+
+  @Post('oauth/google')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60_000 } })
+  async googleOAuth(@Body() dto: GoogleAuthDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const { accessToken, refreshToken, user } = await this.auth.loginWithGoogle(dto.idToken, this.meta(req));
+    this.setRefreshCookie(res, refreshToken);
+    return { accessToken, user };
   }
 
   @Post('otp/request')
