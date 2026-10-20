@@ -104,10 +104,12 @@ async function main() {
     create: { code: 'WELCOME10', type: 'PERCENT', value: 10, maxUses: null },
   });
 
+  // CARE500 is capped: at most 200 total redemptions, expiring end of November 2026.
+  // The upsert update block applies these limits to the live row on every deploy's seed run.
   await prisma.discountCode.upsert({
     where: { code: 'CARE500' },
-    update: { type: 'FIXED', value: 50000, active: true, maxUses: null },
-    create: { code: 'CARE500', type: 'FIXED', value: 50000, maxUses: null },
+    update: { type: 'FIXED', value: 50000, active: true, maxUses: 200, endsAt: new Date('2026-11-30T23:59:59+05:00') },
+    create: { code: 'CARE500', type: 'FIXED', value: 50000, maxUses: 200, endsAt: new Date('2026-11-30T23:59:59+05:00') },
   });
 
   // ---- Demo healthcare seed (Phase 1B) ----
