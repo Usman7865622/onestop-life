@@ -105,6 +105,19 @@ type PrescriptionView = {
   patient?: { name: string | null };
 };
 
+type RefillItem = {
+  prescriptionId: string;
+  doctorName: string | null;
+  product: { id: string; nameEn: string; priceMinor: number; imageUrl: string | null; unit: string; requiresRx: boolean; inStock: boolean };
+  prescribedQty: number;
+  dosage: string | null;
+  frequency: string | null;
+  status: 'DUE' | 'DUE_SOON' | 'ON_TRACK' | 'NOT_ORDERED';
+  daysLeft: number | null;
+  runOutDate: string | null;
+  lastOrderedAt: string | null;
+};
+
 type SellerProduct = {
   id: string;
   nameEn: string;
@@ -156,6 +169,7 @@ export default function DashboardPage() {
   const [rxQueue, setRxQueue] = useState<RxQueueOrder[]>([]);
   const [rxNotes, setRxNotes] = useState<Record<string, string>>({});
   const [myPrescriptions, setMyPrescriptions] = useState<PrescriptionView[]>([]);
+  const [myRefills, setMyRefills] = useState<RefillItem[]>([]);
   const [issuedPrescriptions, setIssuedPrescriptions] = useState<PrescriptionView[]>([]);
   const [composingFor, setComposingFor] = useState<string | null>(null);
   const router = useRouter();
@@ -187,6 +201,7 @@ export default function DashboardPage() {
       void apiFetch<PrescriptionView[]>('/prescriptions/doctor/mine', { method: 'GET' }, accessToken).then(setIssuedPrescriptions).catch(() => setIssuedPrescriptions([]));
     }
     void apiFetch<PrescriptionView[]>('/prescriptions/mine', { method: 'GET' }, accessToken).then(setMyPrescriptions).catch(() => setMyPrescriptions([]));
+    void apiFetch<{ items: RefillItem[] }>('/prescriptions/refills/mine', { method: 'GET' }, accessToken).then((r) => setMyRefills(r.items)).catch(() => setMyRefills([]));
     if (!hasRole(user, 'ADMIN')) {
       void apiFetch<MyVerificationRequest[]>('/verification-requests/mine', { method: 'GET' }, accessToken).then(setMyRequests).catch(() => setMyRequests([]));
     }
@@ -236,6 +251,27 @@ export default function DashboardPage() {
     setStatus(skipped > 0
       ? `${orderable.length} medicine${orderable.length === 1 ? '' : 's'} added to your cart. ${skipped} item${skipped === 1 ? '' : 's'} on the prescription ${skipped === 1 ? 'is' : 'are'} not available for one-tap ordering.`
       : 'All prescription medicines were added to your cart.');
+    router.push('/cart');
+  };
+
+  const reorderRefill = (refill: RefillItem) => {
+    const product = refill.product;
+    if (!product.inStock) {
+      setError(`${product.nameEn} is out of stock right now — the pharmacy can suggest an alternative.`);
+      return;
+    }
+    type CartLine = { id: string; nameEn: string; priceMinor: number; quantity: number; unit?: string; imageUrl?: string; category?: string; requiresRx?: boolean };
+    let cart: CartLine[] = [];
+    try { cart = JSON.parse(window.localStorage.getItem('onestop-cart') ?? '[]') as CartLine[]; } catch { cart = []; }
+    const existing = cart.find((line) => line.id === product.id);
+    if (existing) existing.quantity += refill.prescribedQty;
+    else cart.push({ id: product.id, nameEn: product.nameEn, priceMinor: product.priceMinor, quantity: refill.prescribedQty, unit: product.unit, imageUrl: product.imageUrl ?? undefined, requiresRx: product.requiresRx });
+    window.localStorage.setItem('onestop-cart', JSON.stringify(cart));
+    if (product.requiresRx) {
+      // The issuing prescription covers this refill at checkout — no upload needed.
+      window.localStorage.setItem('onestop-rx-prescription', refill.prescriptionId);
+    }
+    setStatus(`${product.nameEn} added to your cart for a refill.`);
     router.push('/cart');
   };
 
@@ -425,6 +461,36 @@ export default function DashboardPage() {
                 );
               }) : <p className={styles.emptyStateInline}>No orders yet. Your shop and pharmacy orders will appear here.</p>}
             </div>
+            {(() => {
+              const actionable = myRefills.filter((r) => r.status !== 'ON_TRACK');
+              const onTrack = myRefills.filter((r) => r.status === 'ON_TRACK');
+              if (!myRefills.length) return null;
+              const refillText = (r: RefillItem): string => {
+                if (r.status === 'NOT_ORDERED') return 'Prescribed for you — not ordered yet';
+                if (r.status === 'DUE') return r.daysLeft === 0 ? 'Supply finished today' : `Supply finished ${Math.abs(r.daysLeft ?? 0)} day${Math.abs(r.daysLeft ?? 0) === 1 ? '' : 's'} ago`;
+                if (r.status === 'DUE_SOON') return `About ${r.daysLeft} day${r.daysLeft === 1 ? '' : 's'} of supply left`;
+                return `${r.daysLeft} days of supply left`;
+              };
+              return (
+                <div className={styles.listBlock}>
+                  <h3>Medicine refills</h3>
+                  {actionable.length ? actionable.slice(0, 5).map((refill) => (
+                    <div className={styles.listItem} key={`${refill.prescriptionId}-${refill.product.id}`}>
+                      <strong>{refill.product.nameEn}</strong>
+                      <span>{[refill.dosage, refill.frequency, refill.doctorName ? `Dr. ${refill.doctorName}` : null].filter(Boolean).join(' · ')}</span>
+                      <span className={refill.status === 'DUE' ? styles.rxPillRejected : styles.rxPillPending}>{refillText(refill)}</span>
+                      <button type="button" className={styles.primaryButton} onClick={() => reorderRefill(refill)} disabled={!refill.product.inStock}>
+                        {refill.product.inStock ? `${refill.status === 'NOT_ORDERED' ? 'Order' : 'Reorder'} ×${refill.prescribedQty}` : 'Out of stock'}
+                      </button>
+                    </div>
+                  )) : (
+                    <p className={styles.emptyStateInline}>
+                      All medicines on track{onTrack.length ? ` — next refill: ${onTrack[0].product.nameEn}, ${refillText(onTrack[0]).toLowerCase()}.` : '.'}
+                    </p>
+                  )}
+                </div>
+              );
+            })()}
             <div className={styles.listBlock}>
               <h3>My prescriptions</h3>
               {myPrescriptions.length ? myPrescriptions.slice(0, 4).map((prescription) => {
