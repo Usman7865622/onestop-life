@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { AppointmentStatus, RoleKey } from '@prisma/client';
+import { AppointmentStatus, OrderStatus, RoleKey } from '@prisma/client';
 import { AuthUser } from '../../common/types/auth-user';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreatePrescriptionDto } from './dto/prescription.dto';
@@ -98,6 +98,103 @@ export class PrescriptionsService {
       include: prescriptionInclude,
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /**
+   * Refill autopilot: for every catalogue medicine on the patient's
+   * prescriptions, work out where they are in the course. Supply is estimated
+   * from the prescribed duration, scaled by how much of it was actually
+   * ordered (two packs of a 10-day course last ~20 days). Statuses:
+   * NOT_ORDERED (prescribed but never bought), ON_TRACK, DUE_SOON (<=5 days
+   * of supply left), DUE (supply exhausted). Courses that ran out more than
+   * 30 days ago are dropped so the list never nags forever.
+   */
+  async refillsMine(patient: AuthUser) {
+    const prescriptions = await this.prisma.prescription.findMany({
+      where: { patientId: patient.id },
+      include: prescriptionInclude,
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!prescriptions.length) return { items: [] };
+
+    const orders = await this.prisma.order.findMany({
+      where: {
+        userId: patient.id,
+        prescriptionId: { in: prescriptions.map((p) => p.id) },
+        status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REFUNDED] },
+      },
+      include: { items: { select: { productId: true, quantity: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Latest order per (prescription, product) — orders are newest-first.
+    const latest = new Map<string, { orderedAt: Date; quantity: number }>();
+    for (const order of orders) {
+      for (const line of order.items) {
+        const key = `${order.prescriptionId}:${line.productId}`;
+        if (!latest.has(key)) latest.set(key, { orderedAt: order.createdAt, quantity: line.quantity });
+      }
+    }
+
+    const DAY_MS = 86_400_000;
+    const now = Date.now();
+    type RefillItem = {
+      prescriptionId: string;
+      doctorName: string | null;
+      product: { id: string; nameEn: string; priceMinor: number; imageUrl: string | null; unit: string; requiresRx: boolean; inStock: boolean };
+      prescribedQty: number;
+      dosage: string | null;
+      frequency: string | null;
+      status: 'DUE' | 'DUE_SOON' | 'ON_TRACK' | 'NOT_ORDERED';
+      daysLeft: number | null;
+      runOutDate: string | null;
+      lastOrderedAt: string | null;
+    };
+    const items: RefillItem[] = [];
+
+    for (const prescription of prescriptions) {
+      for (const item of prescription.items) {
+        if (!item.product) continue; // free-text rows have nothing to reorder
+        const base = {
+          prescriptionId: prescription.id,
+          doctorName: prescription.doctorProfile.user.name,
+          product: {
+            id: item.product.id,
+            nameEn: item.product.nameEn,
+            priceMinor: item.product.priceMinor,
+            imageUrl: item.product.imageUrl,
+            unit: item.product.unit,
+            requiresRx: item.product.requiresRx,
+            inStock: item.product.inStock,
+          },
+          prescribedQty: item.qty,
+          dosage: item.dosage,
+          frequency: item.frequency,
+        };
+        const ordered = latest.get(`${prescription.id}:${item.product.id}`);
+        if (!ordered) {
+          items.push({ ...base, status: 'NOT_ORDERED', daysLeft: null, runOutDate: null, lastOrderedAt: null });
+          continue;
+        }
+        if (!item.durationDays || item.durationDays <= 0) continue; // no course length, no honest estimate
+        const ratio = item.qty > 0 ? ordered.quantity / item.qty : 1;
+        const daysSupply = Math.max(1, Math.round(item.durationDays * ratio));
+        const runOutMs = ordered.orderedAt.getTime() + daysSupply * DAY_MS;
+        const daysLeft = Math.ceil((runOutMs - now) / DAY_MS);
+        if (daysLeft < -30) continue;
+        items.push({
+          ...base,
+          status: daysLeft <= 0 ? 'DUE' : daysLeft <= 5 ? 'DUE_SOON' : 'ON_TRACK',
+          daysLeft,
+          runOutDate: new Date(runOutMs).toISOString(),
+          lastOrderedAt: ordered.orderedAt.toISOString(),
+        });
+      }
+    }
+
+    const rank = { DUE: 0, DUE_SOON: 1, NOT_ORDERED: 2, ON_TRACK: 3 } as const;
+    items.sort((a, b) => rank[a.status] - rank[b.status] || (a.daysLeft ?? 0) - (b.daysLeft ?? 0));
+    return { items };
   }
 
   async listDoctorMine(doctorUser: AuthUser) {
