@@ -24,6 +24,7 @@ import { PharmacyModule } from './modules/pharmacy/pharmacy.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { AddressesModule } from './modules/addresses/addresses.module';
 import { WalletModule } from './modules/wallet/wallet.module';
+import { PrescriptionsModule } from './modules/prescriptions/prescriptions.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
     ReviewsModule,
     AddressesModule,
     WalletModule,
+    PrescriptionsModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

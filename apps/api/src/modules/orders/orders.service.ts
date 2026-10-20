@@ -32,10 +32,26 @@ export class OrdersService {
     // Rx gating: orders containing prescription medicines must carry a
     // prescription document key and wait for pharmacist verification before
     // dispatch (DRAP requires Rx medicines, incl. antibiotics, to be sold
-    // only against a registered doctor's prescription).
+    // only against a registered doctor's prescription). A OneStop digital
+    // prescription issued by a doctor after a completed visit also satisfies
+    // the gate, but only for the exact medicines it lists — the pharmacist
+    // still verifies the order before dispatch.
     const rxItems = products.filter((product) => product.requiresRx);
     const prescriptionKey = dto.prescriptionKey?.trim();
-    if (rxItems.length && (!prescriptionKey || prescriptionKey.length < 3)) {
+    let digitalPrescriptionId: string | undefined;
+    if (rxItems.length && (!prescriptionKey || prescriptionKey.length < 3) && dto.prescriptionId) {
+      const digital = await this.prisma.prescription.findUnique({
+        where: { id: dto.prescriptionId },
+        include: { items: { select: { productId: true } } },
+      });
+      if (digital && digital.patientId === user.id) {
+        const covered = new Set(digital.items.map((item) => item.productId).filter((id): id is string => Boolean(id)));
+        if (rxItems.every((product) => covered.has(product.id))) {
+          digitalPrescriptionId = digital.id;
+        }
+      }
+    }
+    if (rxItems.length && !digitalPrescriptionId && (!prescriptionKey || prescriptionKey.length < 3)) {
       const names = rxItems.map((product) => product.nameEn).join(', ');
       throw new BadRequestException(
         `This order contains prescription medicines (${names}). Please attach your prescription so our pharmacist can verify it before dispatch.`,
@@ -69,7 +85,8 @@ export class OrdersService {
         // verification", not dispatched. Approval moves them to PROCESSING.
         status: gated ? OrderStatus.PENDING_PAYMENT : dto.paymentMethod === 'COD' ? OrderStatus.PROCESSING : OrderStatus.PENDING_PAYMENT,
         requiresRx: gated,
-        prescriptionKey: gated ? prescriptionKey : undefined,
+        prescriptionKey: gated && prescriptionKey && prescriptionKey.length >= 3 ? prescriptionKey : undefined,
+        prescriptionId: gated ? digitalPrescriptionId : undefined,
         prescriptionStatus: gated ? PrescriptionStatus.PENDING : undefined,
         subtotalMinor,
         discountMinor: discount.amountMinor,
@@ -166,6 +183,15 @@ export class OrdersService {
       include: {
         items: true,
         user: { select: { id: true, name: true, phone: true } },
+        // A doctor-issued digital prescription covering the order, when used.
+        prescription: {
+          select: {
+            id: true,
+            diagnosis: true,
+            createdAt: true,
+            doctorProfile: { select: { user: { select: { name: true } } } },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

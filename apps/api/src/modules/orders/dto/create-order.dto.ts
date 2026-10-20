@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsIn, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
 
 export class CreateOrderItemDto {
   @IsString()
@@ -72,4 +72,14 @@ export class CreateOrderDto {
   @IsOptional()
   @IsString()
   prescriptionKey?: string;
+
+  /**
+   * A OneStop digital prescription that covers the order's Rx medicines,
+   * issued by a doctor after a completed visit. When present and valid it
+   * satisfies the Rx gate instead of an uploaded prescription document — the
+   * pharmacist still verifies the order before dispatch.
+   */
+  @IsOptional()
+  @IsUUID()
+  prescriptionId?: string;
 }
