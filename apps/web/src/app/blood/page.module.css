@@ -43,7 +43,7 @@
 .cancelButton { border: 1px solid #fecdd3; background: #fff; color: #9f1239; border-radius: 10px; padding: 8px 12px; font-weight: 800; cursor: pointer; }
 .inlineField { min-width: 180px; }
 .bankGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
-.bankCard { border: 1px solid #f0e2e5; border-radius: 18px; padding: 18px; background: #fff; display: grid; gap: 12px; box-shadow: 0 12px 30px rgba(23,35,55,.05); transition: transform .18s ease, box-shadow .18s ease; }
+.bankCard { border: 1px solid #f0e2e5; border-radius: 18px; padding: 18px; background: #fff; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 12px 30px rgba(23,35,55,.05); transition: transform .18s ease, box-shadow .18s ease; }
 .bankCard:hover { transform: translateY(-2px); box-shadow: 0 18px 40px rgba(159,18,57,.1); }
 .bankTop { display: grid; grid-template-columns: 48px 1fr auto; gap: 12px; align-items: start; }
 .dropIcon { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, #e11d48, #fb7185); color: #fff; }
@@ -53,7 +53,7 @@
 .emergencyBadge { padding: 5px 9px; border-radius: 999px; background: #fff1f2; color: #9f1239; font-size: .68rem; font-weight: 950; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
 .quickStats { display: flex; flex-wrap: wrap; gap: 7px; }
 .quickStats span { padding: 7px 9px; border-radius: 999px; background: #fff7f7; color: #7a3049; font-size: .8rem; font-weight: 700; }
-.callButton { padding: 11px 14px; border-radius: 12px; background: #172337; color: #fff; font-weight: 900; text-decoration: none; text-align: center; }
+.callButton { padding: 11px 14px; border-radius: 12px; background: #172337; color: #fff; font-weight: 900; text-decoration: none; text-align: center; margin-top: auto; }
 .callButton:hover { background: #be123c; }
 .boardFilters { display: flex; gap: 10px; flex-wrap: wrap; }
 .requestGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
