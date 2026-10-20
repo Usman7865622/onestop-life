@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import styles from './dashboard.module.css';
 import { apiFetch } from '../../lib/auth/api';
@@ -10,6 +11,7 @@ import { money, type Appointment } from '../../lib/doctors/types';
 import { SectionIcon, type SectionIconName } from '../../components/home/SectionIcons';
 import OrderTracking from '../../components/orders/OrderTracking';
 import WalletPanel from '../../components/wallet/WalletPanel';
+import PrescriptionComposer from '../../components/dashboard/PrescriptionComposer';
 
 function PanelTitle({ icon, title, sub, id }: { icon: SectionIconName; title: string; sub: string; id?: string }) {
   return (<div className={styles.cardHeader}><span className={styles.panelIcon}><SectionIcon name={icon} size={21} /></span><div><h2 id={id}>{title}</h2><p>{sub}</p></div></div>);
@@ -48,6 +50,13 @@ type RxQueueOrder = {
   totalMinor: number;
   createdAt: string;
   prescriptionKey: string | null;
+  prescriptionId?: string | null;
+  prescription?: {
+    id: string;
+    diagnosis: string | null;
+    createdAt: string;
+    doctorProfile: { user: { name: string | null } };
+  } | null;
   shippingName: string;
   shippingPhone: string;
   shippingAddress: string;
@@ -59,6 +68,41 @@ const PRESCRIPTION_PILL: Record<string, { label: string; className: 'rxPillPendi
   PENDING: { label: 'Prescription under review', className: 'rxPillPending' },
   APPROVED: { label: 'Prescription approved', className: 'rxPillApproved' },
   REJECTED: { label: 'Prescription rejected', className: 'rxPillRejected' },
+};
+
+type PrescriptionProduct = {
+  id: string;
+  nameEn: string;
+  priceMinor: number;
+  imageUrl: string | null;
+  unit: string;
+  requiresRx: boolean;
+  inStock: boolean;
+  packSize: string | null;
+};
+
+type PrescriptionItemView = {
+  id: string;
+  productId: string | null;
+  name: string;
+  dosage: string | null;
+  frequency: string | null;
+  durationDays: number | null;
+  qty: number;
+  notes: string | null;
+  product: PrescriptionProduct | null;
+};
+
+type PrescriptionView = {
+  id: string;
+  appointmentId: string;
+  diagnosis: string | null;
+  notes: string | null;
+  createdAt: string;
+  items: PrescriptionItemView[];
+  doctorProfile: { speciality: string; user: { name: string | null } };
+  appointment: { startsAt: string };
+  patient?: { name: string | null };
 };
 
 type SellerProduct = {
@@ -111,6 +155,10 @@ export default function DashboardPage() {
   const [myOrders, setMyOrders] = useState<MyOrder[]>([]);
   const [rxQueue, setRxQueue] = useState<RxQueueOrder[]>([]);
   const [rxNotes, setRxNotes] = useState<Record<string, string>>({});
+  const [myPrescriptions, setMyPrescriptions] = useState<PrescriptionView[]>([]);
+  const [issuedPrescriptions, setIssuedPrescriptions] = useState<PrescriptionView[]>([]);
+  const [composingFor, setComposingFor] = useState<string | null>(null);
+  const router = useRouter();
 
   const loadUser = useCallback(async () => {
     const accessToken = readAccessToken();
@@ -136,7 +184,9 @@ export default function DashboardPage() {
 
     if (hasRole(user, 'DOCTOR')) {
       void apiFetch<Appointment[]>('/appointments/doctor/mine', {}, accessToken).then(setDoctorAppointments).catch(() => setDoctorAppointments([]));
+      void apiFetch<PrescriptionView[]>('/prescriptions/doctor/mine', { method: 'GET' }, accessToken).then(setIssuedPrescriptions).catch(() => setIssuedPrescriptions([]));
     }
+    void apiFetch<PrescriptionView[]>('/prescriptions/mine', { method: 'GET' }, accessToken).then(setMyPrescriptions).catch(() => setMyPrescriptions([]));
     if (!hasRole(user, 'ADMIN')) {
       void apiFetch<MyVerificationRequest[]>('/verification-requests/mine', { method: 'GET' }, accessToken).then(setMyRequests).catch(() => setMyRequests([]));
     }
@@ -155,6 +205,39 @@ export default function DashboardPage() {
         .catch((e) => setError(e instanceof Error ? e.message : 'Unable to load prescription queue.'));
     }
   }, [user]);
+
+  const refreshIssuedPrescriptions = async () => {
+    const accessToken = readAccessToken();
+    if (!accessToken) return;
+    void apiFetch<PrescriptionView[]>('/prescriptions/doctor/mine', { method: 'GET' }, accessToken).then(setIssuedPrescriptions).catch(() => {});
+  };
+
+  const orderAllPrescription = (prescription: PrescriptionView) => {
+    const orderable = prescription.items.filter((item) => item.product && item.product.inStock);
+    const skipped = prescription.items.length - orderable.length;
+    if (!orderable.length) {
+      setError('None of the medicines on this prescription are currently orderable from our pharmacy.');
+      return;
+    }
+    type CartLine = { id: string; nameEn: string; priceMinor: number; quantity: number; unit?: string; imageUrl?: string; category?: string; requiresRx?: boolean };
+    let cart: CartLine[] = [];
+    try { cart = JSON.parse(window.localStorage.getItem('onestop-cart') ?? '[]') as CartLine[]; } catch { cart = []; }
+    for (const item of orderable) {
+      const product = item.product!;
+      const existing = cart.find((line) => line.id === product.id);
+      if (existing) existing.quantity += item.qty;
+      else cart.push({ id: product.id, nameEn: product.nameEn, priceMinor: product.priceMinor, quantity: item.qty, unit: product.unit, imageUrl: product.imageUrl ?? undefined, requiresRx: product.requiresRx });
+    }
+    window.localStorage.setItem('onestop-cart', JSON.stringify(cart));
+    if (orderable.some((item) => item.product?.requiresRx)) {
+      // The digital prescription covers these Rx medicines at checkout — no upload needed.
+      window.localStorage.setItem('onestop-rx-prescription', prescription.id);
+    }
+    setStatus(skipped > 0
+      ? `${orderable.length} medicine${orderable.length === 1 ? '' : 's'} added to your cart. ${skipped} item${skipped === 1 ? '' : 's'} on the prescription ${skipped === 1 ? 'is' : 'are'} not available for one-tap ordering.`
+      : 'All prescription medicines were added to your cart.');
+    router.push('/cart');
+  };
 
   const reviewPrescription = async (order: RxQueueOrder, decision: 'APPROVED' | 'REJECTED') => {
     const accessToken = readAccessToken();
@@ -273,6 +356,8 @@ export default function DashboardPage() {
   const showAdmin = intent === 'admin' || isAdmin;
   const professionalCopy = PROFESSIONAL_COPY[verificationType];
   const roleSummary = user.roles.length ? user.roles.join(', ') : 'Customer';
+  const accessToken = readAccessToken();
+  const issuedByAppointment = new Map(issuedPrescriptions.map((prescription) => [prescription.appointmentId, prescription]));
 
   return (
     <main className={styles.page}>
@@ -340,6 +425,26 @@ export default function DashboardPage() {
                 );
               }) : <p className={styles.emptyStateInline}>No orders yet. Your shop and pharmacy orders will appear here.</p>}
             </div>
+            <div className={styles.listBlock}>
+              <h3>My prescriptions</h3>
+              {myPrescriptions.length ? myPrescriptions.slice(0, 4).map((prescription) => {
+                const orderableCount = prescription.items.filter((item) => item.product && item.product.inStock).length;
+                return (
+                  <div className={styles.listItem} key={prescription.id}>
+                    <strong>Dr. {prescription.doctorProfile.user.name ?? 'Your doctor'} · {prescription.doctorProfile.speciality}</strong>
+                    <span>Visit: {new Date(prescription.appointment.startsAt).toLocaleDateString('en-PK', { dateStyle: 'medium' })} · Issued {new Date(prescription.createdAt).toLocaleDateString('en-PK', { dateStyle: 'medium' })}</span>
+                    {prescription.diagnosis ? <span>Diagnosis: {prescription.diagnosis}</span> : null}
+                    <span>{prescription.items.map((item) => `${item.name}${item.dosage ? ` ${item.dosage}` : ''}${item.frequency ? ` — ${item.frequency}` : ''}${item.durationDays ? ` for ${item.durationDays} days` : ''} ×${item.qty}`).join(' · ')}</span>
+                    {prescription.notes ? <span>Doctor's note: {prescription.notes}</span> : null}
+                    {orderableCount > 0 ? (
+                      <button type="button" className={styles.primaryButton} onClick={() => orderAllPrescription(prescription)}>Order all medicines ({orderableCount})</button>
+                    ) : (
+                      <span>Ask the pharmacy about availability for these medicines.</span>
+                    )}
+                  </div>
+                );
+              }) : <p className={styles.emptyStateInline}>No prescriptions yet. After a completed visit, your doctor can issue a digital prescription here.</p>}
+            </div>
             <WalletPanel token={readAccessToken()} />
           </section>
         ) : null}
@@ -355,13 +460,33 @@ export default function DashboardPage() {
                 </div>
                 <div id="doctor-appointments" className={styles.listBlock}>
                   <h3>Upcoming patient requests</h3>
-                  {doctorAppointments.length ? doctorAppointments.slice(0, 6).map((appt) => (
-                    <div className={styles.listItem} key={appt.id}>
-                      <strong>{appt.patientName}</strong>
-                      <span>{new Date(appt.startsAt).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })} · {appt.type === 'VIDEO' ? 'Video' : 'In-person'} · {appt.status}</span>
-                      <span>{money(appt.feeMinor)}</span>
-                    </div>
-                  )) : <p className={styles.emptyStateInline}>No doctor appointments yet. New patient bookings will appear here.</p>}
+                  {doctorAppointments.length ? doctorAppointments.slice(0, 6).map((appt) => {
+                    const issued = issuedByAppointment.get(appt.id);
+                    return (
+                      <div className={styles.listItem} key={appt.id}>
+                        <strong>{appt.patientName}</strong>
+                        <span>{new Date(appt.startsAt).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })} · {appt.type === 'VIDEO' ? 'Video' : 'In-person'} · {appt.status}</span>
+                        <span>{money(appt.feeMinor)}</span>
+                        {appt.status === 'COMPLETED' ? (
+                          issued ? (
+                            <>
+                              <span className={styles.issuedTag}>Prescription issued</span>
+                              <span>{issued.items.map((item) => `${item.name}${item.dosage ? ` ${item.dosage}` : ''} ×${item.qty}`).join(' · ')}</span>
+                            </>
+                          ) : composingFor === appt.id ? (
+                            <PrescriptionComposer
+                              appointmentId={appt.id}
+                              token={accessToken ?? ''}
+                              onIssued={() => { setComposingFor(null); void refreshIssuedPrescriptions(); setStatus('Prescription issued — the patient can now see it and order the medicines in one tap.'); }}
+                              onCancel={() => setComposingFor(null)}
+                            />
+                          ) : (
+                            <button type="button" className={styles.secondaryButton} onClick={() => setComposingFor(appt.id)}>Write prescription</button>
+                          )
+                        ) : null}
+                      </div>
+                    );
+                  }) : <p className={styles.emptyStateInline}>No doctor appointments yet. New patient bookings will appear here.</p>}
                 </div>
                 <p className={styles.note}>Profile editing is available through your verified doctor profile (speciality, fee, timings and facilities are managed via <code>POST/PATCH /doctors/me/profile</code>). If you need a field changed before the full editor ships, contact support and we will update it with you.</p>
               </>
@@ -473,7 +598,11 @@ export default function DashboardPage() {
                       <span>{new Date(order.createdAt).toLocaleDateString('en-PK')}</span>
                     </div>
                     <p className={styles.queueMeta}>Medicines: <strong>{order.items.map((item) => `${item.productName} ×${item.quantity}`).join(', ')}</strong></p>
-                    <p className={styles.queueMeta}>Prescription: <strong>{order.prescriptionKey ?? 'Not provided'}</strong> · Total: <strong>{money(order.totalMinor)}</strong></p>
+                    {order.prescription ? (
+                      <p className={styles.queueMeta}>Prescription: <strong>Digital prescription from Dr. {order.prescription.doctorProfile.user.name ?? 'doctor'}</strong>{order.prescription.diagnosis ? <> · Diagnosis: {order.prescription.diagnosis}</> : null} · issued {new Date(order.prescription.createdAt).toLocaleDateString('en-PK')} · Total: <strong>{money(order.totalMinor)}</strong></p>
+                    ) : (
+                      <p className={styles.queueMeta}>Prescription: <strong>{order.prescriptionKey ?? 'Not provided'}</strong> · Total: <strong>{money(order.totalMinor)}</strong></p>
+                    )}
                     <label className={styles.field}><span>Pharmacist note (optional, required to explain a rejection)</span><input value={rxNotes[order.id] ?? ''} onChange={(e) => setRxNotes((current) => ({ ...current, [order.id]: e.target.value }))} placeholder="e.g. Verified with Dr. Ahmed Khan" /></label>
                     <div className={styles.reviewActions}>
                       <button className={styles.primaryButton} onClick={() => reviewPrescription(order, 'APPROVED')} disabled={busy}>Approve &amp; dispatch</button>

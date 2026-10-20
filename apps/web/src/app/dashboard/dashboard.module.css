@@ -47,6 +47,7 @@
 .listItem { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); color: var(--muted); }
 .listItem strong { color: var(--ink); }
 .statusTag { padding: 6px 10px; border-radius: 999px; background: #e8f6ee; color: var(--success); font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+.issuedTag { padding: 6px 10px; border-radius: 999px; background: #e8f6ee; color: var(--success); font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; align-self: flex-start; }
 .rxPillPending { padding: 6px 10px; border-radius: 999px; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
 .rxPillApproved { padding: 6px 10px; border-radius: 999px; background: #e8f6ee; color: var(--success); font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
 .rxPillRejected { padding: 6px 10px; border-radius: 999px; background: #ffe8ee; color: var(--danger); font-size: .72rem; font-weight: 950; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
