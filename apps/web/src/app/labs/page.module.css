@@ -42,7 +42,7 @@
 .signInNote { color: #40546b; font-weight: 700; }
 .signInNote a { color: #0f766e; font-weight: 900; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-.card { border: 1px solid #e0eaf0; border-radius: 20px; padding: 20px; background: #fff; display: grid; gap: 14px; box-shadow: 0 14px 34px rgba(23,35,55,.06); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.card { border: 1px solid #e0eaf0; border-radius: 20px; padding: 20px; background: #fff; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 14px 34px rgba(23,35,55,.06); transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .card:hover { transform: translateY(-2px); border-color: #99f6e4; box-shadow: 0 20px 44px rgba(15,118,110,.12); }
 .cardTop { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: start; }
 .testIcon { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: linear-gradient(135deg, #0f766e, #2dd4bf); color: #fff; box-shadow: inset 0 -12px 22px rgba(0,0,0,.16); }
@@ -52,7 +52,7 @@
 .sampleBadge { padding: 5px 9px; border-radius: 999px; background: #f0fdfa; color: #0f766e; font-size: .7rem; font-weight: 950; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
 .quickStats { display: flex; flex-wrap: wrap; gap: 7px; }
 .quickStats span { padding: 7px 9px; border-radius: 999px; background: #f6f9fb; color: #40546b; font-size: .8rem; font-weight: 700; }
-.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #eef1f5; padding-top: 14px; }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #eef1f5; padding-top: 14px; margin-top: auto; }
 .fee { display: grid; gap: 1px; }
 .fee strong { font-size: 1.22rem; letter-spacing: -.02em; }
 .fee span { color: #68798e; font-size: .78rem; font-weight: 700; }

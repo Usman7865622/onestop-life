@@ -31,7 +31,7 @@
 .resultCount { color: #68798e; font-size: .92rem; font-weight: 650; }
 .clearButton, .homeLinkButton { border: 0; background: transparent; color: #166a91; font-weight: 900; cursor: pointer; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-.card { position: relative; overflow: hidden; border: 1px solid #e0eaf0; border-radius: 20px; padding: 20px; background: #fff; display: grid; gap: 14px; box-shadow: 0 14px 34px rgba(23,35,55,.06); transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease, border-color .25s ease; animation: doctorIn .55s cubic-bezier(.22,1,.36,1) both; animation-delay: calc(var(--doc-index, 0) * 60ms); }
+.card { position: relative; overflow: hidden; border: 1px solid #e0eaf0; border-radius: 20px; padding: 20px; background: #fff; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 14px 34px rgba(23,35,55,.06); transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease, border-color .25s ease; animation: doctorIn .55s cubic-bezier(.22,1,.36,1) both; animation-delay: calc(var(--doc-index, 0) * 60ms); }
 .card:hover { transform: translateY(-6px); border-color: #9cc8e0; box-shadow: 0 26px 48px -14px rgba(22,106,145,.25); }
 .card::after { content: ''; position: absolute; top: 0; left: -80%; width: 55%; height: 100%; background: linear-gradient(105deg, transparent, rgba(22,106,145,.08), transparent); transform: skewX(-18deg); transition: left .6s ease; pointer-events: none; }
 .card:hover::after { left: 130%; }
@@ -51,7 +51,7 @@
 .location { display: grid; gap: 2px; padding: 12px; border-radius: 14px; background: #fbfcfe; border: 1px solid #eef2f6; color: #40546b; font-size: .88rem; line-height: 1.4; }
 .location strong { color: #172337; }
 .about { color: #52677d; line-height: 1.55; font-size: .92rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #eef1f5; padding-top: 14px; }
+.cardFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #eef1f5; padding-top: 14px; margin-top: auto; }
 .fee { display: grid; gap: 1px; }
 .fee strong { font-size: 1.22rem; letter-spacing: -.02em; }
 .fee span { color: #68798e; font-size: .78rem; font-weight: 700; }
