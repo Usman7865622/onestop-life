@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import styles from './order-tracking.module.css';
 
-const STEPS = ['Placed', 'Paid', 'Packed', 'Shipped', 'Delivered'] as const;
+type StepState = 'done' | 'current' | 'todo' | 'blocked';
+type Step = { label: string; state: StepState };
 
-function stepIndex(status: string): number {
+function baseIndex(status: string): number {
   switch (status) {
     case 'PENDING_PAYMENT': return 0;
     case 'PAID': return 1;
@@ -16,16 +17,60 @@ function stepIndex(status: string): number {
   }
 }
 
+function buildSteps(status: string, requiresRx: boolean, prescriptionStatus: string | null | undefined): Step[] {
+  const idx = baseIndex(status);
+  const flow: Array<{ label: string; reachedAt: number }> = [
+    { label: 'Placed', reachedAt: 0 },
+    { label: 'Paid', reachedAt: 1 },
+    { label: 'Packed', reachedAt: 2 },
+    { label: 'Shipped', reachedAt: 3 },
+    { label: 'Delivered', reachedAt: 4 },
+  ];
+  const steps: Step[] = flow.map(({ label, reachedAt }) => ({
+    label,
+    state: idx > reachedAt ? 'done' : idx === reachedAt ? 'current' : 'todo',
+  }));
+
+  if (!requiresRx) return steps;
+
+  // Prescription orders pass a pharmacist gate before anything ships. The
+  // gate's state comes from the pharmacist review, not the fulfilment status.
+  const rxState: StepState =
+    prescriptionStatus === 'APPROVED' ? 'done'
+    : prescriptionStatus === 'REJECTED' ? 'blocked'
+    : 'current';
+  const gated: Step[] = [steps[0], { label: 'Pharmacist check', state: rxState }, ...steps.slice(1)];
+  // While the pharmacist check is pending or rejected, later steps cannot be
+  // current — the order is held at the gate.
+  if (rxState !== 'done') {
+    return gated.map((step, i) => (i > 1 && step.state === 'current' ? { ...step, state: 'todo' } : step));
+  }
+  return gated;
+}
+
 const RETURN_REASONS = ['Wrong item received', 'Damaged on arrival', 'Not as described', 'Changed my mind', 'Other'];
 
-export default function OrderTracking({ orderId, status, onReturn }: { orderId: string; status: string; onReturn: (orderId: string, reason: string) => Promise<void> }) {
-  const [open, setOpen] = useState(false);
+export default function OrderTracking({
+  orderId,
+  status,
+  onReturn,
+  requiresRx = false,
+  prescriptionStatus = null,
+}: {
+  orderId: string;
+  status: string;
+  onReturn: (orderId: string, reason: string) => Promise<void>;
+  requiresRx?: boolean;
+  prescriptionStatus?: string | null;
+}) {
+  const cancelled = status === 'CANCELLED' || status === 'REFUNDED';
+  const [open, setOpen] = useState(!cancelled && status !== 'DELIVERED');
   const [reason, setReason] = useState(RETURN_REASONS[0]);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
-  const idx = stepIndex(status);
-  const cancelled = status === 'CANCELLED' || status === 'REFUNDED';
+  const steps = buildSteps(status, requiresRx, prescriptionStatus);
+  const rxHeld = requiresRx && prescriptionStatus !== 'APPROVED' && !cancelled;
 
   const requestReturn = async () => {
     setBusy(true); setError('');
@@ -44,14 +89,32 @@ export default function OrderTracking({ orderId, status, onReturn }: { orderId: 
           {cancelled ? (
             <p className={styles.trackCancelled}>This order was {status.toLowerCase().replace('_', ' ')}.</p>
           ) : (
-            <ol className={styles.timeline}>
-              {STEPS.map((label, i) => (
-                <li key={label} className={i <= idx ? styles.stepDone : styles.stepTodo}>
-                  <span className={styles.stepDot} aria-hidden="true">{i < idx ? '✓' : i + 1}</span>
-                  <span>{label}</span>
-                </li>
-              ))}
-            </ol>
+            <>
+              <ol className={styles.timeline}>
+                {steps.map((step, i) => (
+                  <li
+                    key={step.label}
+                    className={
+                      step.state === 'done' ? styles.stepDone
+                      : step.state === 'current' ? `${styles.stepDone} ${styles.stepCurrent}`
+                      : step.state === 'blocked' ? styles.stepBlocked
+                      : styles.stepTodo
+                    }
+                  >
+                    <span className={styles.stepDot} aria-hidden="true">
+                      {step.state === 'done' ? '✓' : step.state === 'blocked' ? '✕' : i + 1}
+                    </span>
+                    <span>{step.label}</span>
+                  </li>
+                ))}
+              </ol>
+              {rxHeld && prescriptionStatus !== 'REJECTED' ? (
+                <p className={styles.rxNote}>A pharmacist is verifying your prescription — your order moves forward as soon as it is approved.</p>
+              ) : null}
+              {requiresRx && prescriptionStatus === 'REJECTED' ? (
+                <p className={styles.rxNoteBlocked}>The pharmacist could not approve this prescription, so the order is on hold. The pharmacist&rsquo;s note is shown with your order above.</p>
+              ) : null}
+            </>
           )}
           {status === 'DELIVERED' && !done ? (
             <div className={styles.returnBox}>

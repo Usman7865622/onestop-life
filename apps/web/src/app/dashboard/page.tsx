@@ -456,7 +456,7 @@ export default function DashboardPage() {
                     {pill ? <span className={styles[pill.className]}>{pill.label}</span> : <span>{new Date(order.createdAt).toLocaleDateString('en-PK')}</span>}
                     {order.requiresRx && order.prescriptionStatus === 'REJECTED' && order.prescriptionNotes ? <span>Pharmacist note: {order.prescriptionNotes}</span> : null}
                     {order.returnRequested ? <span>Return requested</span> : null}
-                    <OrderTracking orderId={order.id} status={order.status} onReturn={requestReturn} />
+                    <OrderTracking orderId={order.id} status={order.status} requiresRx={order.requiresRx} prescriptionStatus={order.prescriptionStatus} onReturn={requestReturn} />
                   </div>
                 );
               }) : <p className={styles.emptyStateInline}>No orders yet. Your shop and pharmacy orders will appear here.</p>}
