@@ -237,6 +237,14 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const [slide, setSlide] = useState(0);
   const [now, setNow] = useState(() => Date.now());
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [qvQty, setQvQty] = useState(1);
+  const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
+  const toastTimer = useRef<number | null>(null);
+  const showToast = (text: string) => {
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    setToast({ id: Date.now(), text });
+    toastTimer.current = window.setTimeout(() => setToast(null), 2400);
+  };
   const dealsRail = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -337,12 +345,26 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     setAddedId(product.id);
     window.setTimeout(() => setAddedId((id) => (id === product.id ? null : id)), 1200);
   };
+  const addToCartQty = (product: Product, qty: number) => {
+    if (qty < 1) return;
+    setCart((cur) => {
+      const ex = cur.find((i) => i.id === product.id);
+      if (ex) return cur.map((i) => (i.id === product.id ? { ...i, quantity: i.quantity + qty } : i));
+      return [...cur, { ...product, quantity: qty }];
+    });
+    setAddedId(product.id);
+    window.setTimeout(() => setAddedId((id) => (id === product.id ? null : id)), 1200);
+  };
   const updateQuantity = (id: string, qty: number) =>
     setCart((cur) => (qty < 1 ? cur.filter((i) => i.id !== id) : cur.map((i) => (i.id === id ? { ...i, quantity: qty } : i))));
-  const toggleWishlist = (id: string) =>
-    setWishlist((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+  const toggleWishlist = (product: Product) => {
+    const adding = !wishlist.includes(product.id);
+    setWishlist((cur) => (cur.includes(product.id) ? cur.filter((x) => x !== product.id) : [...cur, product.id]));
+    showToast(adding ? `♥ ${product.nameEn} saved to your wishlist` : `${product.nameEn} removed from wishlist`);
+  };
   const openQuickView = (product: Product) => {
     setQuickView(product);
+    setQvQty(1);
     setRecentlyViewed((cur) => [product, ...cur.filter((i) => i.id !== product.id)].slice(0, 6));
   };
 
@@ -635,17 +657,29 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               <span className={styles.countPill}>{items.length}</span>
             </div>
             <div className={styles.grid}>
-              {shown.map((p, idx) => (
+              {shown.map((p, idx) => {
+                const cartQty = cart.find((i) => i.id === p.id)?.quantity ?? 0;
+                return (
                 <article className={styles.card} key={p.id} style={{ '--card-index': idx } as React.CSSProperties}>
                   <button className={styles.cardMedia} onClick={() => openQuickView(p)} aria-label={`Quick view ${p.nameEn}`}>
                     <span className={styles.cardMediaFrame}>
                       {<ProdImg src={p.imageUrl} name={p.nameEn} category={category} iconClassName={styles.cardIcon} />}
+                      {p.inStock !== false ? (
+                        <span className={styles.quickAdd}>
+                          <span role="button" tabIndex={0} className={styles.quickAddBtn}
+                            aria-label={`Quick add ${p.nameEn} to cart`}
+                            onClick={(e) => { e.stopPropagation(); addToCart(p); }}
+                            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); addToCart(p); } }}>
+                            {addedId === p.id ? '✓ Added to cart' : '+ Quick add'}
+                          </span>
+                        </span>
+                      ) : null}
                     </span>
                     <span className={styles.wishWrap}>
                       <span role="button" tabIndex={0} aria-label={`${wishlist.includes(p.id) ? 'Remove' : 'Save'} ${p.nameEn}`}
                         className={wishlist.includes(p.id) ? styles.wishOn : styles.wish}
-                        onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }}
-                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleWishlist(p.id); } }}>
+                        onClick={(e) => { e.stopPropagation(); toggleWishlist(p); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleWishlist(p); } }}>
                         {wishlist.includes(p.id) ? '♥' : '♡'}
                       </span>
                     </span>
@@ -657,12 +691,24 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                     <h4>{p.nameEn}</h4>
                     <Stars value={ratingFor(p.id)} />
                     <div className={styles.priceRow}><strong>{money(p.priceMinor)}</strong><span>{p.unit ?? 'per item'}</span></div>
-                    <button className={addedId === p.id ? styles.addedBtn : styles.addBtn} disabled={p.inStock === false} onClick={() => addToCart(p)}>
-                      {addedId === p.id ? '✓ Added' : p.inStock === false ? 'Out of stock' : 'Add to cart'}
-                    </button>
+                    {cartQty > 0 ? (
+                      <div className={styles.cardStepper}>
+                        <div className={styles.qty}>
+                          <button onClick={() => updateQuantity(p.id, cartQty - 1)} aria-label={`Remove one ${p.nameEn}`}>−</button>
+                          <span>{cartQty}</span>
+                          <button onClick={() => updateQuantity(p.id, cartQty + 1)} aria-label={`Add one more ${p.nameEn}`}>+</button>
+                        </div>
+                        <span className={styles.inCartLbl}>in your cart</span>
+                      </div>
+                    ) : (
+                      <button className={addedId === p.id ? styles.addedBtn : styles.addBtn} disabled={p.inStock === false} onClick={() => addToCart(p)}>
+                        {addedId === p.id ? '✓ Added' : p.inStock === false ? 'Out of stock' : 'Add to cart'}
+                      </button>
+                    )}
                   </div>
                 </article>
-              ))}
+                );
+              })}
             </div>
             {items.length > shown.length ? (
               <button className={styles.viewAllBtn} onClick={() => setLimits((l) => ({ ...l, [category]: (l[category] ?? (selectedCategory === 'All products' ? 10 : 20)) + (selectedCategory === 'All products' ? items.length : 20) }))}>
@@ -712,9 +758,16 @@ export default function CatalogClient({ products }: CatalogClientProps) {
               <div className={styles.qvPrice}><strong>{money(quickView.priceMinor)}</strong><span>{quickView.unit ?? 'per item'}</span></div>
               <p className={styles.qvCopy}>Genuine product, quality-checked by OneStop. {quickView.requiresRx ? 'A valid prescription is required at checkout.' : 'Ready to ship with cash on delivery.'}</p>
               <div className={styles.qvMeta}><span>✓ In stock</span><span>✓ Ships in 24h</span><span>✓ COD available</span></div>
-              <button className={styles.addBtn} disabled={quickView.inStock === false} onClick={() => { addToCart(quickView); setQuickView(null); }}>
-                {quickView.inStock === false ? 'Out of stock' : 'Add to cart'}
-              </button>
+              <div className={styles.qvActions}>
+                <div className={styles.qty} aria-label="Choose quantity">
+                  <button onClick={() => setQvQty((q) => Math.max(1, q - 1))} aria-label="Decrease quantity">−</button>
+                  <span>{qvQty}</span>
+                  <button onClick={() => setQvQty((q) => Math.min(99, q + 1))} aria-label="Increase quantity">+</button>
+                </div>
+                <button className={styles.addBtn} disabled={quickView.inStock === false} onClick={() => { addToCartQty(quickView, qvQty); setQuickView(null); }}>
+                  {quickView.inStock === false ? 'Out of stock' : qvQty > 1 ? `Add ${qvQty} to cart` : 'Add to cart'}
+                </button>
+              </div>
             </div>
           </section>
         </div>
@@ -797,6 +850,9 @@ export default function CatalogClient({ products }: CatalogClientProps) {
           </section>
         </div>
       ) : null}
+
+      {/* Wishlist / feedback toast */}
+      {toast ? <div key={toast.id} className={styles.toast} role="status">{toast.text}</div> : null}
 
       {/* Sticky mobile cart */}
       {cartCount > 0 && !cartOpen && !checkoutOpen ? (
