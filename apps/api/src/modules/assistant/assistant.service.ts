@@ -9,10 +9,12 @@ import {
   MEDICINE_FILLER_TERMS,
   MEDICINE_TERMS,
   PlatformResult,
+  SYMPTOM_INTRO_PATTERN,
   buildProductResult,
   detectCity,
   detectMedicineClass,
   detectSpeciality,
+  detectSymptomGuide,
   extractBudget,
   extractNamedItemAvailability,
   fieldTokens,
@@ -43,6 +45,25 @@ export class AssistantService {
     const city = detectCity(query);
     const speciality = detectSpeciality(query);
     const budget = extractBudget(query);
+
+    // Symptom guide: everyday symptom language routes to the speciality that
+    // usually assesses it (never a diagnosis). Skipped when the person is
+    // clearly shopping for a product ("cream for itchy skin" stays a product).
+    const productSeeking = /\b(cream|ointment|lotion|shampoo|soap|medicine|medication|tablets?|capsules?|syrup|drops|spray|gel|balm|buy|price|cost|order)\b/i.test(query);
+    const guide = productSeeking ? null : detectSymptomGuide(query);
+    if (guide) return this.doctorResult(query, guide.speciality, city, guide.label);
+
+    // "Which doctor should I see?" / "I want to describe a symptom" before any
+    // concrete symptom is named: invite the description, in their own words.
+    if (SYMPTOM_INTRO_PATTERN.test(query) && !speciality) {
+      return {
+        reply: 'Of course — tell me what\'s bothering you, in your own words: where it is, what it feels like, and since when. For example, "my knee hurts when I climb stairs" or "burning in my stomach after meals". I\'ll point you to the right kind of specialist and show you who is bookable. One honest note: I can\'t diagnose — only a doctor can do that.',
+        products: [],
+        cards: [],
+        suggestions: ['My knee hurts on stairs', 'Burning in my stomach after meals', 'Itchy skin rash', "I can't sleep well"],
+        source: 'live_platform',
+      } satisfies PlatformResult;
+    }
 
     const intent = this.detectIntent(lower, speciality);
     if (intent === 'blood') return this.bloodResult(city);
@@ -111,7 +132,11 @@ export class AssistantService {
     return 'general';
   }
 
-  private async doctorResult(query: string, speciality: string | null, city: string | null): Promise<PlatformResult> {
+  private article(speciality: string): string {
+    return /^[AEIOU]/i.test(speciality) ? `an ${speciality}` : `a ${speciality}`;
+  }
+
+  private async doctorResult(query: string, speciality: string | null, city: string | null, guideLabel?: string): Promise<PlatformResult> {
     const doctors = await this.prisma.doctorProfile.findMany({
       where: { isBookable: true },
       include: {
@@ -177,8 +202,12 @@ export class AssistantService {
     let reply: string;
     if (emergency) {
       reply = `This can be an emergency—please seek urgent medical care or call your local emergency service now. I have also listed bookable ${focus} doctors below if follow-up care is needed.`;
+    } else if (guideLabel && speciality) {
+      reply = cards.length
+        ? `I can't diagnose — only a doctor can. For ${guideLabel}, people usually see ${this.article(speciality)} specialist. Here ${cards.length === 1 ? 'is a bookable option' : 'are bookable options'}${locationText} — open a card to pick a time:`
+        : `I can't diagnose — only a doctor can. For ${guideLabel}, people usually see ${this.article(speciality)} specialist, but I could not find a bookable one${locationText} in the current listings.`;
     } else if (symptomLed && speciality) {
-      reply = `I can’t diagnose symptoms, but a ${speciality} specialist can assess this properly. ${cards.length ? `Here ${cards.length === 1 ? 'is a bookable option' : 'are bookable options'}${locationText}:` : `I could not find a bookable ${speciality} doctor${locationText} in the current listings.`}`;
+      reply = `I can’t diagnose symptoms, but ${this.article(speciality)} specialist can assess this properly. ${cards.length ? `Here ${cards.length === 1 ? 'is a bookable option' : 'are bookable options'}${locationText}:` : `I could not find a bookable ${speciality} doctor${locationText} in the current listings.`}`;
     } else if (cards.length) {
       reply = `I found ${cards.length} bookable ${focus}${cards.length === 1 ? '' : 's'}${locationText}. Fees are shown on each card, and you can open one to choose an appointment time.`;
     } else {

@@ -52,6 +52,7 @@ type ChatMessage = {
 const STORAGE_KEY = 'onestop-assistant-chat';
 const MAX_STORED_MESSAGES = 30;
 const QUICK_ACTIONS = [
+  'Which doctor should I see for a symptom?',
   'Find a cardiologist in Lahore',
   'I need paracetamol',
   'Book a CBC test',
