@@ -5,7 +5,6 @@ import { FACILITY_FALLBACK, FACILITY_STYLE, SectionIcon } from '../components/ho
 import HeroSearch from '../components/home/HeroSearch';
 import HomeAccountBar from '../components/home/HomeAccountBar';
 import Reveal from '../components/home/Reveal';
-import CountUp from '../components/home/CountUp';
 import Ticker from '../components/home/Ticker';
 import HeroParallax from '../components/home/HeroParallax';
 import ActivityToast from '../components/home/ActivityToast';
@@ -172,7 +171,7 @@ export default async function HomePage() {
           <section className={styles.liveStrip} aria-label="Live on OneStop Life">
             <span className={styles.liveBadge}><span className={styles.liveDot} aria-hidden="true" />Live on OneStop</span>
             <div className={styles.liveStats}>
-              {liveStats.map((s) => <span key={s.label} className={styles.liveStat}><strong><CountUp end={s.value} /></strong> {s.label}</span>)}
+              {liveStats.map((s) => <span key={s.label} className={styles.liveStat}><strong>{s.value.toLocaleString('en-PK')}</strong> {s.label}</span>)}
             </div>
             <span className={styles.liveUpdated}><SectionIcon name="check" size={15} /> Updated today</span>
           </section>
