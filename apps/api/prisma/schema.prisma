@@ -132,6 +132,7 @@ model User {
   id              String     @id @default(uuid()) @db.Uuid
   phone           String?    @unique // E.164 when supplied; email accounts may add a phone later
   email           String?    @unique
+  googleSub       String?    @unique // Google OAuth subject id for "Continue with Google"
   passwordHash    String?
   name            String?
   locale          Locale     @default(en)
