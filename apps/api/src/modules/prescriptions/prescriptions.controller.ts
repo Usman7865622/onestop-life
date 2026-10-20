@@ -21,6 +21,11 @@ export class PrescriptionsController {
     return this.prescriptions.listMine(user);
   }
 
+  @Get('refills/mine')
+  refillsMine(@CurrentUser() user: AuthUser) {
+    return this.prescriptions.refillsMine(user);
+  }
+
   @Get('doctor/mine')
   @Roles(RoleKey.DOCTOR, RoleKey.ADMIN)
   doctorMine(@CurrentUser() user: AuthUser) {
