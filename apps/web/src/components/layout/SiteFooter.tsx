@@ -23,6 +23,8 @@ export default function SiteFooter() {
           <Link href="/facilities">Hospitals, clinics & labs</Link>
           <Link href="/labs">Lab tests at home</Link>
           <Link href="/blood">Blood banks & requests</Link>
+          <Link href="/about">About OneStop Life</Link>
+          <Link href="/how-we-verify">How we verify</Link>
           <Link href="/login">Login / Sign up</Link>
           <Link href="/dashboard">My dashboard</Link>
           <Link href="/cart">Your shopping cart</Link>
@@ -61,6 +63,8 @@ export default function SiteFooter() {
           <span>&copy; {new Date().getFullYear()} OneStop Life. All rights reserved. &middot; Carefully chosen. Clearly delivered.</span>
           <span>
             <Link href="/privacy" style={{ color: 'inherit', marginRight: 16 }}>Privacy Policy</Link>
+            <Link href="/terms" style={{ color: 'inherit', marginRight: 16 }}>Terms of Service</Link>
+            <Link href="/refunds" style={{ color: 'inherit', marginRight: 16 }}>Refund Policy</Link>
             <Link href="/contact" style={{ color: 'inherit' }}>Contact Us</Link>
           </span>
         </div>

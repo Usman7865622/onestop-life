@@ -16,6 +16,10 @@ const STATIC_ROUTES = [
   '/pharmacy',
   '/products',
   '/privacy',
+  '/terms',
+  '/refunds',
+  '/about',
+  '/how-we-verify',
   '/contact',
 ];
 
