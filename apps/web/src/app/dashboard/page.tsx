@@ -36,7 +36,7 @@ type AdminOverview = {
   users: { total: number; newToday: number; newThisWeek: number; byRole: Record<string, number>; recent: Array<{ id: string; name: string | null; phone: string | null; email: string | null; roles: string[]; createdAt: string }> };
   verification: { byStatus: Record<string, number> };
   orders: { total: number; today: number; revenueMinor: number; byStatus: Record<string, number>; rxPending: number };
-  catalogue: { total: number; inStock: number; outOfStock: number; outOfStockItems: Array<{ id: string; nameEn: string; category: string | null }>; medicines: number; rxMedicines: number };
+  catalogue: { total: number; inStock: number; outOfStock: number; outOfStockItems: Array<{ id: string; nameEn: string; category: string | null }>; medicines: number; rxMedicines: number; byCategory: Array<{ category: string; total: number; inStock: number }> };
   platform: { doctors: number; facilities: number; appointmentsToday: number };
   monthly: Array<{ month: string; registrations: number; orders: number; revenueMinor: number }>;
 };
@@ -692,6 +692,13 @@ export default function DashboardPage() {
                           </div>
                         )) : <p className={styles.emptyStateInline}>No accounts yet.</p>}
                         </div>
+                        {Object.keys(adminOverview.users.byRole).length ? (
+                          <p className={styles.roleMix}>
+                            {Object.entries(adminOverview.users.byRole).sort((a, b) => b[1] - a[1]).map(([role, count]) => (
+                              <span key={role}><em>{role.replaceAll('_', ' ')}</em> {count}</span>
+                            ))}
+                          </p>
+                        ) : null}
                       </div>
                       <div className={`${styles.adminBlock} ${styles.adminPanel}`}>
                         <h3 className={styles.adminBlockTitle}>Inventory snapshot</h3>
@@ -699,6 +706,13 @@ export default function DashboardPage() {
                           <i style={{ width: `${adminOverview.catalogue.total ? Math.round((adminOverview.catalogue.inStock / adminOverview.catalogue.total) * 100) : 0}%` }} />
                         </div>
                         <p className={styles.adminStockLine}><strong>{adminOverview.catalogue.inStock}</strong> in stock · <strong>{adminOverview.catalogue.outOfStock}</strong> out of stock</p>
+                        {adminOverview.catalogue.byCategory.map((cat) => (
+                          <div className={styles.catRow} key={cat.category}>
+                            <span className={styles.catName}>{cat.category}</span>
+                            <span className={styles.catBar}><i style={{ width: `${cat.total ? Math.round((cat.inStock / cat.total) * 100) : 0}%` }} /></span>
+                            <span className={styles.catCount}>{cat.inStock}/{cat.total}</span>
+                          </div>
+                        ))}
                         {adminOverview.catalogue.outOfStockItems.length ? (
                           <>
                             <p className={styles.adminStockLabel}>Out of stock right now:</p>
