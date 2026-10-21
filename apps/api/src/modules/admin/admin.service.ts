@@ -54,7 +54,7 @@ export class AdminService {
     const [
       usersTotal, usersToday, usersWeek, roleRows, recentRegistrations,
       verificationRows, ordersTotal, ordersToday, revenueAgg, orderStatusRows, rxPending,
-      productsTotal, productsInStock, outOfStock, medicinesCount, rxMedicinesCount,
+      productsTotal, productsInStock, outOfStock, medicinesCount, rxMedicinesCount, categoryRows, categoryStockRows,
       doctorsTotal, facilitiesTotal, appointmentsToday,
       userDates, orderRows,
     ] = await Promise.all([
@@ -89,6 +89,8 @@ export class AdminService {
       }),
       this.prisma.product.count({ where: { therapeuticClass: { not: null } } }),
       this.prisma.product.count({ where: { requiresRx: true } }),
+      this.prisma.product.groupBy({ by: ['category'], _count: { _all: true } }),
+      this.prisma.product.groupBy({ by: ['category'], where: { inStock: true }, _count: { _all: true } }),
       this.prisma.doctorProfile.count(),
       this.prisma.facility.count(),
       this.prisma.appointment.count({
@@ -106,6 +108,14 @@ export class AdminService {
       for (const row of rows) out[String(row[field] as T)] = row._count._all;
       return out;
     };
+
+    const inStockByCategory = new Map(categoryStockRows.map((r) => [r.category ?? 'Other', r._count._all]));
+    const byCategory = categoryRows
+      .map((r) => {
+        const category = r.category ?? 'Other';
+        return { category, total: r._count._all, inStock: inStockByCategory.get(category) ?? 0 };
+      })
+      .sort((a, b) => b.total - a.total);
 
     return {
       users: {
@@ -139,6 +149,7 @@ export class AdminService {
         outOfStockItems: outOfStock,
         medicines: medicinesCount,
         rxMedicines: rxMedicinesCount,
+        byCategory,
       },
       platform: {
         doctors: doctorsTotal,
