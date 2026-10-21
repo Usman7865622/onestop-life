@@ -68,6 +68,8 @@
 .adminTile span { color: #22314a; font-weight: 700; font-size: .85rem; }
 .adminTile small { color: var(--muted); font-size: .76rem; }
 .adminBlock { margin-bottom: 20px; }
+.adminPanel { border: 1px solid var(--line); border-radius: 14px; background: #fbfdff; padding: 16px; margin-bottom: 0; }
+.adminRegList { max-height: 328px; overflow-y: auto; padding-right: 4px; }
 .adminBlockTitle { margin: 0 0 10px; font-size: 1rem; color: #22314a; }
 .adminChart { width: 100%; height: auto; background: #fbfdff; border: 1px solid var(--line); border-radius: 14px; padding: 6px 4px 0; }
 .adminLegend { display: flex; gap: 18px; flex-wrap: wrap; margin: 8px 0 0; color: var(--muted); font-size: .78rem; }

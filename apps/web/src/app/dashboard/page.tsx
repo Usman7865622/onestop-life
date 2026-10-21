@@ -653,16 +653,21 @@ export default function DashboardPage() {
                         return (
                           <>
                             <svg className={styles.adminChart} viewBox="0 0 560 158" role="img" aria-label="Registrations and orders per month for the last six months">
+                              {[21, 42, 63, 84].map((h) => (
+                                <line key={h} x1={4} x2={556} y1={108 - h} y2={108 - h} stroke="#edf1f6" strokeWidth={1} />
+                              ))}
                               {points.map((p, i) => {
                                 const gx = i * 93 + 8;
-                                const regH = Math.round((p.registrations / maxValue) * 96);
-                                const ordH = Math.round((p.orders / maxValue) * 96);
+                                const regH = Math.round((p.registrations / maxValue) * 84);
+                                const ordH = Math.round((p.orders / maxValue) * 84);
                                 return (
                                   <g key={p.month}>
-                                    <rect x={gx + 12} y={108 - regH} width={26} height={regH} rx={4} fill="#166a91" />
-                                    <rect x={gx + 44} y={108 - ordH} width={26} height={ordH} rx={4} fill="#f7b928" />
+                                    <rect x={gx + 12} y={108 - Math.max(regH, 3)} width={26} height={Math.max(regH, 3)} rx={3} fill={p.registrations ? '#166a91' : '#d7e0e8'} />
+                                    <rect x={gx + 44} y={108 - Math.max(ordH, 3)} width={26} height={Math.max(ordH, 3)} rx={3} fill={p.orders ? '#f7b928' : '#e8e2d2'} />
+                                    <text x={gx + 25} y={100 - regH} textAnchor="middle" fontSize={10.5} fontWeight={700} fill="#166a91">{p.registrations}</text>
+                                    <text x={gx + 57} y={100 - ordH} textAnchor="middle" fontSize={10.5} fontWeight={700} fill="#a8740a">{p.orders}</text>
                                     <text x={gx + 41} y={126} textAnchor="middle" fontSize={11} fill="#5b6b7f">{monthName(p.month)}</text>
-                                    <text x={gx + 41} y={144} textAnchor="middle" fontSize={10.5} fill="#166a91" fontWeight={700}>{compactRs(p.revenueMinor)}</text>
+                                    <text x={gx + 41} y={144} textAnchor="middle" fontSize={10.5} fill="#166a91" fontWeight={700}>{p.revenueMinor > 0 ? compactRs(p.revenueMinor) : '—'}</text>
                                   </g>
                                 );
                               })}
@@ -675,8 +680,9 @@ export default function DashboardPage() {
                     </div>
 
                     <div className={styles.adminColumns}>
-                      <div className={styles.adminBlock}>
+                      <div className={`${styles.adminBlock} ${styles.adminPanel}`}>
                         <h3 className={styles.adminBlockTitle}>Newest registrations</h3>
+                        <div className={styles.adminRegList}>
                         {adminOverview.users.recent.length ? adminOverview.users.recent.map((person) => (
                           <div className={styles.adminRow} key={person.id}>
                             <strong>{person.name || 'Unnamed'}</strong>
@@ -685,8 +691,9 @@ export default function DashboardPage() {
                             <time>{new Date(person.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' })}</time>
                           </div>
                         )) : <p className={styles.emptyStateInline}>No accounts yet.</p>}
+                        </div>
                       </div>
-                      <div className={styles.adminBlock}>
+                      <div className={`${styles.adminBlock} ${styles.adminPanel}`}>
                         <h3 className={styles.adminBlockTitle}>Inventory snapshot</h3>
                         <div className={styles.stockBar} role="img" aria-label={`${adminOverview.catalogue.inStock} of ${adminOverview.catalogue.total} products in stock`}>
                           <i style={{ width: `${adminOverview.catalogue.total ? Math.round((adminOverview.catalogue.inStock / adminOverview.catalogue.total) * 100) : 0}%` }} />
