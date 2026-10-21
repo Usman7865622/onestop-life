@@ -32,6 +32,15 @@ type VerificationRequest = {
 type MyVerificationRequest = Omit<VerificationRequest, 'user'>;
 type VerificationQueue = { items: VerificationRequest[]; total: number };
 
+type AdminOverview = {
+  users: { total: number; newToday: number; newThisWeek: number; byRole: Record<string, number>; recent: Array<{ id: string; name: string | null; phone: string | null; email: string | null; roles: string[]; createdAt: string }> };
+  verification: { byStatus: Record<string, number> };
+  orders: { total: number; today: number; revenueMinor: number; byStatus: Record<string, number>; rxPending: number };
+  catalogue: { total: number; inStock: number; outOfStock: number; outOfStockItems: Array<{ id: string; nameEn: string; category: string | null }>; medicines: number; rxMedicines: number };
+  platform: { doctors: number; facilities: number; appointmentsToday: number };
+  monthly: Array<{ month: string; registrations: number; orders: number; revenueMinor: number }>;
+};
+
 type MyOrder = {
   id: string;
   status: string;
@@ -164,6 +173,7 @@ export default function DashboardPage() {
   const [sellerImage, setSellerImage] = useState('');
 
   const [queue, setQueue] = useState<VerificationRequest[]>([]);
+  const [adminOverview, setAdminOverview] = useState<AdminOverview | null>(null);
   const [rejectNotes, setRejectNotes] = useState<Record<string, string>>({});
   const [myOrders, setMyOrders] = useState<MyOrder[]>([]);
   const [rxQueue, setRxQueue] = useState<RxQueueOrder[]>([]);
@@ -212,6 +222,7 @@ export default function DashboardPage() {
       void apiFetch<VerificationQueue>('/admin/verification-requests?status=PENDING&page=1&pageSize=50', { method: 'GET' }, accessToken)
         .then((result) => setQueue(result.items))
         .catch((e) => setError(e instanceof Error ? e.message : 'Unable to load verification queue.'));
+      void apiFetch<AdminOverview>('/admin/overview', { method: 'GET' }, accessToken).then(setAdminOverview).catch(() => setAdminOverview(null));
     }
     void apiFetch<MyOrder[]>('/orders/mine', { method: 'GET' }, accessToken).then(setMyOrders).catch(() => setMyOrders([]));
     if (hasRole(user, 'PHARMACY', 'ADMIN')) {
@@ -621,7 +632,81 @@ export default function DashboardPage() {
             <PanelTitle id="admin-heading" icon="shield" title="Admin control centre" sub="Review trust applications and keep the marketplace safe." />
             {isAdmin ? (
               <>
-                <div className={styles.adminStats}><div><strong>{queue.length}</strong><span>pending reviews</span></div><Link href="/products">Open catalogue →</Link></div>
+                {adminOverview ? (
+                  <>
+                    <div className={styles.adminTiles}>
+                      <div className={styles.adminTile}><strong>{adminOverview.users.total}</strong><span>Registered accounts</span><small>+{adminOverview.users.newToday} today · +{adminOverview.users.newThisWeek} this week</small></div>
+                      <div className={styles.adminTile}><strong>{queue.length + adminOverview.orders.rxPending}</strong><span>Approvals waiting</span><small>{queue.length} professional · {adminOverview.orders.rxPending} prescription</small></div>
+                      <div className={styles.adminTile}><strong>{adminOverview.orders.total}</strong><span>Orders placed</span><small>{money(adminOverview.orders.revenueMinor)} revenue · {adminOverview.orders.today} today</small></div>
+                      <div className={styles.adminTile}><strong>{adminOverview.catalogue.inStock}/{adminOverview.catalogue.total}</strong><span>Products in stock</span><small>{adminOverview.catalogue.medicines} medicines · {adminOverview.catalogue.rxMedicines} need a prescription</small></div>
+                      <div className={styles.adminTile}><strong>{adminOverview.platform.doctors}</strong><span>Verified doctors</span><small>{adminOverview.platform.facilities} facilities listed</small></div>
+                      <div className={styles.adminTile}><strong>{adminOverview.platform.appointmentsToday}</strong><span>Appointments today</span><small>Across all clinics</small></div>
+                    </div>
+
+                    <div className={styles.adminBlock}>
+                      <h3 className={styles.adminBlockTitle}>Monthly progress</h3>
+                      {(() => {
+                        const points = adminOverview.monthly;
+                        const maxValue = Math.max(1, ...points.flatMap((p) => [p.registrations, p.orders]));
+                        const monthName = (key: string) => new Date(`${key}-02T00:00:00`).toLocaleDateString('en-PK', { month: 'short' });
+                        const compactRs = (minor: number) => { const rs = minor / 100; return rs >= 1000 ? `Rs. ${(rs / 1000).toFixed(1)}k` : `Rs. ${Math.round(rs)}`; };
+                        return (
+                          <>
+                            <svg className={styles.adminChart} viewBox="0 0 560 158" role="img" aria-label="Registrations and orders per month for the last six months">
+                              {points.map((p, i) => {
+                                const gx = i * 93 + 8;
+                                const regH = Math.round((p.registrations / maxValue) * 96);
+                                const ordH = Math.round((p.orders / maxValue) * 96);
+                                return (
+                                  <g key={p.month}>
+                                    <rect x={gx + 12} y={108 - regH} width={26} height={regH} rx={4} fill="#166a91" />
+                                    <rect x={gx + 44} y={108 - ordH} width={26} height={ordH} rx={4} fill="#f7b928" />
+                                    <text x={gx + 41} y={126} textAnchor="middle" fontSize={11} fill="#5b6b7f">{monthName(p.month)}</text>
+                                    <text x={gx + 41} y={144} textAnchor="middle" fontSize={10.5} fill="#166a91" fontWeight={700}>{compactRs(p.revenueMinor)}</text>
+                                  </g>
+                                );
+                              })}
+                              <line x1={4} x2={556} y1={108} y2={108} stroke="#dfe6ee" strokeWidth={1.5} />
+                            </svg>
+                            <p className={styles.adminLegend}><span><i style={{ background: '#166a91' }} /> New accounts</span><span><i style={{ background: '#f7b928' }} /> Orders</span><span>Label under each month: revenue</span></p>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    <div className={styles.adminColumns}>
+                      <div className={styles.adminBlock}>
+                        <h3 className={styles.adminBlockTitle}>Newest registrations</h3>
+                        {adminOverview.users.recent.length ? adminOverview.users.recent.map((person) => (
+                          <div className={styles.adminRow} key={person.id}>
+                            <strong>{person.name || 'Unnamed'}</strong>
+                            <span>{person.phone || person.email || ''}</span>
+                            <span className={styles.adminRoleChips}>{person.roles.map((role) => <em key={role}>{role.replaceAll('_', ' ')}</em>)}</span>
+                            <time>{new Date(person.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' })}</time>
+                          </div>
+                        )) : <p className={styles.emptyStateInline}>No accounts yet.</p>}
+                      </div>
+                      <div className={styles.adminBlock}>
+                        <h3 className={styles.adminBlockTitle}>Inventory snapshot</h3>
+                        <div className={styles.stockBar} role="img" aria-label={`${adminOverview.catalogue.inStock} of ${adminOverview.catalogue.total} products in stock`}>
+                          <i style={{ width: `${adminOverview.catalogue.total ? Math.round((adminOverview.catalogue.inStock / adminOverview.catalogue.total) * 100) : 0}%` }} />
+                        </div>
+                        <p className={styles.adminStockLine}><strong>{adminOverview.catalogue.inStock}</strong> in stock · <strong>{adminOverview.catalogue.outOfStock}</strong> out of stock</p>
+                        {adminOverview.catalogue.outOfStockItems.length ? (
+                          <>
+                            <p className={styles.adminStockLabel}>Out of stock right now:</p>
+                            {adminOverview.catalogue.outOfStockItems.map((item) => (
+                              <div className={styles.adminRow} key={item.id}><strong>{item.nameEn}</strong><span>{item.category ?? ''}</span></div>
+                            ))}
+                          </>
+                        ) : <p className={styles.emptyStateInline}>Everything in the catalogue is in stock.</p>}
+                      </div>
+                    </div>
+                    <h3 className={styles.adminBlockTitle}>Professional approvals — who is asking</h3>
+                  </>
+                ) : (
+                  <div className={styles.adminStats}><div><strong>{queue.length}</strong><span>pending reviews</span></div><Link href="/products">Open catalogue →</Link></div>
+                )}
                 {queue.length ? (
                   <div className={styles.queueList}>
                     {queue.map((request) => (
