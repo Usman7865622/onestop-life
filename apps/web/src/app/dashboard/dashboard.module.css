@@ -62,6 +62,32 @@
 .note a { color: var(--accent); font-weight: 900; }
 .sellerGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
 .adminStats { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
+.adminTiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.adminTile { display: grid; gap: 2px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdff; }
+.adminTile strong { color: var(--accent); font-size: 1.5rem; line-height: 1.1; }
+.adminTile span { color: #22314a; font-weight: 700; font-size: .85rem; }
+.adminTile small { color: var(--muted); font-size: .76rem; }
+.adminBlock { margin-bottom: 20px; }
+.adminBlockTitle { margin: 0 0 10px; font-size: 1rem; color: #22314a; }
+.adminChart { width: 100%; height: auto; background: #fbfdff; border: 1px solid var(--line); border-radius: 14px; padding: 6px 4px 0; }
+.adminLegend { display: flex; gap: 18px; flex-wrap: wrap; margin: 8px 0 0; color: var(--muted); font-size: .78rem; }
+.adminLegend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+.adminColumns { display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px; }
+.adminRow { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eef2f6; font-size: .86rem; }
+.adminRow strong { color: #22314a; }
+.adminRow span { color: var(--muted); }
+.adminRow time { margin-left: auto; color: var(--muted); font-size: .78rem; white-space: nowrap; }
+.adminRoleChips { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.adminRoleChips em { font-style: normal; font-size: .66rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: #166a91; background: #e7f2f8; border-radius: 999px; padding: 2px 8px; }
+.stockBar { height: 12px; border-radius: 999px; background: #f3d9d4; overflow: hidden; margin-bottom: 8px; }
+.stockBar i { display: block; height: 100%; background: #1e9e6a; border-radius: 999px; }
+.adminStockLine { margin: 0 0 8px; color: var(--muted); font-size: .85rem; }
+.adminStockLine strong { color: #22314a; }
+.adminStockLabel { margin: 10px 0 2px; color: #22314a; font-weight: 700; font-size: .85rem; }
+@media (max-width: 760px) {
+  .adminTiles { grid-template-columns: repeat(2, 1fr); }
+  .adminColumns { grid-template-columns: 1fr; }
+}
 .adminStats div { display: grid; gap: 2px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 14px; background: #fbfdff; }
 .adminStats strong { color: var(--accent); font-size: 1.4rem; }
 .adminStats span { color: var(--muted); font-size: .78rem; }

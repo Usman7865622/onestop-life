@@ -9,6 +9,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { ProductsModule } from './modules/products/products.module';
 import { UsersModule } from './modules/users/users.module';
 import { VerificationModule } from './modules/verification/verification.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
@@ -36,6 +37,7 @@ import { PrescriptionsModule } from './modules/prescriptions/prescriptions.modul
     AuthModule,
     UsersModule,
     VerificationModule,
+    AdminModule,
     PaymentsModule,
     ProductsModule,
     OrdersModule,
