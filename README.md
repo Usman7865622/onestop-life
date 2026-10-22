@@ -75,3 +75,5 @@ curl localhost:4000/orders/mine -H "Authorization: Bearer $TOKEN"
 - Set `COOKIE_SECURE=true`, real secrets, `TRUST_PROXY=true` only if behind a reverse proxy.
 - Serve web and API on the same registrable domain (app.example.pk / api.example.pk) because the
   refresh cookie is `SameSite=Lax`.
+
+Assistant languages: English, Urdu (script), and Roman Urdu.
