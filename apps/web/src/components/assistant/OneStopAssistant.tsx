@@ -58,6 +58,8 @@ const QUICK_ACTIONS = [
   'Book a CBC test',
   'Blood needed urgently',
   'Trending products',
+  'میرے گھٹنے میں درد ہے',
+  'Mujhe bukhar ki dawa chahiye',
 ];
 
 const CARD_LABELS: Record<AssistantCard['type'], string> = {
