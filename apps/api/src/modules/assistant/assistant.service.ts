@@ -4,17 +4,24 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ProductsService } from '../products/products.service';
 import { AssistantMessageDto } from './dto/assistant-chat.dto';
 import {
+  ASSISTANT_STRINGS,
   AssistantCard,
+  AssistantLang,
+  GUIDE_LABELS,
   LegacyProduct,
   MEDICINE_FILLER_TERMS,
   MEDICINE_TERMS,
   PlatformResult,
   SYMPTOM_INTRO_PATTERN,
+  URDU_EMERGENCY_PATTERN,
   buildProductResult,
+  detectAssistantLanguage,
   detectCity,
   detectMedicineClass,
   detectSpeciality,
   detectSymptomGuide,
+  detectUrduSpeciality,
+  detectUrduSymptomGuide,
   extractBudget,
   extractNamedItemAvailability,
   fieldTokens,
@@ -24,7 +31,10 @@ import {
   queryMentionsPhrase,
   searchTerms,
   titleCase,
+  translateUrduQuery,
 } from './assistant.helpers';
+
+const URDU_INTRO_PATTERN = /(کون سا|کونسا|کس) ڈاکٹر (دیکھوں|دیکھوں؟|سے ملوں|کے پاس جاؤں|چاہیے)|\bkonsa doctor\b|\bkaun ?sa doctor\b|\bkis doctor (ke paas|ko|se)\b/i;
 
 @Injectable()
 export class AssistantService {
@@ -41,74 +51,83 @@ export class AssistantService {
     }
 
     const query = lastMessage.content.trim();
-    const lower = query.toLowerCase();
-    const city = detectCity(query);
-    const speciality = detectSpeciality(query);
+    // Urdu (script or Roman) is detected on the raw message; routing then runs
+    // on an English translation so every existing detector/search is reused,
+    // while replies are rendered in the user's own language and script.
+    const lang = detectAssistantLanguage(query);
+    const routing = lang === 'en' ? query : translateUrduQuery(query, lang);
+    const lower = routing.toLowerCase();
+    const city = detectCity(routing);
+    const speciality = detectUrduSpeciality(query) ?? detectSpeciality(routing);
     const budget = extractBudget(query);
+    const S = ASSISTANT_STRINGS[lang];
 
     // Symptom guide: everyday symptom language routes to the speciality that
     // usually assesses it (never a diagnosis). Skipped when the person is
     // clearly shopping for a product ("cream for itchy skin" stays a product).
-    const productSeeking = /\b(cream|ointment|lotion|shampoo|soap|medicine|medication|tablets?|capsules?|syrup|drops|spray|gel|balm|buy|price|cost|order)\b/i.test(query);
-    const guide = productSeeking ? null : detectSymptomGuide(query);
-    if (guide) return this.doctorResult(query, guide.speciality, city, guide.label);
+    const productSeeking = /\b(cream|ointment|lotion|shampoo|soap|medicine|medication|tablets?|capsules?|syrup|drops|spray|gel|balm|buy|price|cost|order)\b/i.test(routing);
+    const urduGuide = lang === 'en' || productSeeking ? null : detectUrduSymptomGuide(query);
+    let guide = productSeeking ? null : detectSymptomGuide(routing);
+    if (urduGuide) guide = { speciality: urduGuide, label: GUIDE_LABELS[lang][urduGuide] ?? urduGuide };
+    else if (guide && lang !== 'en') guide = { speciality: guide.speciality, label: GUIDE_LABELS[lang][guide.speciality] ?? guide.label };
+    if (guide) return this.doctorResult(routing, guide.speciality, city, guide.label, lang, query);
 
     // "Which doctor should I see?" / "I want to describe a symptom" before any
     // concrete symptom is named: invite the description, in their own words.
-    if (SYMPTOM_INTRO_PATTERN.test(query) && !speciality) {
+    if ((SYMPTOM_INTRO_PATTERN.test(routing) || URDU_INTRO_PATTERN.test(query)) && !speciality) {
       return {
-        reply: 'Of course — tell me what\'s bothering you, in your own words: where it is, what it feels like, and since when. For example, "my knee hurts when I climb stairs" or "burning in my stomach after meals". I\'ll point you to the right kind of specialist and show you who is bookable. One honest note: I can\'t diagnose — only a doctor can do that.',
+        reply: S.symptomIntro,
         products: [],
         cards: [],
-        suggestions: ['My knee hurts on stairs', 'Burning in my stomach after meals', 'Itchy skin rash', "I can't sleep well"],
+        suggestions: S.symptomIntroSuggestions,
         source: 'live_platform',
       } satisfies PlatformResult;
     }
 
     const intent = this.detectIntent(lower, speciality);
-    if (intent === 'blood') return this.bloodResult(city);
-    if (intent === 'labs') return this.labResult(query, city);
-    if (intent === 'doctors') return this.doctorResult(query, speciality, city);
-    if (intent === 'medicines') return this.medicineResult(query, budget);
-    if (intent === 'facilities') return this.facilityResult(query, city);
+    if (intent === 'blood') return this.bloodResult(city, lang);
+    if (intent === 'labs') return this.labResult(routing, city, lang);
+    if (intent === 'doctors') return this.doctorResult(routing, speciality, city, undefined, lang, query);
+    if (intent === 'medicines') return this.medicineResult(routing, budget, lang);
+    if (intent === 'facilities') return this.facilityResult(routing, city, lang);
 
-    const productMatches = await this.products.searchForAssistant(query, null, budget) as LegacyProduct[];
+    const productMatches = await this.products.searchForAssistant(routing, null, budget) as LegacyProduct[];
 
     // Named-item availability questions ("Do you sell Xanax?", "Is X available?")
     // reach this point only when no medicine/doctor/lab match was found. The legacy
     // product search matches loosely, so keep only products whose name/generic/
     // brand genuinely contain the item term — and answer honestly when none do,
     // instead of padding the reply with unrelated "matches".
-    const availabilityItem = extractNamedItemAvailability(query);
+    const availabilityItem = extractNamedItemAvailability(routing);
     if (availabilityItem) {
       const verifiedMatches = await this.filterToNamedItem(productMatches, availabilityItem.terms);
       if (!verifiedMatches.length) {
         return {
-          reply: `I couldn't find “${availabilityItem.label}” in the live OneStop catalogue right now. Check the spelling, try the generic name if it has one, or ask me for alternatives by category — for example, “mental health medicines” or “pain relief”.`,
+          reply: S.availabilityMissing(availabilityItem.label),
           products: [],
           cards: [],
-          suggestions: ['Find medicines', 'Trending products', 'Products under Rs. 1,000', 'Find a doctor'],
+          suggestions: S.availabilitySuggestions,
           source: 'live_catalog',
         } satisfies PlatformResult;
       }
-      return buildProductResult(verifiedMatches, budget);
+      return buildProductResult(verifiedMatches, budget, lang);
     }
 
-    if (productMatches.length && (intent === 'products' || isShoppingQuestion(query) || !query.includes('?'))) {
-      return buildProductResult(productMatches, budget);
+    if (productMatches.length && (intent === 'products' || isShoppingQuestion(routing) || !routing.includes('?'))) {
+      return buildProductResult(productMatches, budget, lang);
     }
 
     if (intent === 'products') {
       return {
-        reply: 'I could not find a live in-stock product match for that yet. Try a product name, category, or budget—for example, “vitamins under Rs. 1,000”.',
+        reply: S.productsMissing,
         products: [],
         cards: [],
-        suggestions: ['Trending products', 'Products under Rs. 1,000', 'Find medicines', 'Find a doctor'],
+        suggestions: S.productsMissingSuggestions,
         source: 'live_catalog',
       } satisfies PlatformResult;
     }
 
-    return this.fallback(messages, query);
+    return this.fallback(messages, query, lang);
   }
 
   private detectIntent(lower: string, speciality: string | null): 'blood' | 'labs' | 'doctors' | 'medicines' | 'facilities' | 'products' | 'general' {
@@ -132,11 +151,8 @@ export class AssistantService {
     return 'general';
   }
 
-  private article(speciality: string): string {
-    return /^[AEIOU]/i.test(speciality) ? `an ${speciality}` : `a ${speciality}`;
-  }
-
-  private async doctorResult(query: string, speciality: string | null, city: string | null, guideLabel?: string): Promise<PlatformResult> {
+  private async doctorResult(query: string, speciality: string | null, city: string | null, guideLabel?: string, lang: AssistantLang = 'en', originalQuery: string = query): Promise<PlatformResult> {
+    const S = ASSISTANT_STRINGS[lang];
     const doctors = await this.prisma.doctorProfile.findMany({
       where: { isBookable: true },
       include: {
@@ -193,25 +209,28 @@ export class AssistantService {
       };
     });
 
-    const emergency = /\b(chest pain|chest pressure|difficulty breathing|trouble breathing|stroke|unconscious|severe bleeding|suicidal|suicide)\b/i.test(query);
+    const emergency = /\b(chest pain|chest pressure|difficulty breathing|trouble breathing|stroke|unconscious|severe bleeding|suicidal|suicide)\b/i.test(query)
+      || URDU_EMERGENCY_PATTERN.test(originalQuery);
     const symptomLed = /\b(pain|ache|fever|rash|problem|issue|infection|swelling|vomiting|diarrh(o)?ea|anxiety|depression|stress|insomnia|toothache|vision)\b/i.test(query)
       && !/\b(find|book|appointment|doctor|specialist)\b/i.test(query);
     const focus = speciality ?? 'doctor';
-    const locationText = city ? ` in ${city}` : '';
+    const cityText = city ? S.cityText(city) : '';
 
     let reply: string;
     if (emergency) {
-      reply = `This can be an emergency—please seek urgent medical care or call your local emergency service now. I have also listed bookable ${focus} doctors below if follow-up care is needed.`;
+      reply = S.emergency(focus);
     } else if (guideLabel && speciality) {
       reply = cards.length
-        ? `I can't diagnose — only a doctor can. For ${guideLabel}, people usually see ${this.article(speciality)} specialist. Here ${cards.length === 1 ? 'is a bookable option' : 'are bookable options'}${locationText} — open a card to pick a time:`
-        : `I can't diagnose — only a doctor can. For ${guideLabel}, people usually see ${this.article(speciality)} specialist, but I could not find a bookable one${locationText} in the current listings.`;
+        ? S.guideFound(guideLabel, speciality, cards.length, cityText)
+        : S.guideNone(guideLabel, speciality, cityText);
     } else if (symptomLed && speciality) {
-      reply = `I can’t diagnose symptoms, but ${this.article(speciality)} specialist can assess this properly. ${cards.length ? `Here ${cards.length === 1 ? 'is a bookable option' : 'are bookable options'}${locationText}:` : `I could not find a bookable ${speciality} doctor${locationText} in the current listings.`}`;
+      reply = cards.length
+        ? S.symptomLedFound(speciality, cards.length, cityText)
+        : S.symptomLedNone(speciality, cityText);
     } else if (cards.length) {
-      reply = `I found ${cards.length} bookable ${focus}${cards.length === 1 ? '' : 's'}${locationText}. Fees are shown on each card, and you can open one to choose an appointment time.`;
+      reply = S.doctorFound(focus, cards.length, cityText);
     } else {
-      reply = `I could not find a bookable ${focus}${locationText} in the live listings right now. You can browse all doctors or try another city.`;
+      reply = S.doctorNone(focus, cityText);
     }
 
     const firstDoctor = cards[0];
@@ -219,17 +238,13 @@ export class AssistantService {
       reply,
       products: [],
       cards,
-      suggestions: [
-        ...(firstDoctor ? [`Book ${firstDoctor.title}`] : []),
-        ...(city ? [`Show ${focus} doctors in ${city === 'Lahore' ? 'Karachi' : 'Lahore'}`] : ['Find a cardiologist in Lahore']),
-        'Book a lab test',
-        'Find a medicine',
-      ].slice(0, 4),
+      suggestions: S.doctorSuggestions(firstDoctor ? firstDoctor.title : null, focus, city).slice(0, 4),
       source: 'live_platform',
     };
   }
 
-  private async medicineResult(query: string, budget: number | null): Promise<PlatformResult> {
+  private async medicineResult(query: string, budget: number | null, lang: AssistantLang = 'en'): Promise<PlatformResult> {
+    const S = ASSISTANT_STRINGS[lang];
     const medicineClass = detectMedicineClass(query);
     const normalizedQuery = normalize(query);
     // Require at least 3 characters and drop conversational filler, so weak
@@ -342,37 +357,33 @@ export class AssistantService {
 
     // The Rx note may only name medicines actually matched and shown above.
     const rxNames = ranked.filter(({ medicine }) => medicine.requiresRx).map(({ medicine }) => medicine.nameEn);
-    const budgetText = budget !== null ? ` under ${formatRs(budget * 100)}` : '';
+    const budgetText = budget !== null ? S.medicineBudgetText(formatRs(budget * 100)) : '';
     let reply: string;
     if (cards.length) {
-      reply = `I found ${cards.length} live medicine match${cards.length === 1 ? '' : 'es'}${budgetText}. Prices and pack details are shown on each card.`;
+      reply = S.medicineFound(cards.length, budgetText);
     } else if (terms.length && !medicineClass) {
       // The user named a specific medicine that is not in the catalogue — say so
       // honestly instead of substituting unrelated medicines.
       const namedMedicine = [...terms].sort((a, b) => b.length - a.length)[0];
-      reply = `I couldn't find “${titleCase(namedMedicine)}” in the live OneStop pharmacy catalogue yet. If you know its generic name, try that instead — or browse the Pharmacy page to see everything currently stocked.`;
+      reply = S.medicineNamedMissing(titleCase(namedMedicine));
     } else {
-      reply = 'I could not find a matching medicine in the live pharmacy catalogue. Try the generic name, brand name, or a condition such as “pain relief”.';
+      reply = S.medicineGenericMissing;
     }
     if (rxNames.length) {
-      reply += ` Prescription required for ${rxNames.join(', ')}—OneStop will ask for a valid prescription during checkout, and a pharmacist must verify it before dispatch.`;
+      reply += S.rxNote(rxNames.join(', '));
     }
 
     return {
       reply,
       products: [],
       cards,
-      suggestions: [
-        ...(medicineClass ? [`Show more ${medicineClass} medicines`] : ['Show pain relief medicines']),
-        'Medicines under Rs. 500',
-        wantsNoRx ? 'Show prescription medicines' : 'No-prescription medicines',
-        'Find a doctor',
-      ],
+      suggestions: S.medicineSuggestions(medicineClass, wantsNoRx),
       source: 'live_platform',
     };
   }
 
-  private async labResult(query: string, city: string | null): Promise<PlatformResult> {
+  private async labResult(query: string, city: string | null, lang: AssistantLang = 'en'): Promise<PlatformResult> {
+    const S = ASSISTANT_STRINGS[lang];
     const tests = await this.prisma.labTest.findMany({
       where: { isActive: true },
       include: { facility: { select: { name: true, city: true } } },
@@ -411,21 +422,17 @@ export class AssistantService {
 
     return {
       reply: cards.length
-        ? `I found ${cards.length} live lab test option${cards.length === 1 ? '' : 's'}${city ? ` in ${city}` : ''}. Report time and price are shown on each card; open Labs to book home collection.`
-        : `I could not find that lab test${city ? ` in ${city}` : ''} in the current listings. You can browse all available tests on the Labs page.`,
+        ? S.labFound(cards.length, city ? S.cityText(city) : '')
+        : S.labNone(city ? S.cityText(city) : ''),
       products: [],
       cards,
-      suggestions: [
-        ...(cards[0] ? [`Book a ${cards[0].title} test`] : []),
-        'Lab tests in Lahore',
-        'Find a doctor',
-        'Find medicines',
-      ].slice(0, 4),
+      suggestions: S.labSuggestions(cards[0] ? cards[0].title : null).slice(0, 4),
       source: 'live_platform',
     };
   }
 
-  private async facilityResult(query: string, city: string | null): Promise<PlatformResult> {
+  private async facilityResult(query: string, city: string | null, lang: AssistantLang = 'en'): Promise<PlatformResult> {
+    const S = ASSISTANT_STRINGS[lang];
     const type = /\bblood bank\b/i.test(query)
       ? 'BLOOD_BANK'
       : /\bhospitals?\b/i.test(query)
@@ -459,16 +466,17 @@ export class AssistantService {
 
     return {
       reply: cards.length
-        ? `Here ${cards.length === 1 ? 'is a live facility' : 'are live facilities'}${city ? ` in ${city}` : ''}. Open Facilities to compare locations, timings, and contact details.`
-        : `I could not find a matching facility${city ? ` in ${city}` : ''} in the live directory. Try Lahore, Karachi, or Islamabad, or browse all facilities.`,
+        ? S.facilityFound(cards.length, city ? S.cityText(city) : '')
+        : S.facilityNone(city ? S.cityText(city) : ''),
       products: [],
       cards,
-      suggestions: ['Hospitals in Lahore', 'Find a doctor', 'Blood banks near me', 'Book a lab test'],
+      suggestions: S.facilitySuggestions,
       source: 'live_platform',
     };
   }
 
-  private async bloodResult(city: string | null): Promise<PlatformResult> {
+  private async bloodResult(city: string | null, lang: AssistantLang = 'en'): Promise<PlatformResult> {
+    const S = ASSISTANT_STRINGS[lang];
     const banks = await this.prisma.facility.findMany({
       where: {
         type: 'BLOOD_BANK',
@@ -489,10 +497,10 @@ export class AssistantService {
     }));
 
     return {
-      reply: `For urgent blood, open OneStop Blood to post a request and contact a listed blood bank${city ? ` in ${city}` : ''}. ${cards.length ? 'I found these live blood banks:' : 'I could not find a blood bank in that city in the current listings, but the Blood page can still help you post the request.'} If someone’s condition is critical, seek emergency medical care immediately.`,
+      reply: S.bloodReply(cards.length > 0, city ? S.cityText(city) : ''),
       products: [],
       cards,
-      suggestions: ['Open the blood request board', 'Find a hospital', 'Find a doctor', 'Hospitals in Lahore'],
+      suggestions: S.bloodSuggestions,
       source: 'live_platform',
     };
   }
@@ -523,15 +531,10 @@ export class AssistantService {
       return terms.some((term) => searchable.includes(term));
     });
   }
-  private async fallback(messages: AssistantMessageDto[], query: string): Promise<PlatformResult> {
-    const menuReply = 'I’m OneStop Assistant. I can search live doctors, medicines, lab tests, hospitals and clinics, blood banks, and everyday products across OneStop Life. Tell me what you need—or tap a suggestion below.';
-    const suggestions = [
-      'Find a cardiologist in Lahore',
-      'I need paracetamol',
-      'Book a CBC test',
-      'Blood needed urgently',
-      'Trending products',
-    ];
+  private async fallback(messages: AssistantMessageDto[], query: string, lang: AssistantLang = 'en'): Promise<PlatformResult> {
+    const S = ASSISTANT_STRINGS[lang];
+    const menuReply = S.menuReply;
+    const suggestions = S.menuSuggestions;
 
     const apiKey = this.config.get<string>('GEMINI_API_KEY')
       ?? this.config.get<string>('Gemini API Key 2');
@@ -553,6 +556,8 @@ export class AssistantService {
               text: [
                 'You are OneStop Assistant for OneStop Life, a Pakistan healthcare and everyday-care platform.',
                 'Answer directly and concisely in friendly language. Use Rs. formatting when discussing prices.',
+                ...(lang === 'ur' ? ['The user is writing in Urdu script — reply in Urdu script.'] : []),
+                ...(lang === 'roman-ur' ? ['The user is writing in Roman Urdu — reply in Roman Urdu.'] : []),
                 'No live OneStop records were returned for this request, so do not invent doctors, medicines, tests, stock, prices, locations, or availability.',
                 'You can explain that you can search doctors, pharmacy medicines, lab tests, facilities, blood banks, and products, and invite the user to name a city, specialist, medicine, or test.',
                 'Never claim you booked, ordered, contacted, or completed anything.',
@@ -587,7 +592,7 @@ export class AssistantService {
       return { reply, products: [], cards: [], suggestions, source: 'gemini' };
     } catch {
       return {
-        reply: `I could not reach the general-answer service just now, but I can still search OneStop’s live platform. ${menuReply}`,
+        reply: `${S.offlinePrefix}${menuReply}`,
         products: [],
         cards: [],
         suggestions,
