@@ -402,3 +402,27 @@
 .doneActions { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .doneActions .checkoutBtn { width: auto; padding: 13px 26px; }
 .coForm .rememberRow { flex-direction: row; }
+
+/* Checkout alignment pass: one grid rhythm for the stepper, the form,
+   the summary and the done step */
+.coSteps { gap: 12px; padding: 2px 28px 20px; }
+.coSteps i { max-width: none; }
+.coSteps span { display: inline-flex; align-items: center; white-space: nowrap; }
+.coSteps b { margin-right: 8px; flex: none; }
+.coSection { border-bottom: 1px solid var(--line); padding-bottom: 7px; margin: 12px 0 0; }
+.coForm { gap: 12px; }
+.coForm input, .coForm select { height: 48px; }
+.coRow { align-items: start; }
+.coRow label > span, .coForm label > span { line-height: 1.25; min-height: 16px; }
+.chipRow { flex-wrap: wrap; align-items: center; }
+.speedRow { align-items: stretch; }
+.speed, .speedActive { min-height: 62px; }
+.addrCards { grid-template-columns: 1fr; }
+@media (min-width: 760px) { .addrCards { grid-template-columns: 1fr 1fr; } }
+.reviewBlock > div { align-items: flex-start; }
+.reviewBlock > div > span { flex: none; width: 20px; text-align: center; }
+.coSummary .checkoutBtn { white-space: nowrap; font-size: 15px; height: 52px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; }
+.doneCard > div { align-items: center; }
+.doneCard > div > span { flex: none; width: 20px; text-align: center; }
+.discountRow { align-items: end; }
+.discountRow .applyBtn { height: 48px; }
