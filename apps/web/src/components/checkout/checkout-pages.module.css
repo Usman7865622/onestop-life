@@ -1,0 +1,127 @@
+/* Checkout pages: shared with the store checkout design system.
+   Extracted from products/page.module.css so the step pages are self-contained. */
+.storeMessage { background: #e6f6f3; color: var(--accent-strong); border: 1px solid #bfe8e1; }
+.storeError { background: #fdecec; color: #b42318; border: 1px solid #f5c6c0; }
+.cardCat { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); }
+.addBtn { background: var(--ink); color: #fff; }
+.addBtn:hover:not(:disabled) { background: var(--accent-strong); transform: translateY(-1px); box-shadow: 0 8px 18px rgba(13, 122, 111, 0.3); }
+.addBtn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+.checkoutBtn { background: var(--accent); color: #fff; font-size: 16px; padding: 15px; }
+.checkoutBtn:hover:not(:disabled) { background: var(--accent-strong); transform: translateY(-1px); box-shadow: 0 10px 22px rgba(248, 86, 6, 0.35); }
+.checkoutBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.qvActions .addBtn { flex: 1; }
+.totals { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 14px; margin-bottom: 14px; }
+.totals span { color: var(--muted); }
+.totals .grand { font-size: 18px; color: var(--ink); border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.coSteps { display: flex; align-items: center; gap: 10px; padding: 0 28px 18px; font-size: 13px; color: var(--muted); }
+.coSteps i { flex: 1; height: 2px; background: var(--line); border-radius: 2px; max-width: 60px; }
+.coSteps b { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; background: var(--line); align-items: center; justify-content: center; font-size: 12px; margin-right: 6px; }
+.stepOn { color: var(--ink); font-weight: 700; }
+.stepOn b { background: var(--accent); color: #fff; }
+.coGrid { display: grid; grid-template-columns: 1fr; gap: 22px; padding: 0 28px 28px; }
+@media (min-width: 760px) { .coGrid { grid-template-columns: 1.2fr 0.8fr; } }
+.coForm { display: flex; flex-direction: column; gap: 14px; }
+.coForm label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; }
+.coForm input, .coForm textarea { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 15px; outline: 0; transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit; }
+.coForm input:focus, .coForm textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(13, 122, 111, 0.12); }
+.coSummary { background: var(--background); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; height: fit-content; }
+.coSummary > p { margin: 0; font-weight: 700; }
+.coSummary small { color: var(--muted); font-size: 12.5px; text-align: center; }
+.coRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.coRow label { display: grid; gap: 6px; }
+.coForm select { width: 100%; border: 1.5px solid var(--line); border-radius: 10px; padding: 11px 13px; font-size: 15px; font-family: inherit; background: #fff; color: inherit; }
+.coForm label i { font-style: normal; font-weight: 400; color: var(--muted); }
+.chipRow { display: flex; gap: 8px; margin: 2px 0 12px; }
+.chip, .chipActive { border: 1.5px solid var(--line); background: #fff; border-radius: 999px; padding: 8px 16px; font-size: 13px; font-weight: 700; color: var(--muted); cursor: pointer; font-family: inherit; }
+.chipActive { border-color: var(--accent); color: var(--accent); background: #f0faf8; }
+.speedRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 2px 0 14px; }
+.speed, .speedActive { display: flex; align-items: center; gap: 10px; border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 12px; cursor: pointer; text-align: left; font-family: inherit; }
+.speed > span:nth-child(2), .speedActive > span:nth-child(2) { flex: 1; display: grid; gap: 2px; }
+.speed b, .speedActive b { font-size: 14px; }
+.speed small, .speedActive small { font-size: 12px; color: var(--muted); font-weight: 400; }
+.speedActive { border-color: var(--accent); background: #f0faf8; box-shadow: 0 0 0 3px rgba(13, 122, 111, 0.12); }
+.rememberRow { display: flex; align-items: center; gap: 9px; margin: 2px 0 14px; font-size: 13.5px; font-weight: 600; color: var(--muted); cursor: pointer; }
+.rememberRow input { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
+.reviewBlock { display: grid; gap: 8px; background: #f6f9fc; border: 1px solid #e3e8ee; border-radius: 12px; padding: 12px 14px; margin: 12px 0; }
+.reviewBlock > div { display: flex; gap: 9px; align-items: flex-start; font-size: 13px; }
+.reviewBlock p { margin: 0; color: #3c4b64; }
+.reviewBlock i { font-style: normal; color: var(--muted); }
+.slotSection { margin: 2px 0 14px; }
+.slotLabel { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.discountRow { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+.discountRow label { margin-bottom: 0; }
+.applyBtn { border: 1.5px solid var(--accent); background: #fff; color: var(--accent); border-radius: 10px; padding: 11px 18px; font-size: 14px; font-weight: 800; cursor: pointer; white-space: nowrap; font-family: inherit; }
+.applyBtn:hover { background: #f0faf8; }
+.applyBtn:disabled { opacity: 0.6; cursor: wait; }
+.discountOk { color: #147a3d; font-size: 13px; font-weight: 700; margin: 8px 0 0; }
+.discountErr { color: #b91c1c; font-size: 13px; font-weight: 600; margin: 8px 0 0; }
+.stepDone { color: var(--accent-strong); font-weight: 600; }
+.stepDone b { background: var(--accent); color: #fff; }
+.coSection { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 8px 0 -4px; }
+.fieldErr { color: #b42318; font-size: 12.5px; font-weight: 600; margin: 2px 0 0; }
+.coForm .inputErr { border-color: #d92d20; box-shadow: 0 0 0 3px rgba(217, 45, 32, 0.10); }
+.addrBook { margin-bottom: 2px; }
+.addrCards { display: grid; gap: 8px; }
+.addrCard, .addrCardActive { display: grid; gap: 2px; text-align: left; border: 1.5px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 14px; cursor: pointer; font-family: inherit; }
+.addrCard b, .addrCardActive b { font-size: 13.5px; color: var(--ink); }
+.addrCard span, .addrCardActive span { font-size: 12.5px; color: var(--muted); }
+.addrCardActive { border-color: var(--accent); background: #f0faf8; box-shadow: 0 0 0 3px rgba(13, 122, 111, 0.12); }
+.backBtn { background: none; border: 0; color: var(--accent-strong); font-weight: 700; font-size: 13.5px; cursor: pointer; padding: 4px 0; text-align: left; font-family: inherit; text-decoration: none; }
+.editLink { justify-self: start; background: none; border: 0; color: var(--accent-strong); font-weight: 700; font-size: 13px; cursor: pointer; padding: 0; font-family: inherit; }
+.doneWrap { padding: 10px 28px 34px; text-align: center; }
+.doneCheck { width: 64px; height: 64px; margin: 8px auto 14px; border-radius: 50%; background: #e7f6ef; color: #147a3d; font-size: 32px; display: flex; align-items: center; justify-content: center; }
+.doneWrap h3 { margin: 0 0 6px; font-size: 22px; }
+.doneWrap > p { color: var(--muted); margin: 0 0 16px; }
+.doneCard { text-align: left; background: #f6f9fc; border: 1px solid #e3e8ee; border-radius: 12px; padding: 14px 16px; display: grid; gap: 10px; max-width: 460px; margin: 0 auto 20px; }
+.doneCard > div { display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; }
+.doneCard p { margin: 0; color: #3c4b64; }
+.doneCard i { font-style: normal; color: var(--muted); }
+.doneActions { display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.doneActions .checkoutBtn { width: auto; padding: 13px 26px; }
+.coForm .rememberRow { flex-direction: row; }
+.coSteps { gap: 12px; padding: 2px 28px 20px; }
+.coSteps i { max-width: none; }
+.coSteps span { display: inline-flex; align-items: center; white-space: nowrap; }
+.coSteps b { margin-right: 8px; flex: none; }
+.coSection { border-bottom: 1px solid var(--line); padding-bottom: 7px; margin: 12px 0 0; }
+.coForm { gap: 12px; }
+.coForm input, .coForm select { height: 48px; }
+.coRow { align-items: start; }
+.coRow label > span, .coForm label > span { line-height: 1.25; min-height: 16px; }
+.chipRow { flex-wrap: wrap; align-items: center; }
+.speedRow { align-items: stretch; }
+.speed, .speedActive { min-height: 62px; }
+.addrCards { grid-template-columns: 1fr; }
+@media (min-width: 760px) { .addrCards { grid-template-columns: 1fr 1fr; } }
+.reviewBlock > div { align-items: flex-start; }
+.reviewBlock > div > span { flex: none; width: 20px; text-align: center; }
+.coSummary .checkoutBtn { white-space: nowrap; font-size: 15px; height: 52px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; }
+.doneCard > div { align-items: center; }
+.doneCard > div > span { flex: none; width: 20px; text-align: center; }
+.discountRow { align-items: end; }
+.discountRow .applyBtn { height: 48px; }
+.coForm label { font-size: 13.5px; color: var(--ink); }
+.coForm input, .coForm textarea, .coForm select { color: var(--ink); font-weight: 500; }
+.coForm input::placeholder, .coForm textarea::placeholder { color: #a7b2c0; font-weight: 400; }
+.coSection { color: #54687e; }
+.coSteps { color: #5b6b80; }
+.coSteps b { background: #dbe3ec; color: #40536c; }
+.stepOn b { background: var(--accent); color: #fff; }
+.stepDone b { background: var(--accent); color: #fff; }
+.reviewBlock p { color: #2e3d55; }
+.coSummary small { font-size: 12px; white-space: nowrap; }
+.totals span { color: #54687e; }
+.addrCard span, .addrCardActive span { color: #54687e; }
+
+/* Page shell for the routed checkout steps */
+.pageWrap { max-width: 1080px; margin: 0 auto; padding: 28px 16px 56px; }
+.pageCard { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 26px 28px 30px; box-shadow: 0 18px 44px rgba(15, 23, 42, 0.06); }
+.pageTitle { font-size: 26px; margin: 2px 0 16px; }
+.pageCard .coSteps { padding-left: 0; padding-right: 0; }
+.loadingNote { color: var(--muted); padding: 18px 0 8px; }
+a.checkoutBtn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+@media (max-width: 640px) { .pageCard { padding: 20px 16px 24px; } .pageTitle { font-size: 22px; } }
+
+/* The store accent (orange) scopes the checkout pages, matching the
+   products/pharmacy experience the customer arrives from. */
+.pageWrap { --accent: #f85606; --accent-strong: #d94805; }
