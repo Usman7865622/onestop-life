@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, RoleKey, User, UserRole } from '@prisma/client';
+import { FamilyRelationship, Prisma, RoleKey, User, UserRole } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateMeDto } from './dto/update-me.dto';
 
@@ -30,7 +30,12 @@ export class UsersService {
 
     try {
       return await this.prisma.user.create({
-        data: { phone, phoneVerifiedAt: new Date(), roles: { create: { role: RoleKey.CUSTOMER } } },
+        data: {
+          phone,
+          phoneVerifiedAt: new Date(),
+          roles: { create: { role: RoleKey.CUSTOMER } },
+          familyMembers: { create: { fullName: 'Myself', relationship: FamilyRelationship.SELF, isSelf: true } },
+        },
         include: { roles: true },
       });
     } catch (e) {
@@ -64,6 +69,9 @@ export class UsersService {
         googleSub,
         lastLoginAt: new Date(),
         roles: { create: { role: RoleKey.CUSTOMER } },
+        familyMembers: {
+          create: { fullName: name?.trim() || 'Myself', relationship: FamilyRelationship.SELF, isSelf: true },
+        },
       },
       include: { roles: true },
     });
@@ -75,7 +83,15 @@ export class UsersService {
 
   createEmailUser(email: string, passwordHash: string, name?: string): Promise<UserWithRoles> {
     return this.prisma.user.create({
-      data: { email, passwordHash, name: name?.trim() || undefined, roles: { create: { role: RoleKey.CUSTOMER } } },
+      data: {
+        email,
+        passwordHash,
+        name: name?.trim() || undefined,
+        roles: { create: { role: RoleKey.CUSTOMER } },
+        familyMembers: {
+          create: { fullName: name?.trim() || 'Myself', relationship: FamilyRelationship.SELF, isSelf: true },
+        },
+      },
       include: { roles: true },
     });
   }

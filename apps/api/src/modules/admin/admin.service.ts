@@ -57,6 +57,7 @@ export class AdminService {
       productsTotal, productsInStock, outOfStock, medicinesCount, rxMedicinesCount, categoryRows, categoryStockRows,
       doctorsTotal, facilitiesTotal, appointmentsToday,
       userDates, orderRows,
+      familyProfilesTotal, familySelfProfiles, familyAccountRows,
     ] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.user.count({ where: { createdAt: { gte: startOfToday } } }),
@@ -101,6 +102,9 @@ export class AdminService {
         where: { createdAt: { gte: sixMonthsStart }, status: { notIn: [OrderStatus.CANCELLED, OrderStatus.REFUNDED] } },
         select: { createdAt: true, totalMinor: true },
       }),
+      this.prisma.familyMember.count({ where: { deletedAt: null } }),
+      this.prisma.familyMember.count({ where: { deletedAt: null, isSelf: true } }),
+      this.prisma.familyMember.groupBy({ by: ['userId'], where: { deletedAt: null } }),
     ]);
 
     const byKey = <T extends string>(rows: Array<{ _count: { _all: number } } & Record<string, unknown>>, field: string) => {
@@ -155,6 +159,12 @@ export class AdminService {
         doctors: doctorsTotal,
         facilities: facilitiesTotal,
         appointmentsToday,
+      },
+      family: {
+        profiles: familyProfilesTotal,
+        selfProfiles: familySelfProfiles,
+        membersAdded: familyProfilesTotal - familySelfProfiles,
+        accountsWithProfiles: familyAccountRows.length,
       },
       monthly: buildMonthlySeries(userDates.map((u) => u.createdAt), orderRows, now),
     };
