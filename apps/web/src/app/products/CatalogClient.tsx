@@ -2,9 +2,9 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import styles from './page.module.css';
-import StripePaymentPanel, { validateCardFields, validateWalletFields, PaymentMethodId } from '../../components/checkout/StripePaymentPanel';
 
 
 type Product = {
@@ -40,6 +40,7 @@ function ProdImg({ src, name, category, iconClassName }: { src?: string | null; 
   return <CategoryIcon category={category ?? ''} className={iconClassName} />;
 }
 type CatalogClientProps = { products: Product[] };
+
 
 const categoryLabels: Record<string, string> = {
   'Trending essentials': 'Trending essentials',
@@ -158,74 +159,13 @@ const heroSlides = [
   },
 ];
 
-const PAKISTAN_CITIES = ['Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad', 'Multan', 'Peshawar', 'Quetta', 'Hyderabad', 'Sialkot', 'Gujranwala', 'Bahawalpur', 'Sargodha', 'Abbottabad', 'Other'];
-
-function formatPhone(value: string) {
-  const digits = value.replace(/\D/g, '').slice(0, 11);
-  if (digits.length <= 4) return digits;
-  return `${digits.slice(0, 4)} ${digits.slice(4)}`;
-}
-
-function deliveryWindow(speed: 'STANDARD' | 'EXPRESS') {
-  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', day: 'numeric', month: 'short' });
-  const day = 86400000;
-  const now = Date.now();
-  if (speed === 'EXPRESS') return `Tomorrow, ${fmt.format(new Date(now + day))}`;
-  return `${fmt.format(new Date(now + 2 * day))} – ${fmt.format(new Date(now + 4 * day))}`;
-}
-
-const PAYMENT_LABELS: Record<string, string> = { CARD: 'Card', JAZZCASH: 'JazzCash', EASYPAISA: 'Easypaisa', WALLET: 'OneStop Wallet', COD: 'Cash on delivery' };
-
-const SLOT_TIMES = ['Morning (9 AM – 12 PM)', 'Afternoon (12 – 5 PM)', 'Evening (5 – 9 PM)'];
-
-function slotDays(speed: 'STANDARD' | 'EXPRESS') {
-  const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', weekday: 'short', day: 'numeric', month: 'short' });
-  const day = 86400000;
-  const now = Date.now();
-  const start = speed === 'EXPRESS' ? 1 : 2;
-  const count = speed === 'EXPRESS' ? 1 : 6;
-  return Array.from({ length: count }, (_, i) => fmt.format(new Date(now + (start + i) * day)));
-}
-
-const GIFT_WRAP_MINOR = 10000;
 
 export default function CatalogClient({ products }: CatalogClientProps) {
+  const router = useRouter();
   const [cart, setCart] = useState<CartLine[]>([]);
   const [cartLoaded, setCartLoaded] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [discountCode, setDiscountCode] = useState('');
-  const [shippingName, setShippingName] = useState('');
-  const [shippingPhone, setShippingPhone] = useState('');
-  const [shippingAddress, setShippingAddress] = useState('');
-  const [shippingCity, setShippingCity] = useState('');
-  const [shippingPostalCode, setShippingPostalCode] = useState('');
-  const [addressLabel, setAddressLabel] = useState('Home');
-  const [deliveryNotes, setDeliveryNotes] = useState('');
-  const [deliverySpeed, setDeliverySpeed] = useState<'STANDARD' | 'EXPRESS'>('STANDARD');
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethodId>('COD');
-  const [cardEmail, setCardEmail] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvc, setCardCvc] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [walletNumber, setWalletNumber] = useState('');
-  const [walletName, setWalletName] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [saveDetails, setSaveDetails] = useState(false);
-  const [slotDay, setSlotDay] = useState(0);
-  const [slotTime, setSlotTime] = useState(0);
-  const [giftWrap, setGiftWrap] = useState(false);
-  const [giftMessage, setGiftMessage] = useState('');
-  const [discountApplied, setDiscountApplied] = useState<{ code: string; amountMinor: number } | null>(null);
-  const [discountBusy, setDiscountBusy] = useState(false);
-  const [discountError, setDiscountError] = useState('');
   const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [storeWalletBalance, setStoreWalletBalance] = useState<number | null>(null);
-  const [emiPlan, setEmiPlan] = useState('');
-  const [savedAddresses, setSavedAddresses] = useState<Array<{ id: string; label: string; name: string; phone: string; address: string; city: string; postalCode?: string | null }>>([]);
-  const [saveToAddressBook, setSaveToAddressBook] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All products');
   const [sortOrder, setSortOrder] = useState('featured');
@@ -248,33 +188,9 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   const dealsRail = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const token = window.localStorage.getItem('onestop-access-token');
-    if (token) {
-      fetch('/api/wallet', { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.ok ? r.json() : null)
-        .then((d) => { if (d && typeof d.balanceMinor === 'number') setStoreWalletBalance(d.balanceMinor); })
-        .catch(() => {});
-      fetch('/api/addresses', { headers: { Authorization: `Bearer ${token}` } })
-        .then((r) => r.ok ? r.json() : [])
-        .then((d) => { if (Array.isArray(d)) setSavedAddresses(d); })
-        .catch(() => {});
-    }
     const stored = window.localStorage.getItem('onestop-cart');
     if (stored) { try { setCart(JSON.parse(stored) as CartLine[]); } catch { /* ignore */ } }
     setCartLoaded(true);
-    try {
-      const saved = JSON.parse(window.localStorage.getItem('onestop-delivery') ?? 'null') as null | { name?: string; phone?: string; address?: string; city?: string; postal?: string; label?: string; notes?: string };
-      if (saved) {
-        if (saved.name) setShippingName(saved.name);
-        if (saved.phone) setShippingPhone(saved.phone);
-        if (saved.address) setShippingAddress(saved.address);
-        if (saved.city) setShippingCity(saved.city);
-        if (saved.postal) setShippingPostalCode(saved.postal);
-        if (saved.label) setAddressLabel(saved.label);
-        if (saved.notes) setDeliveryNotes(saved.notes);
-        setSaveDetails(true);
-      }
-    } catch { /* ignore corrupt saved details */ }
     const params = new URLSearchParams(window.location.search);
     const q = params.get('q');
     if (q) setSearchTerm(q);
@@ -330,10 +246,8 @@ export default function CatalogClient({ products }: CatalogClientProps) {
   }, [categories, searchTerm, selectedCategory, sortOrder]);
 
   const subtotal = cart.reduce((t, i) => t + i.priceMinor * i.quantity, 0);
-  const shipping = deliverySpeed === 'EXPRESS' ? 25000 : subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
-  const discountMinor = discountApplied?.amountMinor ?? 0;
-  const giftMinor = giftWrap ? GIFT_WRAP_MINOR : 0;
-  const total = subtotal - discountMinor + shipping + giftMinor;
+  const shipping = subtotal >= 300000 || subtotal === 0 ? 0 : 15000;
+  const total = subtotal + shipping;
   const cartCount = cart.reduce((t, i) => t + i.quantity, 0);
 
   const addToCart = (product: Product) => {
@@ -366,113 +280,6 @@ export default function CatalogClient({ products }: CatalogClientProps) {
     setQuickView(product);
     setQvQty(1);
     setRecentlyViewed((cur) => [product, ...cur.filter((i) => i.id !== product.id)].slice(0, 6));
-  };
-
-  const precheck = () => {
-    const token = window.localStorage.getItem('onestop-access-token');
-    if (!token) return 'Sign in from the login page before placing an order.';
-    if (!shippingName.trim() || !shippingPhone.trim() || !shippingAddress.trim() || !shippingCity.trim()) return 'Complete your delivery details (name, phone, address and city) before placing the order.';
-    if (!/^03\d{9}$/.test(shippingPhone.replace(/\D/g, ''))) return 'Enter a valid mobile number (03XX XXXXXXX).';
-    if (paymentMethod === 'WALLET') {
-      if (storeWalletBalance === null) return 'Sign in to use your OneStop wallet.';
-      if (storeWalletBalance < total) return 'Insufficient wallet balance — top up from your dashboard or choose another payment method.';
-    }
-    return null;
-  };
-
-  const submitCheckout = async () => {
-    const token = window.localStorage.getItem('onestop-access-token');
-    setBusy(true); setError(''); setMessage('');
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          items: cart.map((i) => ({ productId: i.id, quantity: i.quantity })),
-          shippingName, shippingPhone, shippingAddress,
-          shippingCity, shippingPostalCode: shippingPostalCode || undefined,
-          addressLabel, deliveryNotes: deliveryNotes || undefined, deliverySpeed,
-          deliverySlot,
-          giftWrap: giftWrap || undefined,
-          giftMessage: giftWrap && giftMessage.trim() ? giftMessage.trim() : undefined,
-          discountCode: discountCode || undefined, paymentMethod,
-          emiPlan: paymentMethod === 'CARD' && emiPlan ? emiPlan : undefined,
-        }),
-      });
-      const payload = (await res.json()) as { message?: string; order?: { id: string; totalMinor: number } };
-      if (!res.ok) throw new Error(Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? 'Unable to place order');
-      if (saveDetails) {
-        window.localStorage.setItem('onestop-delivery', JSON.stringify({ name: shippingName, phone: shippingPhone, address: shippingAddress, city: shippingCity, postal: shippingPostalCode, label: addressLabel, notes: deliveryNotes }));
-      } else {
-        window.localStorage.removeItem('onestop-delivery');
-      }
-      if (saveToAddressBook) {
-        const bookToken = window.localStorage.getItem('onestop-access-token');
-        fetch('/api/addresses', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${bookToken}` },
-          body: JSON.stringify({ label: addressLabel, name: shippingName, phone: shippingPhone, address: shippingAddress, city: shippingCity, postalCode: shippingPostalCode || undefined }),
-        }).catch(() => {});
-        setSaveToAddressBook(false);
-      }
-      setCart([]); setCheckoutOpen(false); setCartOpen(false); setDiscountCode('');
-      setMessage(`Order ${payload.order?.id.slice(0, 8)} confirmed for ${money(payload.order?.totalMinor ?? total)}.`);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to place order');
-    } finally { setBusy(false); }
-  };
-
-  const checkout = async () => {
-    const blocked = precheck();
-    if (blocked) { setError(blocked); return; }
-    await submitCheckout();
-  };
-
-  /** Test-mode card payment: validates the card form, simulates gateway
-   *  processing, then places the order. No real charge is ever made. */
-  const isWallet = paymentMethod === 'JAZZCASH' || paymentMethod === 'EASYPAISA';
-  const days = slotDays(deliverySpeed);
-  const deliverySlot = `${days[Math.min(slotDay, days.length - 1)]} · ${SLOT_TIMES[slotTime]}`;
-
-  /** Test-mode wallet payment: validates the mobile-wallet form, simulates
-   *  the in-app approval, then places the order. No real money moves. */
-  const applyDiscount = async () => {
-    const code = discountCode.trim();
-    if (!code) { setDiscountError('Enter a discount code first.'); return; }
-    setDiscountBusy(true); setDiscountError('');
-    try {
-      const res = await fetch('/api/orders/validate-discount', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code, subtotalMinor: subtotal }),
-      });
-      const payload = await res.json() as { code?: string; amountMinor?: number; message?: string | string[] };
-      if (!res.ok) throw new Error(Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? 'Invalid code');
-      setDiscountApplied({ code: payload.code ?? code.toUpperCase(), amountMinor: payload.amountMinor ?? 0 });
-      setDiscountCode(payload.code ?? code.toUpperCase());
-    } catch (e) {
-      setDiscountError(e instanceof Error ? e.message : 'Invalid code');
-      setDiscountApplied(null);
-    } finally { setDiscountBusy(false); }
-  };
-
-  const payWithWallet = async () => {
-    const blocked = precheck();
-    if (blocked) { setError(blocked); return; }
-    const walletError = validateWalletFields({ number: walletNumber, name: walletName }, paymentMethod === 'JAZZCASH' ? 'JazzCash' : 'Easypaisa');
-    if (walletError) { setError(walletError); return; }
-    setBusy(true); setError('');
-    await new Promise((resolve) => setTimeout(resolve, 1400));
-    await submitCheckout();
-  };
-
-  const payWithCard = async () => {
-    const blocked = precheck();
-    if (blocked) { setError(blocked); return; }
-    const cardError = validateCardFields({ email: cardEmail, number: cardNumber, expiry: cardExpiry, cvc: cardCvc, name: cardName });
-    if (cardError) { setError(cardError); return; }
-    setBusy(true); setError('');
-    await new Promise((resolve) => setTimeout(resolve, 1400));
-    await submitCheckout();
   };
 
   // Countdown to midnight (flash deals reset daily)
@@ -519,7 +326,6 @@ export default function CatalogClient({ products }: CatalogClientProps) {
       </div>
 
       {message ? <p className={styles.storeMessage} role="status">{message}</p> : null}
-      {error ? <p className={styles.storeError} role="alert">{error}</p> : null}
 
       {/* Hero carousel */}
       <section className={styles.hero} aria-label="Featured offers">
@@ -799,7 +605,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 <div className={styles.cartFoot}>
                   <div className={styles.totals}><span>Subtotal</span><b>{money(subtotal)}</b><span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b><span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
                   {shipping > 0 ? <p className={styles.freeShipNote}>Add {money(300000 - subtotal)} more for free delivery</p> : <p className={styles.freeShipNote}>🎉 You unlocked free delivery</p>}
-                  <button className={styles.checkoutBtn} onClick={() => { setCheckoutOpen(true); setCartOpen(false); }}>Checkout →</button>
+                  <button className={styles.checkoutBtn} onClick={() => { setCartOpen(false); router.push('/checkout'); }}>Checkout →</button>
                 </div>
               </>
             ) : <p className={styles.emptyCart}>Your cart is empty — grab a deal above.</p>}
@@ -807,55 +613,11 @@ export default function CatalogClient({ products }: CatalogClientProps) {
         </div>
       ) : null}
 
-      {/* Checkout */}
-      {checkoutOpen ? (
-        <div className={styles.overlay} role="presentation">
-          <section className={styles.checkout} aria-label="Checkout">
-            <div className={styles.drawerHead}>
-              <div><p className={styles.cardCat}>Secure checkout</p><h2>Delivery & payment</h2></div>
-              <button className={styles.qvClose} onClick={() => setCheckoutOpen(false)} aria-label="Close checkout">×</button>
-            </div>
-            <div className={styles.coSteps}><span className={styles.stepOn}><b>1</b> Details</span><i /><span><b>2</b> Payment</span><i /><span><b>3</b> Done</span></div>{error ? <p className={styles.storeError} role="alert" style={{ margin: '12px 28px 0' }}>{error}</p> : null}
-            <div className={styles.coGrid}>
-              <div className={styles.coForm}>
-                <div className={styles.coRow}>
-                  <label><span>Full name</span><input value={shippingName} onChange={(e) => setShippingName(e.target.value)} autoComplete="name" /></label>
-                  <label><span>Phone</span><input value={shippingPhone} onChange={(e) => setShippingPhone(formatPhone(e.target.value))} autoComplete="tel" inputMode="numeric" placeholder="03XX XXXXXXX" /></label>
-                </div>
-                <label><span>Delivery address</span><textarea value={shippingAddress} onChange={(e) => setShippingAddress(e.target.value)} rows={3} autoComplete="street-address" placeholder="House, street, area" /></label>
-                <div className={styles.coRow}>
-                  <label><span>City</span><select value={shippingCity} onChange={(e) => setShippingCity(e.target.value)}><option value="">Select city</option>{PAKISTAN_CITIES.map((city) => <option key={city} value={city}>{city}</option>)}</select></label>
-                  <label><span>Postal code <i>(optional)</i></span><input value={shippingPostalCode} onChange={(e) => setShippingPostalCode(e.target.value.replace(/\D/g, '').slice(0, 5))} inputMode="numeric" placeholder="75000" /></label>
-                </div>
-                <div className={styles.chipRow} role="group" aria-label="Address type">{['Home', 'Office', 'Other'].map((label) => <button key={label} type="button" className={addressLabel === label ? styles.chipActive : styles.chip} onClick={() => setAddressLabel(label)}>{label}</button>)}</div>
-                <label><span>Delivery notes <i>(optional)</i></span><textarea value={deliveryNotes} onChange={(e) => setDeliveryNotes(e.target.value)} rows={2} placeholder="Gate code, landmark, rider instructions…" /></label>
-                <label className={styles.rememberRow}><input type="checkbox" checked={saveDetails} onChange={(e) => setSaveDetails(e.target.checked)} /><span>Save my delivery details for next time</span></label>{savedAddresses.length ? <div className={styles.addressBook}><span className={styles.slotLabel}>Saved addresses</span><div className={styles.chipRow} role="group" aria-label="Saved addresses">{savedAddresses.map((a) => <button key={a.id} type="button" className={styles.chip} onClick={() => { setShippingName(a.name); setShippingPhone(a.phone); setShippingAddress(a.address); setShippingCity(a.city); setShippingPostalCode(a.postalCode ?? ''); setAddressLabel(a.label); }}>{a.label} · {a.city}</button>)}</div></div> : null}<label className={styles.rememberRow}><input type="checkbox" checked={saveToAddressBook} onChange={(e) => setSaveToAddressBook(e.target.checked)} /><span>Save this address to my address book</span></label>
-                <div className={styles.speedRow} role="radiogroup" aria-label="Delivery speed">
-                  <button type="button" role="radio" aria-checked={deliverySpeed === 'STANDARD'} className={deliverySpeed === 'STANDARD' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('STANDARD'); setSlotDay(0); }}><span aria-hidden="true">🚚</span><span><b>Standard</b><small>{deliveryWindow('STANDARD')}</small></span><b>{subtotal >= 300000 ? 'Free' : money(15000)}</b></button>
-                  <button type="button" role="radio" aria-checked={deliverySpeed === 'EXPRESS'} className={deliverySpeed === 'EXPRESS' ? styles.speedActive : styles.speed} onClick={() => { setDeliverySpeed('EXPRESS'); setSlotDay(0); }}><span aria-hidden="true">⚡</span><span><b>Express</b><small>{deliveryWindow('EXPRESS')}</small></span><b>{money(25000)}</b></button>
-                </div>
-                <div className={styles.slotSection}><span className={styles.slotLabel}>Choose your delivery slot</span><div className={styles.chipRow} role="group" aria-label="Delivery day">{days.map((d, i) => <button key={d} type="button" className={Math.min(slotDay, days.length - 1) === i ? styles.chipActive : styles.chip} onClick={() => setSlotDay(i)}>{d}</button>)}</div><div className={styles.chipRow} role="group" aria-label="Delivery time">{SLOT_TIMES.map((t, i) => <button key={t} type="button" className={slotTime === i ? styles.chipActive : styles.chip} onClick={() => setSlotTime(i)}>{t}</button>)}</div></div>
-                <div className={styles.discountRow}><label><span>Discount code</span><input value={discountCode} onChange={(e) => { setDiscountCode(e.target.value.toUpperCase()); setDiscountApplied(null); setDiscountError(''); }} placeholder="WELCOME10" /></label><button type="button" className={styles.applyBtn} onClick={applyDiscount} disabled={discountBusy}>{discountBusy ? 'Checking…' : 'Apply'}</button></div>{discountApplied ? <p className={styles.discountOk} role="status">✓ {discountApplied.code} applied · you save {money(discountApplied.amountMinor)}</p> : null}{discountError ? <p className={styles.discountErr} role="alert">{discountError}</p> : null}
-                <label className={styles.rememberRow}><input type="checkbox" checked={giftWrap} onChange={(e) => setGiftWrap(e.target.checked)} /><span>🎁 Add gift wrap · {money(GIFT_WRAP_MINOR)}</span></label>{giftWrap ? <label><span>Gift message <i>(optional)</i></span><textarea value={giftMessage} onChange={(e) => setGiftMessage(e.target.value)} rows={2} maxLength={200} placeholder="Write your message for the recipient…" /></label> : null}
-                <StripePaymentPanel items={cart} subtotal={subtotal} shipping={shipping} total={total} paymentMethod={paymentMethod} onPaymentMethodChange={setPaymentMethod} storeWalletBalance={storeWalletBalance} emiPlan={emiPlan} setEmiPlan={setEmiPlan} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} />
-              </div>
-              <aside className={styles.coSummary}>
-                <p>Order summary</p>
-                <div className={styles.totals}><span>Items ({cartCount})</span><b>{money(subtotal)}</b>{discountMinor > 0 ? <><span>Discount ({discountApplied?.code})</span><b>−{money(discountMinor)}</b></> : null}<span>Delivery</span><b>{shipping ? money(shipping) : 'Free'}</b>{giftWrap ? <><span>Gift wrap</span><b>{money(giftMinor)}</b></> : null}<span className={styles.grand}>Total</span><b className={styles.grand}>{money(total)}</b></div>
-                <div className={styles.reviewBlock} aria-label="Order review"><div><span aria-hidden="true">📍</span><p>{[shippingAddress.trim(), shippingCity.trim()].filter(Boolean).join(', ') || 'Add your address'} <i>({addressLabel})</i></p></div><div><span aria-hidden="true">{deliverySpeed === 'EXPRESS' ? '⚡' : '🚚'}</span><p>{deliverySpeed === 'EXPRESS' ? 'Express' : 'Standard'} · {deliveryWindow(deliverySpeed)}</p></div><div><span aria-hidden="true">💳</span><p>{PAYMENT_LABELS[paymentMethod]}</p></div></div>
-                <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : isWallet ? payWithWallet : checkout} disabled={busy}>{busy ? 'Placing…' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(total)}` : paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(total)}` : `Place order · ${money(total)}`}</button>
-                <small>🔒 Protected checkout · tracked delivery</small>
-              </aside>
-            </div>
-          </section>
-        </div>
-      ) : null}
-
       {/* Wishlist / feedback toast */}
       {toast ? <div key={toast.id} className={styles.toast} role="status">{toast.text}</div> : null}
 
       {/* Sticky mobile cart */}
-      {cartCount > 0 && !cartOpen && !checkoutOpen ? (
+      {cartCount > 0 && !cartOpen ? (
         <button className={styles.stickyCart} onClick={() => setCartOpen(true)} aria-label={`Open cart, ${cartCount} items, ${money(total)}`}>
           <span>🛒 {cartCount} item{cartCount === 1 ? '' : 's'}</span><b>{money(total)} →</b>
         </button>
