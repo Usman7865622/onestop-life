@@ -1006,7 +1006,7 @@ export default function CatalogClient({ products }: CatalogClientProps) {
                 ) : (
                   <button className={styles.checkoutBtn} onClick={paymentMethod === 'CARD' ? payWithCard : isWallet ? payWithWallet : checkout} disabled={busy}>{busy ? 'Placing…' : paymentMethod === 'CARD' ? `Pay ${money(total)}` : paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(total)}` : paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(total)}` : `Place order · ${money(total)}`}</button>
                 )}
-                <small>🔒 Protected checkout · tracked delivery</small>
+                <small>🔒 Protected · tracked delivery</small>
               </aside>
             </div>
             )}

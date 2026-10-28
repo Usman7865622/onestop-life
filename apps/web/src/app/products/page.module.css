@@ -426,3 +426,18 @@
 .doneCard > div > span { flex: none; width: 20px; text-align: center; }
 .discountRow { align-items: end; }
 .discountRow .applyBtn { height: 48px; }
+
+/* Checkout clarity pass: stronger contrast, calmer noise, clearer states */
+.checkout { box-shadow: 0 32px 80px rgba(15, 23, 42, 0.30); }
+.coForm label { font-size: 13.5px; color: var(--ink); }
+.coForm input, .coForm textarea, .coForm select { color: var(--ink); font-weight: 500; }
+.coForm input::placeholder, .coForm textarea::placeholder { color: #a7b2c0; font-weight: 400; }
+.coSection { color: #54687e; }
+.coSteps { color: #5b6b80; }
+.coSteps b { background: #dbe3ec; color: #40536c; }
+.stepOn b { background: var(--accent); color: #fff; }
+.stepDone b { background: var(--accent); color: #fff; }
+.reviewBlock p { color: #2e3d55; }
+.coSummary small { font-size: 12px; white-space: nowrap; }
+.totals span { color: #54687e; }
+.addrCard span, .addrCardActive span { color: #54687e; }
