@@ -126,6 +126,21 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
+enum FamilyRelationship {
+  SELF
+  CHILD
+  PARENT
+  SPOUSE
+  SIBLING
+  OTHER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 // ---------- Identity ----------
 
 model User {
@@ -145,6 +160,7 @@ model User {
 
   roles                UserRole[]
   refreshTokens        RefreshToken[]
+  familyMembers        FamilyMember[] @relation("AccountFamilyMembers")
   verificationRequests VerificationRequest[] @relation("Applicant")
   reviewedRequests     VerificationRequest[] @relation("Reviewer")
   auditLogs            AuditLog[]
@@ -189,6 +205,32 @@ model RefreshToken {
   @@index([userId])
   @@index([familyId])
   @@map("refresh_tokens")
+}
+
+// ---------- Family profiles ----------
+// One account (the account holder) manages patient profiles for the whole
+// household: themselves plus children, parents, spouse, siblings. Profiles
+// live inside the account — no separate logins. Every account has exactly one
+// isSelf profile ("Myself"), created at signup and backfilled for existing
+// users by the family_profiles migration. Removal is a soft delete
+// (deletedAt) so appointment/order history stays intact for records.
+
+model FamilyMember {
+  id           String             @id @default(uuid()) @db.Uuid
+  userId       String             @db.Uuid // the account holder who manages this profile
+  fullName     String
+  relationship FamilyRelationship
+  dateOfBirth  DateTime?          @db.Date
+  gender       Gender?
+  isSelf       Boolean            @default(false)
+  deletedAt    DateTime?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  user User @relation("AccountFamilyMembers", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, deletedAt])
+  @@map("family_members")
 }
 
 // ---------- Professional / seller verification ----------
