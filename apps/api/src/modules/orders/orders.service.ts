@@ -123,6 +123,7 @@ export class OrdersService {
       currency: 'PKR',
       customerPhone: dto.shippingPhone,
       customerId: user.id,
+      returnUrl: dto.paymentReturnUrl,
       idempotencyKey: order.id,
     });
 

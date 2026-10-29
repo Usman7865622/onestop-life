@@ -30,8 +30,8 @@ export class CreateOrderDto {
   discountCode?: string;
 
   @IsString()
-  @IsIn(['COD', 'CARD', 'JAZZCASH', 'EASYPAISA', 'WALLET'])
-  paymentMethod!: 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA' | 'WALLET';
+  @IsIn(['COD', 'CARD', 'JAZZCASH', 'EASYPAISA', 'WALLET', 'PAYPAL'])
+  paymentMethod!: 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA' | 'WALLET' | 'PAYPAL';
 
   @IsOptional()
   @IsString()
@@ -82,4 +82,9 @@ export class CreateOrderDto {
   @IsOptional()
   @IsUUID()
   prescriptionId?: string;
+
+  /** Storefront page a redirect gateway (PayPal) returns the customer to. */
+  @IsOptional()
+  @IsString()
+  paymentReturnUrl?: string;
 }
