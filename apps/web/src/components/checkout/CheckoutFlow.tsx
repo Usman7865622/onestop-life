@@ -92,7 +92,7 @@ function deliveryWindow(speed: 'STANDARD' | 'EXPRESS') {
   return `${fmt.format(new Date(now + 2 * day))} – ${fmt.format(new Date(now + 4 * day))}`;
 }
 
-const PAYMENT_LABELS: Record<string, string> = { CARD: 'Card', JAZZCASH: 'JazzCash', EASYPAISA: 'Easypaisa', WALLET: 'OneStop Wallet', COD: 'Cash on delivery' };
+const PAYMENT_LABELS: Record<string, string> = { CARD: 'Card', JAZZCASH: 'JazzCash', EASYPAISA: 'Easypaisa', WALLET: 'OneStop Wallet', COD: 'Cash on delivery', PAYPAL: 'PayPal' };
 const SLOT_TIMES = ['Morning (9 AM – 12 PM)', 'Afternoon (12 – 5 PM)', 'Evening (5 – 9 PM)'];
 
 function slotDays(speed: 'STANDARD' | 'EXPRESS') {
@@ -375,6 +375,27 @@ export function CheckoutDetailsPage() {
 /* ---------------- Step 2: /checkout/payment — payment & place order ---------------- */
 
 export function CheckoutPaymentPage() {
+  const [methodsLoaded, setMethodsLoaded] = useState(false);
+  const [paypalAvailable, setPaypalAvailable] = useState(false);
+  const [paypalRate, setPaypalRate] = useState<number | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/payments/methods')
+      .then((r) => r.json())
+      .then((data: { methods?: string[]; paypalUsdRate?: number | null }) => {
+        if (cancelled) return;
+        setPaypalAvailable(Array.isArray(data.methods) && data.methods.includes('PAYPAL'));
+        setPaypalRate(typeof data.paypalUsdRate === 'number' ? data.paypalUsdRate : null);
+        setMethodsLoaded(true);
+      })
+      .catch(() => { if (!cancelled) setMethodsLoaded(true); });
+    return () => { cancelled = true; };
+  }, []);
+  useEffect(() => {
+    if (methodsLoaded && !paypalAvailable && draft.paymentMethod === 'PAYPAL') update({ paymentMethod: 'COD' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [methodsLoaded, paypalAvailable]);
+
   const router = useRouter();
   const { ready, cart, draft, setDraft } = useCheckoutState();
   const [error, setError] = useState('');
@@ -433,7 +454,7 @@ export function CheckoutPaymentPage() {
     return null;
   };
 
-  const submitCheckout = async () => {
+  const submitCheckout = async (viaPaypal = false) => {
     const token = window.localStorage.getItem('onestop-access-token');
     setBusy(true); setError('');
     try {
@@ -449,10 +470,11 @@ export function CheckoutPaymentPage() {
           giftWrap: draft.giftWrap || undefined,
           giftMessage: draft.giftWrap && draft.giftMessage.trim() ? draft.giftMessage.trim() : undefined,
           discountCode: draft.discountCode || undefined, paymentMethod: draft.paymentMethod,
+          paymentReturnUrl: viaPaypal ? `${window.location.origin}/checkout/paypal/return` : undefined,
           emiPlan: draft.paymentMethod === 'CARD' && draft.emiPlan ? draft.emiPlan : undefined,
         }),
       });
-      const payload = (await res.json()) as { message?: string; order?: { id: string; totalMinor: number } };
+      const payload = (await res.json()) as { message?: string; order?: { id: string; totalMinor: number }; payment?: { redirectUrl?: string } };
       if (!res.ok) throw new Error(Array.isArray(payload.message) ? payload.message.join(', ') : payload.message ?? 'Unable to place order');
       if (draft.saveDetails) {
         window.localStorage.setItem('onestop-delivery', JSON.stringify({ name: draft.name, phone: draft.phone, address: joinAddress(draft), city: draft.city, postal: draft.postal, label: draft.label, notes: draft.notes }));
@@ -473,6 +495,17 @@ export function CheckoutPaymentPage() {
       };
       try {
         window.sessionStorage.setItem(LAST_ORDER_KEY, JSON.stringify(lastOrder));
+      } catch { /* ignore */ }
+      if (viaPaypal) {
+        const redirectUrl = payload.payment?.redirectUrl;
+        if (!redirectUrl) throw new Error('PayPal did not return a payment link. Please try again.');
+        try { window.sessionStorage.setItem('onestop-paypal-pending', JSON.stringify({ orderId: lastOrder.id })); } catch { /* ignore */ }
+        // Cart and draft stay in place until the return page confirms the
+        // capture — a cancelled PayPal visit must not lose the order setup.
+        window.location.href = redirectUrl;
+        return;
+      }
+      try {
         window.sessionStorage.removeItem(DRAFT_KEY);
         window.localStorage.removeItem(CART_KEY);
       } catch { /* ignore */ }
@@ -508,6 +541,12 @@ export function CheckoutPaymentPage() {
     await submitCheckout();
   };
 
+  const payWithPaypal = async () => {
+    const blocked = precheck();
+    if (blocked) { setError(blocked); return; }
+    await submitCheckout(true);
+  };
+
   if (!ready) return <PageShell current={2}><p className={styles.loadingNote}>Loading checkout…</p></PageShell>;
   if (!cart.length) return <PageShell current={2}><EmptyCart /></PageShell>;
   if (detailsMissing) {
@@ -541,14 +580,14 @@ export function CheckoutPaymentPage() {
           <label className={styles.rememberRow}><input type="checkbox" checked={draft.giftWrap} onChange={(e) => update({ giftWrap: e.target.checked })} /><span>🎁 Add gift wrap · {money(GIFT_WRAP_MINOR)}</span></label>
           {draft.giftWrap ? <label><span>Gift message <i>(optional)</i></span><textarea value={draft.giftMessage} onChange={(e) => update({ giftMessage: e.target.value })} rows={2} maxLength={200} placeholder="Write your message for the recipient…" /></label> : null}
           <p className={styles.coSection}>Payment</p>
-          <StripePaymentPanel items={cart} subtotal={t.subtotal} shipping={t.shipping} total={t.total} paymentMethod={draft.paymentMethod} onPaymentMethodChange={(m) => update({ paymentMethod: m })} storeWalletBalance={storeWalletBalance} emiPlan={draft.emiPlan} setEmiPlan={(v) => update({ emiPlan: v })} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} />
+          <StripePaymentPanel items={cart} subtotal={t.subtotal} shipping={t.shipping} total={t.total} paymentMethod={draft.paymentMethod} onPaymentMethodChange={(m) => update({ paymentMethod: m })} storeWalletBalance={storeWalletBalance} emiPlan={draft.emiPlan} setEmiPlan={(v) => update({ emiPlan: v })} cardEmail={cardEmail} setCardEmail={setCardEmail} cardNumber={cardNumber} setCardNumber={setCardNumber} cardExpiry={cardExpiry} setCardExpiry={setCardExpiry} cardCvc={cardCvc} setCardCvc={setCardCvc} cardName={cardName} setCardName={setCardName} walletNumber={walletNumber} setWalletNumber={setWalletNumber} walletName={walletName} setWalletName={setWalletName} money={money} paypalAvailable={paypalAvailable} paypalUsdRate={paypalRate} />
           <Link className={styles.backBtn} href="/checkout">← Back to delivery details</Link>
         </div>
         <aside className={styles.coSummary}>
           <p>Order summary</p>
           <TotalsBlock cart={cart} draft={draft} />
           <ReviewBlock draft={draft} />
-          <button className={styles.checkoutBtn} onClick={draft.paymentMethod === 'CARD' ? payWithCard : isWallet ? payWithWallet : checkout} disabled={busy}>{busy ? 'Placing…' : draft.paymentMethod === 'CARD' ? `Pay ${money(t.total)}` : draft.paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(t.total)}` : draft.paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(t.total)}` : `Place order · ${money(t.total)}`}</button>
+          <button className={styles.checkoutBtn} onClick={draft.paymentMethod === 'CARD' ? payWithCard : draft.paymentMethod === 'PAYPAL' ? payWithPaypal : isWallet ? payWithWallet : checkout} disabled={busy}>{busy ? (draft.paymentMethod === 'PAYPAL' ? 'Opening PayPal…' : 'Placing…') : draft.paymentMethod === 'PAYPAL' ? `Continue with PayPal · ${money(t.total)}` : draft.paymentMethod === 'CARD' ? `Pay ${money(t.total)}` : draft.paymentMethod === 'JAZZCASH' ? `Pay with JazzCash · ${money(t.total)}` : draft.paymentMethod === 'EASYPAISA' ? `Pay with Easypaisa · ${money(t.total)}` : `Place order · ${money(t.total)}`}</button>
           <small>🔒 Protected · tracked delivery</small>
         </aside>
       </div>
@@ -602,6 +641,97 @@ export function CheckoutDonePage() {
           <Link className={styles.checkoutBtn} href="/products">Continue shopping</Link>
           <Link className={styles.backBtn} href="/dashboard">Track in my dashboard →</Link>
         </div>
+      </div>
+    </PageShell>
+  );
+}
+
+
+/**
+ * PayPal sends the customer back here after approval (with ?token=<paypal
+ * order id>) or after a cancel (?cancel=1, added by our API). Approval is
+ * not payment: this page asks the API to capture and verify the payment,
+ * and only then clears the cart and shows the normal confirmation page.
+ */
+export function CheckoutPaypalReturnPage() {
+  const router = useRouter();
+  const [state, setState] = useState<'working' | 'error' | 'cancelled'>('working');
+  const [message, setMessage] = useState('');
+  const ranRef = useRef(false);
+
+  useEffect(() => {
+    if (ranRef.current) return;
+    ranRef.current = true;
+    void (async () => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('cancel') === '1') {
+        try { window.sessionStorage.removeItem('onestop-paypal-pending'); } catch { /* ignore */ }
+        setState('cancelled');
+        return;
+      }
+      const paypalOrderId = params.get('token');
+      const token = window.localStorage.getItem('onestop-access-token');
+      if (!paypalOrderId) {
+        setMessage('PayPal did not return a payment reference. If you completed a payment there, contact support before ordering again.');
+        setState('error');
+        return;
+      }
+      if (!token) {
+        setMessage('Your sign-in session ended during PayPal checkout. Sign in again and check My orders — a completed payment will show there.');
+        setState('error');
+        return;
+      }
+      try {
+        const res = await fetch('/api/payments/paypal/capture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ paypalOrderId }),
+        });
+        const payload = (await res.json().catch(() => ({}))) as { message?: string };
+        if (!res.ok) throw new Error(typeof payload.message === 'string' ? payload.message : 'We could not confirm your PayPal payment.');
+        try {
+          window.sessionStorage.removeItem('onestop-paypal-pending');
+          window.sessionStorage.removeItem(DRAFT_KEY);
+          window.localStorage.removeItem(CART_KEY);
+        } catch { /* ignore */ }
+        router.replace('/checkout/done');
+      } catch (e) {
+        setMessage(e instanceof Error ? e.message : 'We could not confirm your PayPal payment.');
+        setState('error');
+      }
+    })();
+  }, [router]);
+
+  if (state === 'working') {
+    return (
+      <PageShell current={2}>
+        <div className={styles.doneCard}>
+          <div><span aria-hidden="true">⏳</span><p><b>Confirming your PayPal payment…</b><br />One moment — we are verifying the payment with PayPal. Please don’t close this page.</p></div>
+        </div>
+      </PageShell>
+    );
+  }
+  if (state === 'cancelled') {
+    return (
+      <PageShell current={2}>
+        <div className={styles.doneCard}>
+          <div><span aria-hidden="true">↩️</span><p><b>PayPal payment cancelled.</b><br />No payment was taken. Your cart and delivery details are saved — you can pick another payment method whenever you’re ready.</p></div>
+        </div>
+        <div className={styles.doneActions}>
+          <Link className={styles.checkoutBtn} href="/checkout/payment">Back to payment</Link>
+          <Link href="/cart">View cart</Link>
+        </div>
+      </PageShell>
+    );
+  }
+  return (
+    <PageShell current={2}>
+      <div className={styles.doneCard}>
+        <div><span aria-hidden="true">⚠️</span><p><b>We couldn’t confirm that payment.</b><br />{message}</p></div>
+      </div>
+      <div className={styles.doneActions}>
+        <Link className={styles.checkoutBtn} href="/checkout/payment">Back to payment</Link>
+        <Link href="/dashboard">My orders</Link>
       </div>
     </PageShell>
   );

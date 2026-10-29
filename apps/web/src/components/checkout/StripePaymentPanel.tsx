@@ -45,6 +45,9 @@ function MethodIcon({ id, className }: { id: PaymentMethodId; className?: string
   if (id === 'CARD') {
     return <img src={CARDS_LOGO} alt="Visa and Mastercard" className={className} />;
   }
+  if (id === 'PAYPAL') {
+    return (<svg viewBox="0 0 24 24" className={className} aria-hidden="true"><text x="12" y="17.5" textAnchor="middle" fontSize="15" fontWeight="900" fontStyle="italic" fill="#003087">P</text></svg>);
+  }
   const common = { className, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
   if (id === 'WALLET') {
     return (<svg {...common}><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h11A2.5 2.5 0 0 1 19 7.5V9" /><rect x="3" y="7.5" width="18" height="11" rx="2.5" /><circle cx="16.5" cy="13" r="1.1" fill="currentColor" stroke="none" /></svg>);
@@ -71,10 +74,11 @@ export function validateCardFields(fields: { email: string; number: string; expi
 
 export type StripeItem = { id: string; nameEn: string; priceMinor: number; quantity: number; imageUrl?: string };
 
-export type PaymentMethodId = 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA' | 'WALLET';
+export type PaymentMethodId = 'COD' | 'CARD' | 'JAZZCASH' | 'EASYPAISA' | 'WALLET' | 'PAYPAL';
 
 export const PAYMENT_TABS: Array<{ id: PaymentMethodId; label: string; sub: string; brand: string; tint: string }> = [
   { id: 'CARD', label: 'Card', sub: 'Debit / Credit', brand: '#166a91', tint: '#e8f1f7' },
+  { id: 'PAYPAL', label: 'PayPal', sub: 'PayPal account', brand: '#003087', tint: '#e8eef7' },
   { id: 'JAZZCASH', label: 'JazzCash', sub: 'Mobile account', brand: '#d9261c', tint: '#fdeeee' },
   { id: 'EASYPAISA', label: 'Easypaisa', sub: 'Mobile account', brand: '#2f8f3d', tint: '#ebf6ec' },
   { id: 'WALLET', label: 'OneStop Wallet', sub: 'Store balance', brand: '#7c3aed', tint: '#f1eafe' },
@@ -113,6 +117,9 @@ type Props = {
   storeWalletBalance: number | null;
   emiPlan: string;
   setEmiPlan: (value: string) => void;
+  /** PayPal shows only when the API reports it configured. */
+  paypalAvailable?: boolean;
+  paypalUsdRate?: number | null;
 };
 
 export default function StripePaymentPanel(props: Props) {
@@ -121,7 +128,7 @@ export default function StripePaymentPanel(props: Props) {
     cardEmail, setCardEmail, cardNumber, setCardNumber, cardExpiry, setCardExpiry,
     cardCvc, setCardCvc, cardName, setCardName,
     walletNumber, setWalletNumber, walletName, setWalletName, money,
-    storeWalletBalance, emiPlan, setEmiPlan,
+    storeWalletBalance, emiPlan, setEmiPlan, paypalAvailable, paypalUsdRate,
   } = props;
   const walletLabel = paymentMethod === 'JAZZCASH' ? 'JazzCash' : 'Easypaisa';
   const isWallet = paymentMethod === 'JAZZCASH' || paymentMethod === 'EASYPAISA';
@@ -131,7 +138,7 @@ export default function StripePaymentPanel(props: Props) {
       <div className={styles.stripeCard}>
         <div className={styles.stripeSummary}>
           <p className={styles.stripeBiz}>OneStop Life</p>
-          <span className={styles.stripeTestBadge}>TEST MODE</span>
+          {paymentMethod === 'PAYPAL' ? null : <span className={styles.stripeTestBadge}>TEST MODE</span>}
           <div className={styles.stripeLines}>
             {items.slice(0, 4).map((item) => (
               <div key={item.id} className={styles.stripeLine}>
@@ -149,7 +156,7 @@ export default function StripePaymentPanel(props: Props) {
         </div>
         <div className={styles.stripeForm}>
           <div className={styles.payGrid} role="tablist" aria-label="Payment method">
-            {PAYMENT_TABS.map((tab) => {
+            {PAYMENT_TABS.filter((tab) => tab.id !== 'PAYPAL' || paypalAvailable).map((tab) => {
               const active = paymentMethod === tab.id;
               return (
                 <button
@@ -222,10 +229,15 @@ export default function StripePaymentPanel(props: Props) {
               <div className={styles.stripeCod}><strong>Approve in your {walletLabel} app.</strong><p>We will send a {money(total)} payment request to your {walletLabel} number — approve it there to complete your order.</p></div>
               <p className={styles.stripeTestNote}>Test mode — approval is simulated, no real money moves.</p>
             </>
+          ) : paymentMethod === 'PAYPAL' ? (
+            <div className={styles.stripeCod}>
+              <strong>Continue to PayPal to finish paying.</strong>
+              <p>You will be redirected to PayPal to sign in and approve the payment, then brought straight back here.{paypalUsdRate ? <> PayPal charges in US dollars — this order is <b>{money(total)}</b> ≈ <b>${(total / 100 / paypalUsdRate).toFixed(2)} USD</b>.</> : null}</p>
+            </div>
           ) : (
             <div className={styles.stripeCod}><strong>Pay in cash when your order arrives.</strong><p>Our rider collects {money(total)} at your doorstep. Please keep the amount ready.</p></div>
           )}
-          <p className={styles.stripeSecure}>🔒 Secured checkout · Test mode — no real payment is processed.</p>
+          {paymentMethod === 'PAYPAL' ? <p className={styles.stripeSecure}>🔒 You will complete this payment on PayPal’s secure site.</p> : <p className={styles.stripeSecure}>🔒 Secured checkout · Test mode — no real payment is processed.</p>}
         </div>
       </div>
     </div>
