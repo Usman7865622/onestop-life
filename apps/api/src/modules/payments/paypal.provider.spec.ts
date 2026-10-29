@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { PaypalProvider, paypalConfig, pkrMinorToUsd } from './paypal.provider';
+import { PaypalProvider, isAllowedReturnUrl, paypalConfig, pkrMinorToUsd } from './paypal.provider';
 
 describe('PayPal conversion', () => {
   it('converts paisa to a USD string at the configured rate', () => {
@@ -37,5 +37,28 @@ describe('PayPal configuration gating', () => {
       orderId: 'order-1', amountMinor: 1000, currency: 'PKR', customerPhone: '03001234567',
       idempotencyKey: 'order-1',
     })).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
+
+describe('PayPal return URL origin guard', () => {
+  const original = { ...process.env };
+  afterEach(() => { process.env = { ...original }; });
+
+  it('accepts the live origin when CORS_ORIGIN is a comma-separated list', () => {
+    process.env.CORS_ORIGIN = 'https://web-production-b6b696.up.railway.app,http://localhost:3000';
+    expect(isAllowedReturnUrl('https://web-production-b6b696.up.railway.app/checkout/paypal/return')).toBe(true);
+    expect(isAllowedReturnUrl('http://localhost:3000/checkout/paypal/return')).toBe(true);
+  });
+
+  it('rejects foreign and lookalike origins', () => {
+    process.env.CORS_ORIGIN = 'https://web-production-b6b696.up.railway.app,http://localhost:3000';
+    expect(isAllowedReturnUrl('https://evil.example/checkout/paypal/return')).toBe(false);
+    expect(isAllowedReturnUrl('https://web-production-b6b696.up.railway.app.evil.example/return')).toBe(false);
+    expect(isAllowedReturnUrl('not a url')).toBe(false);
+  });
+
+  it('allows any return URL when no origins are configured', () => {
+    delete process.env.CORS_ORIGIN;
+    expect(isAllowedReturnUrl('https://shop.example/checkout/paypal/return')).toBe(true);
   });
 });

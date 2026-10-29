@@ -33,6 +33,26 @@ export function pkrMinorToUsd(amountMinor: number, usdRate: number): string {
   return (amountMinor / 100 / usdRate).toFixed(2);
 }
 
+
+/**
+ * A PayPal return URL is only ever allowed back to a storefront origin.
+ * CORS_ORIGIN may hold several comma-separated origins (live site +
+ * localhost in production), so the return URL's origin must exactly
+ * equal one configured entry — never a raw prefix match.
+ */
+export function isAllowedReturnUrl(returnUrl: string): boolean {
+  const allowed = (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/+$/, ''))
+    .filter((origin) => origin.startsWith('http'));
+  if (!allowed.length) return true;
+  try {
+    return allowed.includes(new URL(returnUrl).origin);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * PayPal Checkout adapter (server-side Orders v2 flow):
  * createPayment creates a PayPal order and returns its approval link;
@@ -79,8 +99,7 @@ export class PaypalProvider implements PaymentProvider {
     }
     if (!input.returnUrl) throw new BadRequestException('A return URL is required for PayPal checkout');
     // Only ever send customers back to our own storefront origin.
-    const corsOrigin = process.env.CORS_ORIGIN;
-    if (corsOrigin && corsOrigin.startsWith('http') && !input.returnUrl.startsWith(corsOrigin)) {
+    if (!isAllowedReturnUrl(input.returnUrl)) {
       throw new BadRequestException('Return URL must be on the storefront origin');
     }
     const token = await this.accessToken(cfg);
