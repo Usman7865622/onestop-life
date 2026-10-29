@@ -522,20 +522,22 @@ export default function DashboardPage() {
   const docEarningsMinor = doctorAppointments.filter((a) => a.status === 'COMPLETED').reduce((t, a) => t + a.feeMinor, 0);
   const STATUS_PILL: Record<string, string> = { PENDING: styles.pillPending, CONFIRMED: styles.pillConfirmed, COMPLETED: styles.pillCompleted, CANCELLED: styles.pillCancelled, NO_SHOW: styles.pillCancelled };
 
-  const renderDoctorAppt = (appt: Appointment) => {
+  const renderDoctorAppt = (appt: Appointment, index: number) => {
     const issued = issuedByAppointment.get(appt.id);
     const facilityName = appt.facility?.name ?? appt.doctorProfile?.facilities?.[0]?.facility?.name;
     const start = new Date(appt.startsAt);
     const end = new Date(appt.endsAt);
     return (
       <div className={styles.apptItem} key={appt.id}>
+        <div className={styles.apptIndex} aria-label={`Appointment ${index + 1}`}>{index + 1}</div>
+        <div className={styles.apptBody}>
         <div className={styles.apptHead}>
           <strong>{appt.patientName}</strong>
-          <span className={`${styles.pill} ${STATUS_PILL[appt.status] ?? ''}`}>{appt.status.replace('_', ' ')}</span>
+          <span className={styles.apptRail}><b>{money(appt.feeMinor)}</b><span className={`${styles.pill} ${STATUS_PILL[appt.status] ?? ''}`}>{appt.status.replace('_', ' ')}</span></span>
         </div>
         <span>{start.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short' })} · {start.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} – {end.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} · {appt.type === 'VIDEO' ? '🎥 Video' : '🏥 In-person'}{facilityName ? ` · ${facilityName}` : ''}</span>
         {appt.reason ? <span><b>Reason:</b> {appt.reason}</span> : null}
-        <span>📞 {appt.patientPhone} · Fee {money(appt.feeMinor)}</span>
+        <span>📞 {appt.patientPhone}</span>
         {appt.status === 'PENDING' ? (
           <div className={styles.apptActions}>
             <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CONFIRMED')} disabled={busy}>Confirm appointment</button>
@@ -567,6 +569,7 @@ export default function DashboardPage() {
             </div>
           )
         ) : null}
+        </div>
       </div>
     );
   };
@@ -599,17 +602,17 @@ export default function DashboardPage() {
                 </div>
                 <div id="doctor-appointments">
                   <div className={styles.listBlock}>
-                    <h3>Today</h3>
-                    {docToday.length ? docToday.map(renderDoctorAppt) : <p className={styles.emptyStateInline}>No appointments today.</p>}
+                    <h3>Today <span className={styles.groupCount}>{docToday.length}</span></h3>
+                    {docToday.length ? docToday.map((a, i) => renderDoctorAppt(a, i)) : <p className={styles.emptyStateInline}>No appointments today.</p>}
                   </div>
                   <div className={styles.listBlock}>
-                    <h3>Upcoming</h3>
-                    {docUpcoming.length ? docUpcoming.map(renderDoctorAppt) : <p className={styles.emptyStateInline}>No upcoming appointments. New patient bookings will appear here.</p>}
+                    <h3>Upcoming <span className={styles.groupCount}>{docUpcoming.length}</span></h3>
+                    {docUpcoming.length ? docUpcoming.map((a, i) => renderDoctorAppt(a, i)) : <p className={styles.emptyStateInline}>No upcoming appointments. New patient bookings will appear here.</p>}
                   </div>
                   {docPast.length ? (
                     <div className={styles.listBlock}>
-                      <h3>Past appointments</h3>
-                      {docPast.map(renderDoctorAppt)}
+                      <h3>Past appointments <span className={styles.groupCount}>{docPast.length}</span></h3>
+                      {docPast.map((a, i) => renderDoctorAppt(a, i))}
                     </div>
                   ) : null}
                 </div>
