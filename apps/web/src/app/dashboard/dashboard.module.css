@@ -218,3 +218,18 @@
 .upNext i { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; animation: upNextPulse 1.6s ease-in-out infinite; }
 @keyframes upNextPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, .45); } 50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); } }
 .apptActions .primaryButton svg, .apptActions .dangerButton svg { flex: none; }
+
+/* Doctor workspace: week strip + patient reviews */
+.weekStrip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.weekDay, .weekDayToday { display: grid; gap: 2px; justify-items: center; text-align: center; padding: 10px 4px; border: 1px solid var(--line); border-radius: 12px; background: #fbfdff; }
+.weekDay span, .weekDayToday span { font-size: .7rem; font-weight: 800; letter-spacing: .05em; color: var(--muted); text-transform: uppercase; }
+.weekDay b, .weekDayToday b { font-size: 1.05rem; color: var(--ink); }
+.weekDay small, .weekDayToday small { font-size: .68rem; color: var(--muted); }
+.weekDay em, .weekDayToday em { font-style: normal; font-size: .68rem; font-weight: 700; color: var(--accent); }
+.weekDayToday { border-color: var(--accent); background: #eef7fb; box-shadow: 0 6px 16px rgba(22, 106, 145, .12); }
+@media (max-width: 720px) { .weekStrip { grid-template-columns: repeat(4, 1fr); } }
+.ratingLine { display: flex; align-items: center; gap: 8px; color: var(--muted); margin: 0 0 6px; flex-wrap: wrap; }
+.stars { color: #f5a623; letter-spacing: 2px; font-size: .95rem; }
+.reviewItem { display: grid; gap: 3px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.reviewItem p { margin: 0; color: var(--ink); }
+.reviewItem small { color: var(--muted); }

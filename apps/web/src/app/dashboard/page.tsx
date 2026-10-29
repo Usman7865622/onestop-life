@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import styles from './dashboard.module.css';
 import { apiFetch } from '../../lib/auth/api';
 import { clearAccessToken, hasRole, isBusinessUser, readAccessToken, readLoginIntent, type LoginIntent } from '../../lib/auth/session';
@@ -159,6 +159,9 @@ export default function DashboardPage() {
   const [profileEmail, setProfileEmail] = useState('');
 
   const [doctorAppointments, setDoctorAppointments] = useState<Appointment[]>([]);
+  const [doctorSlots, setDoctorSlots] = useState<Array<{ id: string; doctorProfileId: string; weekday: number; startTime: string; endTime: string; isActive: boolean }>>([]);
+  const [doctorReviews, setDoctorReviews] = useState<{ avgRating: number; reviewCount: number; items: Array<{ id: string; rating: number; comment?: string | null; createdAt: string; user?: { name: string | null } | null }> } | null>(null);
+  const reviewsForRef = useRef<string | null>(null);
   const [verificationType, setVerificationType] = useState<(typeof VERIFICATION_TYPES)[number]>('DOCTOR');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [licenseAuthority, setLicenseAuthority] = useState('');
@@ -199,6 +202,20 @@ export default function DashboardPage() {
     } finally { setLoading(false); }
   }, []);
 
+  const loadDoctorReviews = async (profileId: string) => {
+    if (reviewsForRef.current === profileId) return;
+    reviewsForRef.current = profileId;
+    const accessToken = readAccessToken();
+    if (!accessToken) return;
+    try {
+      const [doctor, reviews] = await Promise.all([
+        apiFetch<{ avgRating: number; reviewCount: number }>(`/doctors/${profileId}`, {}, accessToken),
+        apiFetch<{ items: Array<{ id: string; rating: number; comment?: string | null; createdAt: string; user?: { name: string | null } | null }> }>(`/doctors/${profileId}/reviews?page=1&pageSize=3`, {}, accessToken),
+      ]);
+      setDoctorReviews({ avgRating: doctor.avgRating ?? 0, reviewCount: doctor.reviewCount ?? 0, items: reviews.items ?? [] });
+    } catch { /* reviews stay hidden if unavailable */ }
+  };
+
   useEffect(() => { setIntent(readLoginIntent()); void loadUser(); }, [loadUser]);
 
   useEffect(() => {
@@ -208,6 +225,9 @@ export default function DashboardPage() {
 
     if (hasRole(user, 'DOCTOR')) {
       void apiFetch<Appointment[]>('/appointments/doctor/mine', {}, accessToken).then(setDoctorAppointments).catch(() => setDoctorAppointments([]));
+      void apiFetch<Array<{ id: string; doctorProfileId: string; weekday: number; startTime: string; endTime: string; isActive: boolean }>>('/availability/my', {}, accessToken)
+        .then((slots) => { setDoctorSlots(slots); if (slots[0]?.doctorProfileId) void loadDoctorReviews(slots[0].doctorProfileId); })
+        .catch(() => setDoctorSlots([]));
       void apiFetch<PrescriptionView[]>('/prescriptions/doctor/mine', { method: 'GET' }, accessToken).then(setIssuedPrescriptions).catch(() => setIssuedPrescriptions([]));
     }
     void apiFetch<PrescriptionView[]>('/prescriptions/mine', { method: 'GET' }, accessToken).then(setMyPrescriptions).catch(() => setMyPrescriptions([]));
@@ -231,6 +251,12 @@ export default function DashboardPage() {
         .catch((e) => setError(e instanceof Error ? e.message : 'Unable to load prescription queue.'));
     }
   }, [user]);
+
+  useEffect(() => {
+    const profileId = doctorAppointments[0]?.doctorProfile?.id;
+    if (profileId) void loadDoctorReviews(profileId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctorAppointments]);
 
   const refreshIssuedPrescriptions = async () => {
     const accessToken = readAccessToken();
@@ -519,6 +545,16 @@ export default function DashboardPage() {
   const docUpcomingIds = new Set(docUpcoming.map((a) => a.id));
   const docPast = sortedDoctorAppts.filter((a) => !docTodayIds.has(a.id) && !docUpcomingIds.has(a.id)).reverse().slice(0, 6);
   const nextApptId = docToday.find((a) => (a.status === 'PENDING' || a.status === 'CONFIRMED') && new Date(a.endsAt).getTime() > Date.now())?.id;
+  const docUniquePatients = new Set(doctorAppointments.map((a) => a.patientPhone)).size;
+  const weekAhead = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(Date.now() + i * 86400000);
+    const key = dayKeyPK(d);
+    const jsDay = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Karachi' })).getDay();
+    const daySlots = doctorSlots.filter((s) => s.weekday === jsDay && s.isActive);
+    const hours = daySlots.length ? daySlots.map((s) => `${s.startTime}–${s.endTime}`).join(', ') : 'Off';
+    const count = doctorAppointments.filter((a) => dayKeyPK(new Date(a.startsAt)) === key && a.status !== 'CANCELLED' && a.status !== 'NO_SHOW').length;
+    return { key, isToday: i === 0, label: new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', weekday: 'short' }).format(d), dateNum: new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', day: 'numeric' }).format(d), hours, count };
+  });
   const docCompletedCount = doctorAppointments.filter((a) => a.status === 'COMPLETED').length;
   const docEarningsMinor = doctorAppointments.filter((a) => a.status === 'COMPLETED').reduce((t, a) => t + a.feeMinor, 0);
   const STATUS_PILL: Record<string, string> = { PENDING: styles.pillPending, CONFIRMED: styles.pillConfirmed, COMPLETED: styles.pillCompleted, CANCELLED: styles.pillCancelled, NO_SHOW: styles.pillCancelled };
@@ -594,6 +630,7 @@ export default function DashboardPage() {
                 <div className={styles.adminStats}>
                   <div><span className={styles.statIco}><SectionIcon name="calendar" size={16} /></span><strong>{docToday.length}</strong><span>Appointments today</span></div>
                   <div><span className={`${styles.statIco} ${styles.statIcoAmber}`}><SectionIcon name="clock" size={16} /></span><strong>{docUpcoming.length}</strong><span>Upcoming</span></div>
+                  <div><span className={styles.statIco}><SectionIcon name="users" size={16} /></span><strong>{docUniquePatients}</strong><span>Patients seen</span></div>
                   <div><span className={`${styles.statIco} ${styles.statIcoGreen}`}><SectionIcon name="check" size={16} /></span><strong>{docCompletedCount}</strong><span>Consultations completed</span></div>
                   <div><span className={`${styles.statIco} ${styles.statIcoGold}`}><SectionIcon name="wallet" size={16} /></span><strong>{money(docEarningsMinor)}</strong><span>Earned from consultations</span></div>
                 </div>
@@ -617,6 +654,31 @@ export default function DashboardPage() {
                     </div>
                   ) : null}
                 </div>
+                {doctorSlots.length ? (
+                  <div className={styles.listBlock}>
+                    <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="calendar" size={15} /></span>My week ahead</h3>
+                    <div className={styles.weekStrip}>
+                      {weekAhead.map((d) => (
+                        <div key={d.key} className={d.isToday ? styles.weekDayToday : styles.weekDay}>
+                          <span>{d.label}</span><b>{d.dateNum}</b><small>{d.hours}</small><em>{d.count ? `${d.count} appt${d.count === 1 ? '' : 's'}` : 'No appts'}</em>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {doctorReviews && doctorReviews.reviewCount > 0 ? (
+                  <div className={styles.listBlock}>
+                    <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="star" size={15} /></span>Patient reviews <span className={styles.groupCount}>{doctorReviews.reviewCount}</span></h3>
+                    <p className={styles.ratingLine}><span className={styles.stars}>{'★'.repeat(Math.round(doctorReviews.avgRating))}{'☆'.repeat(5 - Math.round(doctorReviews.avgRating))}</span>{doctorReviews.avgRating.toFixed(1)} average from {doctorReviews.reviewCount} review{doctorReviews.reviewCount === 1 ? '' : 's'}</p>
+                    {doctorReviews.items.map((r) => (
+                      <div className={styles.reviewItem} key={r.id}>
+                        <div className={styles.apptHead}><strong>{r.user?.name ?? 'Patient'}</strong><span className={styles.stars}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span></div>
+                        {r.comment ? <p>{r.comment}</p> : null}
+                        <small>{new Date(r.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}</small>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <p className={styles.note}>Profile editing is available through your verified doctor profile (speciality, fee, timings and facilities are managed via <code>POST/PATCH /doctors/me/profile</code>). If you need a field changed before the full editor ships, contact support and we will update it with you.</p>
               </>
             ) : (
