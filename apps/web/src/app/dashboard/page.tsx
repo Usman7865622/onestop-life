@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import styles from './dashboard.module.css';
 import { apiFetch } from '../../lib/auth/api';
 import { clearAccessToken, hasRole, isBusinessUser, readAccessToken, readLoginIntent, type LoginIntent } from '../../lib/auth/session';
@@ -406,45 +406,7 @@ export default function DashboardPage() {
   const accessToken = readAccessToken();
   const issuedByAppointment = new Map(issuedPrescriptions.map((prescription) => [prescription.appointmentId, prescription]));
 
-  return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
-        <section className={styles.welcomeCard}>
-          <div>
-            <span className={styles.badge}>My OneStop dashboard</span>
-            <h1>Welcome, {user.name || 'friend'}</h1>
-            <p>{user.phone}{user.email ? ` · ${user.email}` : ''}</p>
-          </div>
-          <div className={styles.welcomeActions}>
-            <span className={styles.rolePill}>{roleSummary}</span>
-            <button className={styles.secondaryButton} onClick={logout} disabled={busy}>Log out</button>
-          </div>
-        </section>
-
-        {intent ? <p className={styles.intentNote}>You continued as <strong>{intent}</strong>. Your actual access below follows the roles on your account{intent === 'admin' && !isAdmin ? ' — Admin tools stay locked until an ADMIN role is added.' : '.'}</p> : null}
-        {status ? <p className={styles.successText} role="status">{status}</p> : null}
-        {error ? <p className={styles.errorText} role="alert">{error}</p> : null}
-
-        <div className={styles.grid}>
-          <section className={styles.card}>
-            <PanelTitle icon="users" title="Profile" sub="Keep your account details current." />
-            <label className={styles.field}><span>Full name</span><input value={profileName} onChange={(e) => setProfileName(e.target.value)} /></label>
-            <label className={styles.field}><span>Email</span><input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} placeholder="you@example.com" /></label>
-            <button className={styles.primaryButton} onClick={updateProfile} disabled={busy}>Save profile</button>
-          </section>
-
-          <section className={styles.card}>
-            <PanelTitle icon="shield" title="Account overview" sub="Personal details and permissions." />
-            <div className={styles.summaryList}>
-              <div><span>Phone</span><strong>{user.phone || 'Email account'}</strong></div>
-              <div><span>Email</span><strong>{user.email || 'Not provided yet'}</strong></div>
-              <div><span>Locale</span><strong>{user.locale.toUpperCase()}</strong></div>
-              <div><span>Roles</span><strong>{roleSummary}</strong></div>
-            </div>
-          </section>
-        </div>
-
-        {showPatient ? (
+  const patientSection = showPatient ? (
           <section className={styles.card} aria-labelledby="patient-heading">
             <PanelTitle id="patient-heading" icon="heart" title="Patient & customer" sub="Your everyday care shortcuts." />
             <div className={styles.linkGrid}>
@@ -524,9 +486,9 @@ export default function DashboardPage() {
             </div>
             <WalletPanel token={readAccessToken()} />
           </section>
-        ) : null}
+  ) : null;
 
-        {showDoctor ? (
+  const doctorSection = showDoctor ? (
           <section className={styles.card} aria-labelledby="doctor-heading">
             <PanelTitle id="doctor-heading" icon="stethoscope" title="Doctor workspace" sub={isDoctor ? 'Your consultations and public profile.' : 'Doctor tools unlock after your DOCTOR verification is approved.'} />
             {isDoctor ? (
@@ -571,9 +533,9 @@ export default function DashboardPage() {
               <p className={styles.note}>You chose Doctor at sign-in, but your account does not have the DOCTOR role yet. Submit a Doctor verification request in the Business &amp; verification section below — once approved, this workspace unlocks automatically.</p>
             )}
           </section>
-        ) : null}
+  ) : null;
 
-        {showBusiness ? (
+  const businessSection = showBusiness ? (
           <>
             <section className={styles.card} aria-labelledby="business-heading">
               <PanelTitle id="business-heading" icon="pharmacy" title="Pharmacy / Business verification" sub="Choose the workspace that matches your work. Approval unlocks the tools for that role." />
@@ -625,9 +587,9 @@ export default function DashboardPage() {
               <section className={styles.card}><p className={styles.note}>Seller catalogue tools unlock after a SELLER verification is approved. Your submitted requests above are tracked automatically.</p></section>
             )}
           </>
-        ) : null}
+  ) : null;
 
-        {showAdmin ? (
+  const adminSection = showAdmin ? (
           <section className={styles.card} aria-labelledby="admin-heading">
             <PanelTitle id="admin-heading" icon="shield" title="Admin control centre" sub="Review trust applications and keep the marketplace safe." />
             {isAdmin ? (
@@ -755,7 +717,56 @@ export default function DashboardPage() {
               </div>
             )}
           </section>
-        ) : null}
+  ) : null;
+
+  // The workspace matching how the user continued (or their strongest role)
+  // comes first — a doctor who signs in as a doctor lands on their
+  // appointments, not on the customer dashboard.
+  const primarySection = intent ?? (isDoctor ? 'doctor' : isAdmin ? 'admin' : isBusinessUser(user) ? 'business' : 'patient');
+  const sectionOrder = [primarySection, 'patient', 'doctor', 'business', 'admin'].filter((v, i, a) => a.indexOf(v) === i);
+  const sectionByKey = { patient: patientSection, doctor: doctorSection, business: businessSection, admin: adminSection };
+
+  return (
+    <main className={styles.page}>
+      <div className={styles.shell}>
+        <section className={styles.welcomeCard}>
+          <div>
+            <span className={styles.badge}>My OneStop dashboard</span>
+            <h1>Welcome, {user.name || 'friend'}</h1>
+            <p>{user.phone}{user.email ? ` · ${user.email}` : ''}</p>
+          </div>
+          <div className={styles.welcomeActions}>
+            <span className={styles.rolePill}>{roleSummary}</span>
+            <button className={styles.secondaryButton} onClick={logout} disabled={busy}>Log out</button>
+          </div>
+        </section>
+
+        {intent ? <p className={styles.intentNote}>You continued as <strong>{intent}</strong>. Your actual access below follows the roles on your account{intent === 'admin' && !isAdmin ? ' — Admin tools stay locked until an ADMIN role is added.' : '.'}</p> : null}
+        {status ? <p className={styles.successText} role="status">{status}</p> : null}
+        {error ? <p className={styles.errorText} role="alert">{error}</p> : null}
+
+        <div className={styles.grid}>
+          <section className={styles.card}>
+            <PanelTitle icon="users" title="Profile" sub="Keep your account details current." />
+            <label className={styles.field}><span>Full name</span><input value={profileName} onChange={(e) => setProfileName(e.target.value)} /></label>
+            <label className={styles.field}><span>Email</span><input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} placeholder="you@example.com" /></label>
+            <button className={styles.primaryButton} onClick={updateProfile} disabled={busy}>Save profile</button>
+          </section>
+
+          <section className={styles.card}>
+            <PanelTitle icon="shield" title="Account overview" sub="Personal details and permissions." />
+            <div className={styles.summaryList}>
+              <div><span>Phone</span><strong>{user.phone || 'Email account'}</strong></div>
+              <div><span>Email</span><strong>{user.email || 'Not provided yet'}</strong></div>
+              <div><span>Locale</span><strong>{user.locale.toUpperCase()}</strong></div>
+              <div><span>Roles</span><strong>{roleSummary}</strong></div>
+            </div>
+          </section>
+        </div>
+
+        {sectionOrder.map((key) => (
+          <Fragment key={key}>{sectionByKey[key as keyof typeof sectionByKey]}</Fragment>
+        ))}
 
         {hasRole(user, 'PHARMACY', 'ADMIN') ? (
           <section className={styles.card} aria-labelledby="rx-queue-heading">
