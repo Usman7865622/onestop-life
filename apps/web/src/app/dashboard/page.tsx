@@ -518,6 +518,7 @@ export default function DashboardPage() {
   const docTodayIds = new Set(docToday.map((a) => a.id));
   const docUpcomingIds = new Set(docUpcoming.map((a) => a.id));
   const docPast = sortedDoctorAppts.filter((a) => !docTodayIds.has(a.id) && !docUpcomingIds.has(a.id)).reverse().slice(0, 6);
+  const nextApptId = docToday.find((a) => (a.status === 'PENDING' || a.status === 'CONFIRMED') && new Date(a.endsAt).getTime() > Date.now())?.id;
   const docCompletedCount = doctorAppointments.filter((a) => a.status === 'COMPLETED').length;
   const docEarningsMinor = doctorAppointments.filter((a) => a.status === 'COMPLETED').reduce((t, a) => t + a.feeMinor, 0);
   const STATUS_PILL: Record<string, string> = { PENDING: styles.pillPending, CONFIRMED: styles.pillConfirmed, COMPLETED: styles.pillCompleted, CANCELLED: styles.pillCancelled, NO_SHOW: styles.pillCancelled };
@@ -532,22 +533,22 @@ export default function DashboardPage() {
         <div className={styles.apptIndex} aria-label={`Appointment ${index + 1}`}>{index + 1}</div>
         <div className={styles.apptBody}>
         <div className={styles.apptHead}>
-          <strong>{appt.patientName}</strong>
+          <span className={styles.apptName}><strong>{appt.patientName}</strong>{appt.id === nextApptId ? <span className={styles.upNext}><i />Up next</span> : null}</span>
           <span className={styles.apptRail}><b>{money(appt.feeMinor)}</b><span className={`${styles.pill} ${STATUS_PILL[appt.status] ?? ''}`}>{appt.status.replace('_', ' ')}</span></span>
         </div>
-        <span>{start.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short' })} · {start.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} – {end.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} · {appt.type === 'VIDEO' ? '🎥 Video' : '🏥 In-person'}{facilityName ? ` · ${facilityName}` : ''}</span>
+        <span className={styles.metaLine}><span className={styles.metaSeg}><SectionIcon name="clock" size={14} />{start.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short' })} · {start.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} – {end.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })}</span><span className={styles.metaSeg}><SectionIcon name={appt.type === 'VIDEO' ? 'video' : 'clinic'} size={14} />{appt.type === 'VIDEO' ? 'Video' : 'In-person'}</span>{facilityName ? <span className={styles.metaSeg}><SectionIcon name="pin" size={14} />{facilityName}</span> : null}</span>
         {appt.reason ? <span><b>Reason:</b> {appt.reason}</span> : null}
-        <span>📞 {appt.patientPhone}</span>
+        <span className={styles.metaSeg}><SectionIcon name="phone" size={14} />{appt.patientPhone}</span>
         {appt.status === 'PENDING' ? (
           <div className={styles.apptActions}>
-            <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CONFIRMED')} disabled={busy}>Confirm appointment</button>
-            <button type="button" className={styles.dangerButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CANCELLED')} disabled={busy}>Decline</button>
+            <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CONFIRMED')} disabled={busy}><SectionIcon name="check" size={15} /> Confirm appointment</button>
+            <button type="button" className={styles.dangerButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CANCELLED')} disabled={busy}><SectionIcon name="x" size={15} /> Decline</button>
           </div>
         ) : null}
         {appt.status === 'CONFIRMED' ? (
           <div className={styles.apptActions}>
-            {apptStart(appt) <= Date.now() ? <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'COMPLETED')} disabled={busy}>Mark complete</button> : null}
-            <button type="button" className={styles.dangerButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CANCELLED')} disabled={busy}>Cancel</button>
+            {apptStart(appt) <= Date.now() ? <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'COMPLETED')} disabled={busy}><SectionIcon name="check" size={15} /> Mark complete</button> : null}
+            <button type="button" className={styles.dangerButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CANCELLED')} disabled={busy}><SectionIcon name="x" size={15} /> Cancel</button>
           </div>
         ) : null}
         {appt.status === 'COMPLETED' ? (
@@ -565,7 +566,7 @@ export default function DashboardPage() {
             />
           ) : (
             <div className={styles.apptActions}>
-              <button type="button" className={styles.primaryButton} onClick={() => setComposingFor(appt.id)}>Write prescription</button>
+              <button type="button" className={styles.primaryButton} onClick={() => setComposingFor(appt.id)}><SectionIcon name="pen" size={15} /> Write prescription</button>
             </div>
           )
         ) : null}
@@ -583,18 +584,18 @@ export default function DashboardPage() {
                   <div className={styles.docProfile}>
                     <div className={styles.docAvatar} aria-hidden="true">{doctorInitials(myDoctorProfile.user?.name)}</div>
                     <div className={styles.docProfileMeta}>
-                      <strong>Dr. {(myDoctorProfile.user?.name ?? 'Doctor').replace(/^Dr\.\s*/i, '')}</strong>
+                      <span className={styles.docNameRow}><strong>Dr. {(myDoctorProfile.user?.name ?? 'Doctor').replace(/^Dr\.\s*/i, '')}</strong>{myDoctorProfile.pmdcNumber ? <span className={styles.verifiedTag}><SectionIcon name="shield" size={13} /> PMDC verified</span> : null}</span>
                       <span>{myDoctorProfile.speciality}{myDoctorProfile.qualifications ? ` · ${myDoctorProfile.qualifications}` : ''}</span>
                       <span>{myDoctorProfile.pmdcNumber ? `PMDC ${myDoctorProfile.pmdcNumber} · ` : ''}{myDoctorProfile.experienceYears} yrs experience · {money(myDoctorProfile.feeMinor)} per visit</span>
-                      {myDoctorProfile.facilities?.length ? <span>🏥 {myDoctorProfile.facilities.map((f) => f.facility.name).join(' · ')}</span> : null}
+                      {myDoctorProfile.facilities?.length ? <span className={styles.metaSeg}><SectionIcon name="clinic" size={14} /> {myDoctorProfile.facilities.map((f) => f.facility.name).join(' · ')}</span> : null}
                     </div>
                   </div>
                 ) : null}
                 <div className={styles.adminStats}>
-                  <div><strong>{docToday.length}</strong><span>Appointments today</span></div>
-                  <div><strong>{docUpcoming.length}</strong><span>Upcoming</span></div>
-                  <div><strong>{docCompletedCount}</strong><span>Consultations completed</span></div>
-                  <div><strong>{money(docEarningsMinor)}</strong><span>Earned from consultations</span></div>
+                  <div><span className={styles.statIco}><SectionIcon name="calendar" size={16} /></span><strong>{docToday.length}</strong><span>Appointments today</span></div>
+                  <div><span className={`${styles.statIco} ${styles.statIcoAmber}`}><SectionIcon name="clock" size={16} /></span><strong>{docUpcoming.length}</strong><span>Upcoming</span></div>
+                  <div><span className={`${styles.statIco} ${styles.statIcoGreen}`}><SectionIcon name="check" size={16} /></span><strong>{docCompletedCount}</strong><span>Consultations completed</span></div>
+                  <div><span className={`${styles.statIco} ${styles.statIcoGold}`}><SectionIcon name="wallet" size={16} /></span><strong>{money(docEarningsMinor)}</strong><span>Earned from consultations</span></div>
                 </div>
                 <div className={styles.linkGrid}>
                   <Link className={styles.linkCard} href="/doctors"><strong>View public doctors page</strong><span>See how patients find and book you.</span></Link>
@@ -602,16 +603,16 @@ export default function DashboardPage() {
                 </div>
                 <div id="doctor-appointments">
                   <div className={styles.listBlock}>
-                    <h3>Today <span className={styles.groupCount}>{docToday.length}</span></h3>
+                    <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="calendar" size={15} /></span>Today <span className={styles.groupCount}>{docToday.length}</span></h3>
                     {docToday.length ? docToday.map((a, i) => renderDoctorAppt(a, i)) : <p className={styles.emptyStateInline}>No appointments today.</p>}
                   </div>
                   <div className={styles.listBlock}>
-                    <h3>Upcoming <span className={styles.groupCount}>{docUpcoming.length}</span></h3>
+                    <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="clock" size={15} /></span>Upcoming <span className={styles.groupCount}>{docUpcoming.length}</span></h3>
                     {docUpcoming.length ? docUpcoming.map((a, i) => renderDoctorAppt(a, i)) : <p className={styles.emptyStateInline}>No upcoming appointments. New patient bookings will appear here.</p>}
                   </div>
                   {docPast.length ? (
                     <div className={styles.listBlock}>
-                      <h3>Past appointments <span className={styles.groupCount}>{docPast.length}</span></h3>
+                      <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="history" size={15} /></span>Past appointments <span className={styles.groupCount}>{docPast.length}</span></h3>
                       {docPast.map((a, i) => renderDoctorAppt(a, i))}
                     </div>
                   ) : null}
