@@ -7,7 +7,7 @@ import styles from './dashboard.module.css';
 import { apiFetch } from '../../lib/auth/api';
 import { clearAccessToken, hasRole, isBusinessUser, readAccessToken, readLoginIntent, type LoginIntent } from '../../lib/auth/session';
 import type { PublicUser } from '../../lib/auth/types';
-import { money, type Appointment } from '../../lib/doctors/types';
+import { doctorInitials, money, type Appointment } from '../../lib/doctors/types';
 import { SectionIcon, type SectionIconName } from '../../components/home/SectionIcons';
 import OrderTracking from '../../components/orders/OrderTracking';
 import WalletPanel from '../../components/wallet/WalletPanel';
@@ -236,6 +236,25 @@ export default function DashboardPage() {
     const accessToken = readAccessToken();
     if (!accessToken) return;
     void apiFetch<PrescriptionView[]>('/prescriptions/doctor/mine', { method: 'GET' }, accessToken).then(setIssuedPrescriptions).catch(() => {});
+  };
+
+  const refreshDoctorAppointments = async () => {
+    const accessToken = readAccessToken();
+    if (!accessToken) return;
+    void apiFetch<Appointment[]>('/appointments/doctor/mine', {}, accessToken).then(setDoctorAppointments).catch(() => {});
+  };
+
+  const updateDoctorAppointmentStatus = async (appt: Appointment, status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') => {
+    const accessToken = readAccessToken();
+    if (!accessToken) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/appointments/${appt.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }, accessToken);
+      setStatus(`Appointment with ${appt.patientName} is now ${status.toLowerCase()}.`);
+      await refreshDoctorAppointments();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update that appointment.');
+    } finally { setBusy(false); }
   };
 
   const orderAllPrescription = (prescription: PrescriptionView) => {
@@ -488,44 +507,111 @@ export default function DashboardPage() {
           </section>
   ) : null;
 
+  // Doctor workspace detail: profile strip, stats and grouped appointments.
+  const myDoctorProfile = doctorAppointments[0]?.doctorProfile ?? null;
+  const dayKeyPK = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Karachi', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  const todayKeyPK = dayKeyPK(new Date());
+  const apptStart = (a: Appointment) => new Date(a.startsAt).getTime();
+  const sortedDoctorAppts = [...doctorAppointments].sort((a, b) => apptStart(a) - apptStart(b));
+  const docToday = sortedDoctorAppts.filter((a) => dayKeyPK(new Date(a.startsAt)) === todayKeyPK && a.status !== 'CANCELLED' && a.status !== 'NO_SHOW');
+  const docUpcoming = sortedDoctorAppts.filter((a) => apptStart(a) > Date.now() && dayKeyPK(new Date(a.startsAt)) !== todayKeyPK && (a.status === 'PENDING' || a.status === 'CONFIRMED'));
+  const docTodayIds = new Set(docToday.map((a) => a.id));
+  const docUpcomingIds = new Set(docUpcoming.map((a) => a.id));
+  const docPast = sortedDoctorAppts.filter((a) => !docTodayIds.has(a.id) && !docUpcomingIds.has(a.id)).reverse().slice(0, 6);
+  const docCompletedCount = doctorAppointments.filter((a) => a.status === 'COMPLETED').length;
+  const docEarningsMinor = doctorAppointments.filter((a) => a.status === 'COMPLETED').reduce((t, a) => t + a.feeMinor, 0);
+  const STATUS_PILL: Record<string, string> = { PENDING: styles.pillPending, CONFIRMED: styles.pillConfirmed, COMPLETED: styles.pillCompleted, CANCELLED: styles.pillCancelled, NO_SHOW: styles.pillCancelled };
+
+  const renderDoctorAppt = (appt: Appointment) => {
+    const issued = issuedByAppointment.get(appt.id);
+    const facilityName = appt.facility?.name ?? appt.doctorProfile?.facilities?.[0]?.facility?.name;
+    const start = new Date(appt.startsAt);
+    const end = new Date(appt.endsAt);
+    return (
+      <div className={styles.apptItem} key={appt.id}>
+        <div className={styles.apptHead}>
+          <strong>{appt.patientName}</strong>
+          <span className={`${styles.pill} ${STATUS_PILL[appt.status] ?? ''}`}>{appt.status.replace('_', ' ')}</span>
+        </div>
+        <span>{start.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short' })} · {start.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} – {end.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} · {appt.type === 'VIDEO' ? '🎥 Video' : '🏥 In-person'}{facilityName ? ` · ${facilityName}` : ''}</span>
+        {appt.reason ? <span><b>Reason:</b> {appt.reason}</span> : null}
+        <span>📞 {appt.patientPhone} · Fee {money(appt.feeMinor)}</span>
+        {appt.status === 'PENDING' ? (
+          <div className={styles.apptActions}>
+            <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CONFIRMED')} disabled={busy}>Confirm appointment</button>
+            <button type="button" className={styles.dangerButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CANCELLED')} disabled={busy}>Decline</button>
+          </div>
+        ) : null}
+        {appt.status === 'CONFIRMED' ? (
+          <div className={styles.apptActions}>
+            {apptStart(appt) <= Date.now() ? <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'COMPLETED')} disabled={busy}>Mark complete</button> : null}
+            <button type="button" className={styles.dangerButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CANCELLED')} disabled={busy}>Cancel</button>
+          </div>
+        ) : null}
+        {appt.status === 'COMPLETED' ? (
+          issued ? (
+            <>
+              <span className={styles.issuedTag}>Prescription issued</span>
+              <span>{issued.items.map((item) => `${item.name}${item.dosage ? ` ${item.dosage}` : ''} ×${item.qty}`).join(' · ')}</span>
+            </>
+          ) : composingFor === appt.id ? (
+            <PrescriptionComposer
+              appointmentId={appt.id}
+              token={accessToken ?? ''}
+              onIssued={() => { setComposingFor(null); void refreshIssuedPrescriptions(); setStatus('Prescription issued — the patient can now see it and order the medicines in one tap.'); }}
+              onCancel={() => setComposingFor(null)}
+            />
+          ) : (
+            <div className={styles.apptActions}>
+              <button type="button" className={styles.primaryButton} onClick={() => setComposingFor(appt.id)}>Write prescription</button>
+            </div>
+          )
+        ) : null}
+      </div>
+    );
+  };
+
   const doctorSection = showDoctor ? (
           <section className={styles.card} aria-labelledby="doctor-heading">
             <PanelTitle id="doctor-heading" icon="stethoscope" title="Doctor workspace" sub={isDoctor ? 'Your consultations and public profile.' : 'Doctor tools unlock after your DOCTOR verification is approved.'} />
             {isDoctor ? (
               <>
+                {myDoctorProfile ? (
+                  <div className={styles.docProfile}>
+                    <div className={styles.docAvatar} aria-hidden="true">{doctorInitials(myDoctorProfile.user?.name)}</div>
+                    <div className={styles.docProfileMeta}>
+                      <strong>Dr. {(myDoctorProfile.user?.name ?? 'Doctor').replace(/^Dr\.\s*/i, '')}</strong>
+                      <span>{myDoctorProfile.speciality}{myDoctorProfile.qualifications ? ` · ${myDoctorProfile.qualifications}` : ''}</span>
+                      <span>{myDoctorProfile.pmdcNumber ? `PMDC ${myDoctorProfile.pmdcNumber} · ` : ''}{myDoctorProfile.experienceYears} yrs experience · {money(myDoctorProfile.feeMinor)} per visit</span>
+                      {myDoctorProfile.facilities?.length ? <span>🏥 {myDoctorProfile.facilities.map((f) => f.facility.name).join(' · ')}</span> : null}
+                    </div>
+                  </div>
+                ) : null}
+                <div className={styles.adminStats}>
+                  <div><strong>{docToday.length}</strong><span>Appointments today</span></div>
+                  <div><strong>{docUpcoming.length}</strong><span>Upcoming</span></div>
+                  <div><strong>{docCompletedCount}</strong><span>Consultations completed</span></div>
+                  <div><strong>{money(docEarningsMinor)}</strong><span>Earned from consultations</span></div>
+                </div>
                 <div className={styles.linkGrid}>
                   <Link className={styles.linkCard} href="/doctors"><strong>View public doctors page</strong><span>See how patients find and book you.</span></Link>
                   <a className={styles.linkCard} href="#doctor-appointments"><strong>My doctor appointments</strong><span>{doctorAppointments.length} appointment{doctorAppointments.length === 1 ? '' : 's'} on your schedule.</span></a>
                 </div>
-                <div id="doctor-appointments" className={styles.listBlock}>
-                  <h3>Upcoming patient requests</h3>
-                  {doctorAppointments.length ? doctorAppointments.slice(0, 6).map((appt) => {
-                    const issued = issuedByAppointment.get(appt.id);
-                    return (
-                      <div className={styles.listItem} key={appt.id}>
-                        <strong>{appt.patientName}</strong>
-                        <span>{new Date(appt.startsAt).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })} · {appt.type === 'VIDEO' ? 'Video' : 'In-person'} · {appt.status}</span>
-                        <span>{money(appt.feeMinor)}</span>
-                        {appt.status === 'COMPLETED' ? (
-                          issued ? (
-                            <>
-                              <span className={styles.issuedTag}>Prescription issued</span>
-                              <span>{issued.items.map((item) => `${item.name}${item.dosage ? ` ${item.dosage}` : ''} ×${item.qty}`).join(' · ')}</span>
-                            </>
-                          ) : composingFor === appt.id ? (
-                            <PrescriptionComposer
-                              appointmentId={appt.id}
-                              token={accessToken ?? ''}
-                              onIssued={() => { setComposingFor(null); void refreshIssuedPrescriptions(); setStatus('Prescription issued — the patient can now see it and order the medicines in one tap.'); }}
-                              onCancel={() => setComposingFor(null)}
-                            />
-                          ) : (
-                            <button type="button" className={styles.secondaryButton} onClick={() => setComposingFor(appt.id)}>Write prescription</button>
-                          )
-                        ) : null}
-                      </div>
-                    );
-                  }) : <p className={styles.emptyStateInline}>No doctor appointments yet. New patient bookings will appear here.</p>}
+                <div id="doctor-appointments">
+                  <div className={styles.listBlock}>
+                    <h3>Today</h3>
+                    {docToday.length ? docToday.map(renderDoctorAppt) : <p className={styles.emptyStateInline}>No appointments today.</p>}
+                  </div>
+                  <div className={styles.listBlock}>
+                    <h3>Upcoming</h3>
+                    {docUpcoming.length ? docUpcoming.map(renderDoctorAppt) : <p className={styles.emptyStateInline}>No upcoming appointments. New patient bookings will appear here.</p>}
+                  </div>
+                  {docPast.length ? (
+                    <div className={styles.listBlock}>
+                      <h3>Past appointments</h3>
+                      {docPast.map(renderDoctorAppt)}
+                    </div>
+                  ) : null}
                 </div>
                 <p className={styles.note}>Profile editing is available through your verified doctor profile (speciality, fee, timings and facilities are managed via <code>POST/PATCH /doctors/me/profile</code>). If you need a field changed before the full editor ships, contact support and we will update it with you.</p>
               </>

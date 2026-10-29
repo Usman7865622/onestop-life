@@ -168,3 +168,19 @@
 @media (pointer: coarse) {
   .primaryButton, .secondaryButton, .dangerButton, .linkCard { min-height: 44px; }
 }
+
+/* Doctor workspace detail */
+.docProfile { display: flex; gap: 14px; align-items: center; background: #fbfdff; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px; }
+.docAvatar { flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem; }
+.docProfileMeta { display: grid; gap: 2px; }
+.docProfileMeta strong { color: var(--ink); font-size: 1.05rem; }
+.docProfileMeta span { color: var(--muted); font-size: .86rem; }
+.apptItem { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .92rem; }
+.apptItem strong { color: var(--ink); }
+.apptHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pill { flex: none; font-size: .68rem; font-weight: 800; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; background: #eef2f6; color: #54687e; }
+.pillPending { background: #fef3c7; color: #92400e; }
+.pillConfirmed { background: #e0f2fe; color: #075985; }
+.pillCompleted { background: #dcfce7; color: #166534; }
+.pillCancelled { background: #fee2e2; color: #991b1b; }
+.apptActions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
