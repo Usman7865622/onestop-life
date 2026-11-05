@@ -627,14 +627,14 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ) : null}
-                <div className={styles.adminStats}>
+                <div className={`${styles.adminStats} ${styles.docStats}`}>
                   <div><span className={styles.statIco}><SectionIcon name="calendar" size={16} /></span><strong>{docToday.length}</strong><span>Appointments today</span></div>
                   <div><span className={`${styles.statIco} ${styles.statIcoAmber}`}><SectionIcon name="clock" size={16} /></span><strong>{docUpcoming.length}</strong><span>Upcoming</span></div>
                   <div><span className={styles.statIco}><SectionIcon name="users" size={16} /></span><strong>{docUniquePatients}</strong><span>Patients seen</span></div>
                   <div><span className={`${styles.statIco} ${styles.statIcoGreen}`}><SectionIcon name="check" size={16} /></span><strong>{docCompletedCount}</strong><span>Consultations completed</span></div>
                   <div><span className={`${styles.statIco} ${styles.statIcoGold}`}><SectionIcon name="wallet" size={16} /></span><strong>{money(docEarningsMinor)}</strong><span>Earned from consultations</span></div>
                 </div>
-                <div className={styles.linkGrid}>
+                <div className={`${styles.linkGrid} ${styles.docLinks}`}>
                   <Link className={styles.linkCard} href="/doctors"><strong>View public doctors page</strong><span>See how patients find and book you.</span></Link>
                   <a className={styles.linkCard} href="#doctor-appointments"><strong>My doctor appointments</strong><span>{doctorAppointments.length} appointment{doctorAppointments.length === 1 ? '' : 's'} on your schedule.</span></a>
                 </div>

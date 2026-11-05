@@ -233,3 +233,19 @@
 .reviewItem { display: grid; gap: 3px; padding: 10px 0; border-bottom: 1px solid var(--line); }
 .reviewItem p { margin: 0; color: var(--ink); }
 .reviewItem small { color: var(--muted); }
+
+/* Doctor workspace alignment pass: equal grids, one fee column, even rhythm */
+.docStats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+.docStats div { height: 100%; align-content: start; }
+.docStats strong { font-size: 1.3rem; line-height: 1.15; }
+@media (max-width: 980px) { .docStats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .docStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.docLinks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.docLinks .linkCard { height: 100%; }
+@media (max-width: 560px) { .docLinks { grid-template-columns: 1fr; } }
+.apptRail { min-width: 198px; justify-content: flex-end; }
+.apptRail b { min-width: 78px; text-align: right; }
+@media (max-width: 560px) { .apptRail { min-width: 0; } .apptRail b { min-width: 0; } }
+.docProfileMeta span { display: inline-flex; align-items: center; gap: 5px; }
+.weekDay, .weekDayToday { min-height: 88px; align-content: start; }
+.apptActions { min-height: 42px; }
