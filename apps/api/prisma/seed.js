@@ -1,5 +1,24 @@
 // Plain-JS seed so production never depends on ts-node/tsconfig (fixes TS5109 in Docker).
 const { PrismaClient, RoleKey } = require('@prisma/client');
+const { randomBytes, scrypt } = require('crypto');
+const { promisify } = require('util');
+
+const scryptAsync = promisify(scrypt);
+
+/** Same scrypt format as AuthService.hashPassword (`salt:derived`, hex). */
+async function hashPassword(password) {
+  const salt = randomBytes(16).toString('hex');
+  const derived = await scryptAsync(password, salt, 64);
+  return `${salt}:${derived.toString('hex')}`;
+}
+
+/**
+ * Published demo-only password for the seeded @onestop.demo doctor
+ * accounts, so the showcase doctors can actually sign in (they were
+ * seeded profile-only, with no password at all). Demo data only —
+ * never used by a real person's account.
+ */
+const DEMO_DOCTOR_PASSWORD = 'Doctor@Demo123';
 
 function normalizePkMobile(input) {
   if (typeof input !== 'string') return null;
@@ -143,11 +162,12 @@ async function main() {
     { email: 'dr.hira@onestop.demo', name: 'Dr. Hira Shah', speciality: 'Psychiatry', qualifications: 'MBBS, FCPS (Psychiatry)', experienceYears: 7, feeMinor: 250000, languages: ['Urdu', 'English', 'Sindhi'], about: 'Psychiatrist for anxiety, depression, stress, sleep problems and confidential counselling.', facilityName: 'Karachi Care Clinic', pmdcNumber: 'PMDC-35921', consultationCount: 120 },
     { email: 'dr.ali@onestop.demo', name: 'Dr. Ali Nawaz', speciality: 'Gastroenterology', qualifications: 'MBBS, FCPS (Gastroenterology)', experienceYears: 13, feeMinor: 300000, languages: ['Urdu', 'English', 'Pashto'], about: 'Gastroenterologist for acidity, IBS, liver care, endoscopy advice and digestive health.', facilityName: 'Islamabad Medical Complex', pmdcNumber: 'PMDC-28304', consultationCount: 2620 },
   ];
+  const demoDoctorPasswordHash = await hashPassword(DEMO_DOCTOR_PASSWORD);
   for (const d of demoDoctors) {
     const docUser = await prisma.user.upsert({
       where: { email: d.email },
-      update: { name: d.name },
-      create: { email: d.email, name: d.name },
+      update: { name: d.name, passwordHash: demoDoctorPasswordHash },
+      create: { email: d.email, name: d.name, passwordHash: demoDoctorPasswordHash },
     });
     for (const role of [RoleKey.CUSTOMER, RoleKey.DOCTOR]) {
       await prisma.userRole.upsert({
