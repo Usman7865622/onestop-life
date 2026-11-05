@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import styles from './dashboard.module.css';
 import { apiFetch } from '../../lib/auth/api';
 import { clearAccessToken, hasRole, isBusinessUser, readAccessToken, readLoginIntent, type LoginIntent } from '../../lib/auth/session';
 import type { PublicUser } from '../../lib/auth/types';
-import { money, type Appointment } from '../../lib/doctors/types';
+import { doctorInitials, money, type Appointment } from '../../lib/doctors/types';
 import { SectionIcon, type SectionIconName } from '../../components/home/SectionIcons';
 import OrderTracking from '../../components/orders/OrderTracking';
 import WalletPanel from '../../components/wallet/WalletPanel';
@@ -159,6 +159,9 @@ export default function DashboardPage() {
   const [profileEmail, setProfileEmail] = useState('');
 
   const [doctorAppointments, setDoctorAppointments] = useState<Appointment[]>([]);
+  const [doctorSlots, setDoctorSlots] = useState<Array<{ id: string; doctorProfileId: string; weekday: number; startTime: string; endTime: string; isActive: boolean }>>([]);
+  const [doctorReviews, setDoctorReviews] = useState<{ avgRating: number; reviewCount: number; items: Array<{ id: string; rating: number; comment?: string | null; createdAt: string; user?: { name: string | null } | null }> } | null>(null);
+  const reviewsForRef = useRef<string | null>(null);
   const [verificationType, setVerificationType] = useState<(typeof VERIFICATION_TYPES)[number]>('DOCTOR');
   const [licenseNumber, setLicenseNumber] = useState('');
   const [licenseAuthority, setLicenseAuthority] = useState('');
@@ -199,6 +202,20 @@ export default function DashboardPage() {
     } finally { setLoading(false); }
   }, []);
 
+  const loadDoctorReviews = async (profileId: string) => {
+    if (reviewsForRef.current === profileId) return;
+    reviewsForRef.current = profileId;
+    const accessToken = readAccessToken();
+    if (!accessToken) return;
+    try {
+      const [doctor, reviews] = await Promise.all([
+        apiFetch<{ avgRating: number; reviewCount: number }>(`/doctors/${profileId}`, {}, accessToken),
+        apiFetch<{ items: Array<{ id: string; rating: number; comment?: string | null; createdAt: string; user?: { name: string | null } | null }> }>(`/doctors/${profileId}/reviews?page=1&pageSize=3`, {}, accessToken),
+      ]);
+      setDoctorReviews({ avgRating: doctor.avgRating ?? 0, reviewCount: doctor.reviewCount ?? 0, items: reviews.items ?? [] });
+    } catch { /* reviews stay hidden if unavailable */ }
+  };
+
   useEffect(() => { setIntent(readLoginIntent()); void loadUser(); }, [loadUser]);
 
   useEffect(() => {
@@ -208,6 +225,9 @@ export default function DashboardPage() {
 
     if (hasRole(user, 'DOCTOR')) {
       void apiFetch<Appointment[]>('/appointments/doctor/mine', {}, accessToken).then(setDoctorAppointments).catch(() => setDoctorAppointments([]));
+      void apiFetch<Array<{ id: string; doctorProfileId: string; weekday: number; startTime: string; endTime: string; isActive: boolean }>>('/availability/my', {}, accessToken)
+        .then((slots) => { setDoctorSlots(slots); if (slots[0]?.doctorProfileId) void loadDoctorReviews(slots[0].doctorProfileId); })
+        .catch(() => setDoctorSlots([]));
       void apiFetch<PrescriptionView[]>('/prescriptions/doctor/mine', { method: 'GET' }, accessToken).then(setIssuedPrescriptions).catch(() => setIssuedPrescriptions([]));
     }
     void apiFetch<PrescriptionView[]>('/prescriptions/mine', { method: 'GET' }, accessToken).then(setMyPrescriptions).catch(() => setMyPrescriptions([]));
@@ -232,10 +252,35 @@ export default function DashboardPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    const profileId = doctorAppointments[0]?.doctorProfile?.id;
+    if (profileId) void loadDoctorReviews(profileId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctorAppointments]);
+
   const refreshIssuedPrescriptions = async () => {
     const accessToken = readAccessToken();
     if (!accessToken) return;
     void apiFetch<PrescriptionView[]>('/prescriptions/doctor/mine', { method: 'GET' }, accessToken).then(setIssuedPrescriptions).catch(() => {});
+  };
+
+  const refreshDoctorAppointments = async () => {
+    const accessToken = readAccessToken();
+    if (!accessToken) return;
+    void apiFetch<Appointment[]>('/appointments/doctor/mine', {}, accessToken).then(setDoctorAppointments).catch(() => {});
+  };
+
+  const updateDoctorAppointmentStatus = async (appt: Appointment, status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED') => {
+    const accessToken = readAccessToken();
+    if (!accessToken) return;
+    setBusy(true);
+    try {
+      await apiFetch(`/appointments/${appt.id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }, accessToken);
+      setStatus(`Appointment with ${appt.patientName} is now ${status.toLowerCase()}.`);
+      await refreshDoctorAppointments();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to update that appointment.');
+    } finally { setBusy(false); }
   };
 
   const orderAllPrescription = (prescription: PrescriptionView) => {
@@ -406,45 +451,7 @@ export default function DashboardPage() {
   const accessToken = readAccessToken();
   const issuedByAppointment = new Map(issuedPrescriptions.map((prescription) => [prescription.appointmentId, prescription]));
 
-  return (
-    <main className={styles.page}>
-      <div className={styles.shell}>
-        <section className={styles.welcomeCard}>
-          <div>
-            <span className={styles.badge}>My OneStop dashboard</span>
-            <h1>Welcome, {user.name || 'friend'}</h1>
-            <p>{user.phone}{user.email ? ` · ${user.email}` : ''}</p>
-          </div>
-          <div className={styles.welcomeActions}>
-            <span className={styles.rolePill}>{roleSummary}</span>
-            <button className={styles.secondaryButton} onClick={logout} disabled={busy}>Log out</button>
-          </div>
-        </section>
-
-        {intent ? <p className={styles.intentNote}>You continued as <strong>{intent}</strong>. Your actual access below follows the roles on your account{intent === 'admin' && !isAdmin ? ' — Admin tools stay locked until an ADMIN role is added.' : '.'}</p> : null}
-        {status ? <p className={styles.successText} role="status">{status}</p> : null}
-        {error ? <p className={styles.errorText} role="alert">{error}</p> : null}
-
-        <div className={styles.grid}>
-          <section className={styles.card}>
-            <PanelTitle icon="users" title="Profile" sub="Keep your account details current." />
-            <label className={styles.field}><span>Full name</span><input value={profileName} onChange={(e) => setProfileName(e.target.value)} /></label>
-            <label className={styles.field}><span>Email</span><input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} placeholder="you@example.com" /></label>
-            <button className={styles.primaryButton} onClick={updateProfile} disabled={busy}>Save profile</button>
-          </section>
-
-          <section className={styles.card}>
-            <PanelTitle icon="shield" title="Account overview" sub="Personal details and permissions." />
-            <div className={styles.summaryList}>
-              <div><span>Phone</span><strong>{user.phone || 'Email account'}</strong></div>
-              <div><span>Email</span><strong>{user.email || 'Not provided yet'}</strong></div>
-              <div><span>Locale</span><strong>{user.locale.toUpperCase()}</strong></div>
-              <div><span>Roles</span><strong>{roleSummary}</strong></div>
-            </div>
-          </section>
-        </div>
-
-        {showPatient ? (
+  const patientSection = showPatient ? (
           <section className={styles.card} aria-labelledby="patient-heading">
             <PanelTitle id="patient-heading" icon="heart" title="Patient & customer" sub="Your everyday care shortcuts." />
             <div className={styles.linkGrid}>
@@ -524,56 +531,163 @@ export default function DashboardPage() {
             </div>
             <WalletPanel token={readAccessToken()} />
           </section>
-        ) : null}
+  ) : null;
 
-        {showDoctor ? (
+  // Doctor workspace detail: profile strip, stats and grouped appointments.
+  const myDoctorProfile = doctorAppointments[0]?.doctorProfile ?? null;
+  const dayKeyPK = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Karachi', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+  const todayKeyPK = dayKeyPK(new Date());
+  const apptStart = (a: Appointment) => new Date(a.startsAt).getTime();
+  const sortedDoctorAppts = [...doctorAppointments].sort((a, b) => apptStart(a) - apptStart(b));
+  const docToday = sortedDoctorAppts.filter((a) => dayKeyPK(new Date(a.startsAt)) === todayKeyPK && a.status !== 'CANCELLED' && a.status !== 'NO_SHOW');
+  const docUpcoming = sortedDoctorAppts.filter((a) => apptStart(a) > Date.now() && dayKeyPK(new Date(a.startsAt)) !== todayKeyPK && (a.status === 'PENDING' || a.status === 'CONFIRMED'));
+  const docTodayIds = new Set(docToday.map((a) => a.id));
+  const docUpcomingIds = new Set(docUpcoming.map((a) => a.id));
+  const docPast = sortedDoctorAppts.filter((a) => !docTodayIds.has(a.id) && !docUpcomingIds.has(a.id)).reverse().slice(0, 6);
+  const nextApptId = docToday.find((a) => (a.status === 'PENDING' || a.status === 'CONFIRMED') && new Date(a.endsAt).getTime() > Date.now())?.id;
+  const docUniquePatients = new Set(doctorAppointments.map((a) => a.patientPhone)).size;
+  const weekAhead = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(Date.now() + i * 86400000);
+    const key = dayKeyPK(d);
+    const jsDay = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Karachi' })).getDay();
+    const daySlots = doctorSlots.filter((s) => s.weekday === jsDay && s.isActive);
+    const hours = daySlots.length ? daySlots.map((s) => `${s.startTime}–${s.endTime}`).join(', ') : 'Off';
+    const count = doctorAppointments.filter((a) => dayKeyPK(new Date(a.startsAt)) === key && a.status !== 'CANCELLED' && a.status !== 'NO_SHOW').length;
+    return { key, isToday: i === 0, label: new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', weekday: 'short' }).format(d), dateNum: new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Karachi', day: 'numeric' }).format(d), hours, count };
+  });
+  const docCompletedCount = doctorAppointments.filter((a) => a.status === 'COMPLETED').length;
+  const docEarningsMinor = doctorAppointments.filter((a) => a.status === 'COMPLETED').reduce((t, a) => t + a.feeMinor, 0);
+  const STATUS_PILL: Record<string, string> = { PENDING: styles.pillPending, CONFIRMED: styles.pillConfirmed, COMPLETED: styles.pillCompleted, CANCELLED: styles.pillCancelled, NO_SHOW: styles.pillCancelled };
+
+  const renderDoctorAppt = (appt: Appointment, index: number) => {
+    const issued = issuedByAppointment.get(appt.id);
+    const facilityName = appt.facility?.name ?? appt.doctorProfile?.facilities?.[0]?.facility?.name;
+    const start = new Date(appt.startsAt);
+    const end = new Date(appt.endsAt);
+    return (
+      <div className={styles.apptItem} key={appt.id}>
+        <div className={styles.apptIndex} aria-label={`Appointment ${index + 1}`}>{index + 1}</div>
+        <div className={styles.apptBody}>
+        <div className={styles.apptHead}>
+          <span className={styles.apptName}><strong>{appt.patientName}</strong>{appt.id === nextApptId ? <span className={styles.upNext}><i />Up next</span> : null}</span>
+          <span className={styles.apptRail}><b>{money(appt.feeMinor)}</b><span className={`${styles.pill} ${STATUS_PILL[appt.status] ?? ''}`}>{appt.status.replace('_', ' ')}</span></span>
+        </div>
+        <span className={styles.metaLine}><span className={styles.metaSeg}><SectionIcon name="clock" size={14} />{start.toLocaleDateString('en-PK', { weekday: 'short', day: 'numeric', month: 'short' })} · {start.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })} – {end.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })}</span><span className={styles.metaSeg}><SectionIcon name={appt.type === 'VIDEO' ? 'video' : 'clinic'} size={14} />{appt.type === 'VIDEO' ? 'Video' : 'In-person'}</span>{facilityName ? <span className={styles.metaSeg}><SectionIcon name="pin" size={14} />{facilityName}</span> : null}</span>
+        {appt.reason ? <span><b>Reason:</b> {appt.reason}</span> : null}
+        <span className={styles.metaSeg}><SectionIcon name="phone" size={14} />{appt.patientPhone}</span>
+        {appt.status === 'PENDING' ? (
+          <div className={styles.apptActions}>
+            <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CONFIRMED')} disabled={busy}><SectionIcon name="check" size={15} /> Confirm appointment</button>
+            <button type="button" className={styles.dangerButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CANCELLED')} disabled={busy}><SectionIcon name="x" size={15} /> Decline</button>
+          </div>
+        ) : null}
+        {appt.status === 'CONFIRMED' ? (
+          <div className={styles.apptActions}>
+            {apptStart(appt) <= Date.now() ? <button type="button" className={styles.primaryButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'COMPLETED')} disabled={busy}><SectionIcon name="check" size={15} /> Mark complete</button> : null}
+            <button type="button" className={styles.dangerButton} onClick={() => void updateDoctorAppointmentStatus(appt, 'CANCELLED')} disabled={busy}><SectionIcon name="x" size={15} /> Cancel</button>
+          </div>
+        ) : null}
+        {appt.status === 'COMPLETED' ? (
+          issued ? (
+            <>
+              <span className={styles.issuedTag}>Prescription issued</span>
+              <span>{issued.items.map((item) => `${item.name}${item.dosage ? ` ${item.dosage}` : ''} ×${item.qty}`).join(' · ')}</span>
+            </>
+          ) : composingFor === appt.id ? (
+            <PrescriptionComposer
+              appointmentId={appt.id}
+              token={accessToken ?? ''}
+              onIssued={() => { setComposingFor(null); void refreshIssuedPrescriptions(); setStatus('Prescription issued — the patient can now see it and order the medicines in one tap.'); }}
+              onCancel={() => setComposingFor(null)}
+            />
+          ) : (
+            <div className={styles.apptActions}>
+              <button type="button" className={styles.primaryButton} onClick={() => setComposingFor(appt.id)}><SectionIcon name="pen" size={15} /> Write prescription</button>
+            </div>
+          )
+        ) : null}
+        </div>
+      </div>
+    );
+  };
+
+  const doctorSection = showDoctor ? (
           <section className={styles.card} aria-labelledby="doctor-heading">
             <PanelTitle id="doctor-heading" icon="stethoscope" title="Doctor workspace" sub={isDoctor ? 'Your consultations and public profile.' : 'Doctor tools unlock after your DOCTOR verification is approved.'} />
             {isDoctor ? (
               <>
+                {myDoctorProfile ? (
+                  <div className={styles.docProfile}>
+                    <div className={styles.docAvatar} aria-hidden="true">{doctorInitials(myDoctorProfile.user?.name)}</div>
+                    <div className={styles.docProfileMeta}>
+                      <span className={styles.docNameRow}><strong>Dr. {(myDoctorProfile.user?.name ?? 'Doctor').replace(/^Dr\.\s*/i, '')}</strong>{myDoctorProfile.pmdcNumber ? <span className={styles.verifiedTag}><SectionIcon name="shield" size={13} /> PMDC verified</span> : null}</span>
+                      <span>{myDoctorProfile.speciality}{myDoctorProfile.qualifications ? ` · ${myDoctorProfile.qualifications}` : ''}</span>
+                      <span>{myDoctorProfile.pmdcNumber ? `PMDC ${myDoctorProfile.pmdcNumber} · ` : ''}{myDoctorProfile.experienceYears} yrs experience · {money(myDoctorProfile.feeMinor)} per visit</span>
+                      {myDoctorProfile.facilities?.length ? <span className={styles.metaSeg}><SectionIcon name="clinic" size={14} /> {myDoctorProfile.facilities.map((f) => f.facility.name).join(' · ')}</span> : null}
+                    </div>
+                  </div>
+                ) : null}
+                <div className={styles.adminStats}>
+                  <div><span className={styles.statIco}><SectionIcon name="calendar" size={16} /></span><strong>{docToday.length}</strong><span>Appointments today</span></div>
+                  <div><span className={`${styles.statIco} ${styles.statIcoAmber}`}><SectionIcon name="clock" size={16} /></span><strong>{docUpcoming.length}</strong><span>Upcoming</span></div>
+                  <div><span className={styles.statIco}><SectionIcon name="users" size={16} /></span><strong>{docUniquePatients}</strong><span>Patients seen</span></div>
+                  <div><span className={`${styles.statIco} ${styles.statIcoGreen}`}><SectionIcon name="check" size={16} /></span><strong>{docCompletedCount}</strong><span>Consultations completed</span></div>
+                  <div><span className={`${styles.statIco} ${styles.statIcoGold}`}><SectionIcon name="wallet" size={16} /></span><strong>{money(docEarningsMinor)}</strong><span>Earned from consultations</span></div>
+                </div>
                 <div className={styles.linkGrid}>
                   <Link className={styles.linkCard} href="/doctors"><strong>View public doctors page</strong><span>See how patients find and book you.</span></Link>
                   <a className={styles.linkCard} href="#doctor-appointments"><strong>My doctor appointments</strong><span>{doctorAppointments.length} appointment{doctorAppointments.length === 1 ? '' : 's'} on your schedule.</span></a>
                 </div>
-                <div id="doctor-appointments" className={styles.listBlock}>
-                  <h3>Upcoming patient requests</h3>
-                  {doctorAppointments.length ? doctorAppointments.slice(0, 6).map((appt) => {
-                    const issued = issuedByAppointment.get(appt.id);
-                    return (
-                      <div className={styles.listItem} key={appt.id}>
-                        <strong>{appt.patientName}</strong>
-                        <span>{new Date(appt.startsAt).toLocaleString('en-PK', { dateStyle: 'medium', timeStyle: 'short' })} · {appt.type === 'VIDEO' ? 'Video' : 'In-person'} · {appt.status}</span>
-                        <span>{money(appt.feeMinor)}</span>
-                        {appt.status === 'COMPLETED' ? (
-                          issued ? (
-                            <>
-                              <span className={styles.issuedTag}>Prescription issued</span>
-                              <span>{issued.items.map((item) => `${item.name}${item.dosage ? ` ${item.dosage}` : ''} ×${item.qty}`).join(' · ')}</span>
-                            </>
-                          ) : composingFor === appt.id ? (
-                            <PrescriptionComposer
-                              appointmentId={appt.id}
-                              token={accessToken ?? ''}
-                              onIssued={() => { setComposingFor(null); void refreshIssuedPrescriptions(); setStatus('Prescription issued — the patient can now see it and order the medicines in one tap.'); }}
-                              onCancel={() => setComposingFor(null)}
-                            />
-                          ) : (
-                            <button type="button" className={styles.secondaryButton} onClick={() => setComposingFor(appt.id)}>Write prescription</button>
-                          )
-                        ) : null}
-                      </div>
-                    );
-                  }) : <p className={styles.emptyStateInline}>No doctor appointments yet. New patient bookings will appear here.</p>}
+                <div id="doctor-appointments">
+                  <div className={styles.listBlock}>
+                    <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="calendar" size={15} /></span>Today <span className={styles.groupCount}>{docToday.length}</span></h3>
+                    {docToday.length ? docToday.map((a, i) => renderDoctorAppt(a, i)) : <p className={styles.emptyStateInline}>No appointments today.</p>}
+                  </div>
+                  <div className={styles.listBlock}>
+                    <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="clock" size={15} /></span>Upcoming <span className={styles.groupCount}>{docUpcoming.length}</span></h3>
+                    {docUpcoming.length ? docUpcoming.map((a, i) => renderDoctorAppt(a, i)) : <p className={styles.emptyStateInline}>No upcoming appointments. New patient bookings will appear here.</p>}
+                  </div>
+                  {docPast.length ? (
+                    <div className={styles.listBlock}>
+                      <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="history" size={15} /></span>Past appointments <span className={styles.groupCount}>{docPast.length}</span></h3>
+                      {docPast.map((a, i) => renderDoctorAppt(a, i))}
+                    </div>
+                  ) : null}
                 </div>
+                {doctorSlots.length ? (
+                  <div className={styles.listBlock}>
+                    <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="calendar" size={15} /></span>My week ahead</h3>
+                    <div className={styles.weekStrip}>
+                      {weekAhead.map((d) => (
+                        <div key={d.key} className={d.isToday ? styles.weekDayToday : styles.weekDay}>
+                          <span>{d.label}</span><b>{d.dateNum}</b><small>{d.hours}</small><em>{d.count ? `${d.count} appt${d.count === 1 ? '' : 's'}` : 'No appts'}</em>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {doctorReviews && doctorReviews.reviewCount > 0 ? (
+                  <div className={styles.listBlock}>
+                    <h3 className={styles.groupHead}><span className={styles.groupIco}><SectionIcon name="star" size={15} /></span>Patient reviews <span className={styles.groupCount}>{doctorReviews.reviewCount}</span></h3>
+                    <p className={styles.ratingLine}><span className={styles.stars}>{'★'.repeat(Math.round(doctorReviews.avgRating))}{'☆'.repeat(5 - Math.round(doctorReviews.avgRating))}</span>{doctorReviews.avgRating.toFixed(1)} average from {doctorReviews.reviewCount} review{doctorReviews.reviewCount === 1 ? '' : 's'}</p>
+                    {doctorReviews.items.map((r) => (
+                      <div className={styles.reviewItem} key={r.id}>
+                        <div className={styles.apptHead}><strong>{r.user?.name ?? 'Patient'}</strong><span className={styles.stars}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span></div>
+                        {r.comment ? <p>{r.comment}</p> : null}
+                        <small>{new Date(r.createdAt).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}</small>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
                 <p className={styles.note}>Profile editing is available through your verified doctor profile (speciality, fee, timings and facilities are managed via <code>POST/PATCH /doctors/me/profile</code>). If you need a field changed before the full editor ships, contact support and we will update it with you.</p>
               </>
             ) : (
               <p className={styles.note}>You chose Doctor at sign-in, but your account does not have the DOCTOR role yet. Submit a Doctor verification request in the Business &amp; verification section below — once approved, this workspace unlocks automatically.</p>
             )}
           </section>
-        ) : null}
+  ) : null;
 
-        {showBusiness ? (
+  const businessSection = showBusiness ? (
           <>
             <section className={styles.card} aria-labelledby="business-heading">
               <PanelTitle id="business-heading" icon="pharmacy" title="Pharmacy / Business verification" sub="Choose the workspace that matches your work. Approval unlocks the tools for that role." />
@@ -625,9 +739,9 @@ export default function DashboardPage() {
               <section className={styles.card}><p className={styles.note}>Seller catalogue tools unlock after a SELLER verification is approved. Your submitted requests above are tracked automatically.</p></section>
             )}
           </>
-        ) : null}
+  ) : null;
 
-        {showAdmin ? (
+  const adminSection = showAdmin ? (
           <section className={styles.card} aria-labelledby="admin-heading">
             <PanelTitle id="admin-heading" icon="shield" title="Admin control centre" sub="Review trust applications and keep the marketplace safe." />
             {isAdmin ? (
@@ -755,7 +869,56 @@ export default function DashboardPage() {
               </div>
             )}
           </section>
-        ) : null}
+  ) : null;
+
+  // The workspace matching how the user continued (or their strongest role)
+  // comes first — a doctor who signs in as a doctor lands on their
+  // appointments, not on the customer dashboard.
+  const primarySection = intent ?? (isDoctor ? 'doctor' : isAdmin ? 'admin' : isBusinessUser(user) ? 'business' : 'patient');
+  const sectionOrder = [primarySection, 'patient', 'doctor', 'business', 'admin'].filter((v, i, a) => a.indexOf(v) === i);
+  const sectionByKey = { patient: patientSection, doctor: doctorSection, business: businessSection, admin: adminSection };
+
+  return (
+    <main className={styles.page}>
+      <div className={styles.shell}>
+        <section className={styles.welcomeCard}>
+          <div>
+            <span className={styles.badge}>My OneStop dashboard</span>
+            <h1>Welcome, {user.name || 'friend'}</h1>
+            <p>{user.phone}{user.email ? ` · ${user.email}` : ''}</p>
+          </div>
+          <div className={styles.welcomeActions}>
+            <span className={styles.rolePill}>{roleSummary}</span>
+            <button className={styles.secondaryButton} onClick={logout} disabled={busy}>Log out</button>
+          </div>
+        </section>
+
+        {intent ? <p className={styles.intentNote}>You continued as <strong>{intent}</strong>. Your actual access below follows the roles on your account{intent === 'admin' && !isAdmin ? ' — Admin tools stay locked until an ADMIN role is added.' : '.'}</p> : null}
+        {status ? <p className={styles.successText} role="status">{status}</p> : null}
+        {error ? <p className={styles.errorText} role="alert">{error}</p> : null}
+
+        <div className={styles.grid}>
+          <section className={styles.card}>
+            <PanelTitle icon="users" title="Profile" sub="Keep your account details current." />
+            <label className={styles.field}><span>Full name</span><input value={profileName} onChange={(e) => setProfileName(e.target.value)} /></label>
+            <label className={styles.field}><span>Email</span><input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} placeholder="you@example.com" /></label>
+            <button className={styles.primaryButton} onClick={updateProfile} disabled={busy}>Save profile</button>
+          </section>
+
+          <section className={styles.card}>
+            <PanelTitle icon="shield" title="Account overview" sub="Personal details and permissions." />
+            <div className={styles.summaryList}>
+              <div><span>Phone</span><strong>{user.phone || 'Email account'}</strong></div>
+              <div><span>Email</span><strong>{user.email || 'Not provided yet'}</strong></div>
+              <div><span>Locale</span><strong>{user.locale.toUpperCase()}</strong></div>
+              <div><span>Roles</span><strong>{roleSummary}</strong></div>
+            </div>
+          </section>
+        </div>
+
+        {sectionOrder.map((key) => (
+          <Fragment key={key}>{sectionByKey[key as keyof typeof sectionByKey]}</Fragment>
+        ))}
 
         {hasRole(user, 'PHARMACY', 'ADMIN') ? (
           <section className={styles.card} aria-labelledby="rx-queue-heading">

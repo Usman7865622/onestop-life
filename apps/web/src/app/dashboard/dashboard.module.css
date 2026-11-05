@@ -168,3 +168,68 @@
 @media (pointer: coarse) {
   .primaryButton, .secondaryButton, .dangerButton, .linkCard { min-height: 44px; }
 }
+
+/* Doctor workspace detail */
+.docProfile { display: flex; gap: 14px; align-items: center; background: #fbfdff; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 18px; }
+.docAvatar { flex: none; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.05rem; }
+.docProfileMeta { display: grid; gap: 2px; }
+.docProfileMeta strong { color: var(--ink); font-size: 1.05rem; }
+.docProfileMeta span { color: var(--muted); font-size: .86rem; }
+.apptItem { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .92rem; }
+.apptItem strong { color: var(--ink); }
+.apptHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pill { flex: none; font-size: .68rem; font-weight: 800; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; background: #eef2f6; color: #54687e; }
+.pillPending { background: #fef3c7; color: #92400e; }
+.pillConfirmed { background: #e0f2fe; color: #075985; }
+.pillCompleted { background: #dcfce7; color: #166534; }
+.pillCancelled { background: #fee2e2; color: #991b1b; }
+.apptActions { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+
+/* Doctor appointments: numbered rows, aligned rails, uniform action bar */
+.apptItem { grid-template-columns: 34px 1fr; display: grid; gap: 12px; align-items: start; }
+.apptIndex { width: 30px; height: 30px; border-radius: 50%; background: #eef4f8; color: var(--accent); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .85rem; margin-top: 2px; }
+.apptBody { display: grid; gap: 4px; min-width: 0; }
+.apptRail { display: inline-flex; align-items: center; gap: 10px; flex: none; }
+.apptRail b { color: var(--ink); font-size: .95rem; }
+.pill { min-width: 92px; text-align: center; }
+.apptActions { align-items: stretch; }
+.apptActions .primaryButton, .apptActions .dangerButton { min-height: 42px; min-width: 150px; padding: 10px 18px; font-size: .9rem; }
+.groupCount { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: #eef4f8; color: var(--accent); font-size: .75rem; font-weight: 800; vertical-align: 2px; }
+
+/* Doctor workspace appeal pass: icon chips, card rows, live Up-next tag */
+.statIco { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: #e8f3f8; color: var(--accent); margin-bottom: 2px; }
+.statIcoAmber { background: #fef6e0; color: #b45309; }
+.statIcoGreen { background: #e7f8ee; color: #15803d; }
+.statIcoGold { background: #fdf3d7; color: #a16207; }
+.docProfile { background: linear-gradient(120deg, #eef7fb, #fbfdff); }
+.docNameRow { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.verifiedTag { display: inline-flex; align-items: center; gap: 4px; font-size: .7rem; font-weight: 800; color: #0e7490; background: #e0f2f7; padding: 3px 8px; border-radius: 999px; }
+.groupHead { display: flex; align-items: center; gap: 8px; }
+.groupIco { width: 26px; height: 26px; border-radius: 8px; background: #e8f3f8; color: var(--accent); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.apptItem { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; transition: box-shadow .18s ease, transform .18s ease; }
+.apptItem:hover { box-shadow: 0 10px 24px rgba(15, 42, 67, .08); transform: translateY(-1px); }
+.pill { display: inline-flex; align-items: center; justify-content: center; }
+.pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; margin-right: 6px; opacity: .85; }
+.metaLine { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; }
+.metaSeg { display: inline-flex; align-items: center; gap: 5px; }
+.metaSeg svg { color: var(--accent); flex: none; }
+.apptName { display: inline-flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.upNext { display: inline-flex; align-items: center; gap: 5px; font-size: .68rem; font-weight: 800; letter-spacing: .03em; color: #b45309; background: #fef3c7; padding: 3px 8px; border-radius: 999px; }
+.upNext i { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; animation: upNextPulse 1.6s ease-in-out infinite; }
+@keyframes upNextPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, .45); } 50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); } }
+.apptActions .primaryButton svg, .apptActions .dangerButton svg { flex: none; }
+
+/* Doctor workspace: week strip + patient reviews */
+.weekStrip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.weekDay, .weekDayToday { display: grid; gap: 2px; justify-items: center; text-align: center; padding: 10px 4px; border: 1px solid var(--line); border-radius: 12px; background: #fbfdff; }
+.weekDay span, .weekDayToday span { font-size: .7rem; font-weight: 800; letter-spacing: .05em; color: var(--muted); text-transform: uppercase; }
+.weekDay b, .weekDayToday b { font-size: 1.05rem; color: var(--ink); }
+.weekDay small, .weekDayToday small { font-size: .68rem; color: var(--muted); }
+.weekDay em, .weekDayToday em { font-style: normal; font-size: .68rem; font-weight: 700; color: var(--accent); }
+.weekDayToday { border-color: var(--accent); background: #eef7fb; box-shadow: 0 6px 16px rgba(22, 106, 145, .12); }
+@media (max-width: 720px) { .weekStrip { grid-template-columns: repeat(4, 1fr); } }
+.ratingLine { display: flex; align-items: center; gap: 8px; color: var(--muted); margin: 0 0 6px; flex-wrap: wrap; }
+.stars { color: #f5a623; letter-spacing: 2px; font-size: .95rem; }
+.reviewItem { display: grid; gap: 3px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.reviewItem p { margin: 0; color: var(--ink); }
+.reviewItem small { color: var(--muted); }

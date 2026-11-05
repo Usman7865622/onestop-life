@@ -29,6 +29,11 @@ const P: Record<string, ReactNode> = {
   users: (<><circle cx="9" cy="8.5" r="3.4" /><path d="M3.5 20c.8-3.4 2.8-5 5.5-5s4.7 1.6 5.5 5" /><path d="M15.8 5.6a3.4 3.4 0 0 1 0 5.8M17.8 15.4c1.5.7 2.4 2.2 2.8 4.2" /></>),
   stethoscope: (<><path d="M5.5 4v5a4 4 0 0 0 8 0V4" /><path d="M5.5 4H4M9.5 4h4" /><path d="M9.5 13v2.5a4.5 4.5 0 0 0 9 0V14" /><circle cx="18.5" cy="11.5" r="2.3" /></>),
   mail: (<><rect x="3.5" y="5.5" width="17" height="13" rx="2.5" /><path d="m4.5 7.5 7.5 6 7.5-6" /></>),
+  video: (<><rect x="3" y="6.5" width="12.5" height="11" rx="2.5" /><path d="M15.5 10.8 21 7.5v9l-5.5-3.3" /></>),
+  wallet: (<><rect x="3.5" y="6" width="17" height="12.5" rx="2.5" /><path d="M3.5 10h17" /><path d="M16.8 14.2h.01" /></>),
+  history: (<><path d="M4.6 8.6A8 8 0 1 1 4 13.5" /><path d="M4.2 4.2v4.4h4.4" /><path d="M12 8v4.5l3 1.8" /></>),
+  x: (<><path d="M6 6l12 12M18 6 6 18" /></>),
+  pen: (<><path d="M5 19.5 6.2 15 16.5 4.7a1.8 1.8 0 0 1 2.6 0l.2.2a1.8 1.8 0 0 1 0 2.6L9 17.8l-4 1.7Z" /><path d="m14.5 6.5 3 3" /></>),
 };
 
 export type SectionIconName = keyof typeof P;
